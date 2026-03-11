@@ -22,28 +22,27 @@ function LoginForm() {
     const handleLogin = (e) => {
         e.preventDefault();
         setIsLoading(true);
-        // Simulate login
         setTimeout(() => {
             setIsLoading(false);
             alert(`Login attempt with:\nEmail: ${formData.email}\nPassword: ${formData.password}`);
             toast.success("Success! Redirecting...");
-            navigate("/feed"); // Or dashboard
+            navigate("/feed"); 
         }, 1500);
     };
 
     return (
         <div className="flex min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
-            {/* Left Form Section */}
+            {/* Left side */}
             <div className="w-full lg:w-[48%] flex flex-col justify-center px-12 lg:px-20 py-12">
                 <div className="max-w-[340px] w-full mx-auto">
-                    {/* Logo/Brand */}
+                    {/* dropme */}
                     <div className="mb-12 -ml-0.5">
                         <h1 className="text-4xl font-black tracking-tighter text-black flex items-baseline">
                             drop<span className="text-gray-300 font-bold italic ml-0.5">ME</span>
                         </h1>
                     </div>
 
-                    {/* Header */}
+                  
                     <div className="mb-8">
                         <h2 className="text-2xl font-bold tracking-tight mb-1">Welcome back</h2>
                         <p className="text-sm text-gray-400 leading-relaxed font-medium">
@@ -99,7 +98,7 @@ function LoginForm() {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className={`w-full bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 active:scale-[0.98] ${isLoading ? "opacity-50" : ""}`}
+                                className={`w-full bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 ${isLoading ? "opacity-50" : ""}`}
                             >
                                 {isLoading ? "..." : "Sign In"}
                             </button>
@@ -112,12 +111,12 @@ function LoginForm() {
                 </div>
             </div>
 
-            {/* Right Visual Section */}
+            {/* Right side */}
             <div className="hidden lg:block lg:w-[52%] bg-black relative overflow-hidden group">
                 <img
                     src={LOGIN_IMAGE_PATH}
                     alt="Login Visual"
-                    className="absolute inset-0 w-full h-full object-cover opacity-50 grayscale transition-transform duration-1000 group-hover:scale-105"
+                    className="absolute inset-0 w-full h-full object-cover opacity-50 grayscale transition-transform duration-1000"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/40 to-transparent flex flex-col justify-center px-20">
                     <div className="max-w-lg">
@@ -127,7 +126,7 @@ function LoginForm() {
                         </h3>
                         <div className="space-y-2 animate-in slide-in-from-left-12 duration-1000">
                             <p className="text-white/80 text-2xl font-bold tracking-tight uppercase">
-                                Connect with peers.
+                                Paisay bach rahe hain na?
                             </p>
                             <p className="text-white/50 text-xl font-medium leading-relaxed italic">
                                 Reach your campus on time <br />

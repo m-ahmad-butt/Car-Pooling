@@ -93,7 +93,7 @@ function RegisterForm() {
 
     return (
         <div className="flex min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
-            {/* Left Form Section */}
+            {/* Left side */}
             <div className="w-full lg:w-[48%] flex flex-col justify-center px-12 lg:px-20 py-12">
                 <div className="max-w-[340px] w-full mx-auto">
                     <div className="mb-12 -ml-0.5">
@@ -193,13 +193,9 @@ function RegisterForm() {
                                             {showPassword ? "Hide" : "Show"}
                                         </button>
                                     </div>
-                                    {passwordError && (
-                                        <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1">
-                                            <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                                            {passwordError}
-                                        </p>
-                                    )}
+                                    
                                 </div>
+                              
                                 <div>
                                     <label className="block text-[12px] font-bold text-gray-800 mb-2">Confirm Password</label>
                                     <div className="relative">
@@ -219,7 +215,14 @@ function RegisterForm() {
                                             {showConfirmPassword ? "Hide" : "Show"}
                                         </button>
                                     </div>
+                                    
                                 </div>
+                                  {passwordError && (
+                                        <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1">
+                                            <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                                            {passwordError}
+                                        </p>
+                                    )}
                             </div>
                         )}
 
@@ -236,7 +239,7 @@ function RegisterForm() {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className={`flex-1 bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 active:scale-[0.98] ${isLoading ? "opacity-50" : ""}`}
+                                className={`flex-1 bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 ${isLoading ? "opacity-50" : ""}`}
                             >
                                 {isLoading ? "..." : step === 3 ? "Complete" : "Next"}
                             </button>
@@ -251,7 +254,7 @@ function RegisterForm() {
                 </div>
             </div>
 
-            {/* Right Visual Section */}
+            {/* Right side */}
             <div className="hidden lg:block lg:w-[52%] bg-black relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/40 to-transparent flex flex-col justify-center px-20">
                     <div className="max-w-lg">
@@ -272,7 +275,6 @@ function RegisterForm() {
                     </div>
                 </div>
 
-                {/* Corner Accents */}
                 <div className="absolute top-10 right-10">
                     <div className="w-12 h-[1px] bg-white/20 mb-3"></div>
                     <div className="w-12 h-[1px] bg-white/10"></div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import Footer from "./footer";
 
 const FORGOT_IMAGE_PATH = "/image.png";
 
@@ -40,7 +41,6 @@ function ForgotPasswordForm() {
     const handleOtpChange = (element, index) => {
         if (isNaN(element.value)) return false;
         setOtp([...otp.map((d, idx) => (idx === index ? element.value : d))]);
-        // Focus next
         if (element.nextSibling) {
             element.nextSibling.focus();
         }
@@ -58,23 +58,22 @@ function ForgotPasswordForm() {
             setIsLoading(false);
             alert(`OTP verified: ${otpValue}`);
             toast.success("Identity verified! Set your new password.");
-            // navigate("/reset-password");
+            navigate("/reset-password");
         }, 1500);
     };
 
     return (
         <div className="flex min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
-            {/* Left Form Section */}
+            {/* Left SIDE */}
             <div className="w-full lg:w-[48%] flex flex-col justify-center px-12 lg:px-20 py-12">
                 <div className="max-w-[340px] w-full mx-auto">
-                    {/* Logo/Brand */}
+                    {/* dropME */}
                     <div className="mb-12 -ml-0.5">
                         <h1 className="text-4xl font-black tracking-tighter text-black flex items-baseline">
                             drop<span className="text-gray-300 font-bold italic ml-0.5">ME</span>
                         </h1>
                     </div>
 
-                    {/* Header */}
                     <div className="mb-8">
                         <h2 className="text-2xl font-bold tracking-tight mb-1">
                             {step === 1 ? "Forgot password?" : "Verify Identity"}
@@ -103,7 +102,7 @@ function ForgotPasswordForm() {
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className={`w-full bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 active:scale-[0.98] ${isLoading ? "opacity-50" : ""}`}
+                                    className={`w-full bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 ${isLoading ? "opacity-50" : ""}`}
                                 >
                                     {isLoading ? "..." : "Send OTP"}
                                 </button>
@@ -132,7 +131,7 @@ function ForgotPasswordForm() {
                                 <button
                                     type="submit"
                                     disabled={isLoading || timeLeft === 0}
-                                    className={`w-full bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 active:scale-[0.98] ${isLoading || timeLeft === 0 ? "opacity-50" : ""}`}
+                                    className={`w-full bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 ${isLoading || timeLeft === 0 ? "opacity-50" : ""}`}
                                 >
                                     {isLoading ? "..." : "Verify OTP"}
                                 </button>
@@ -153,26 +152,26 @@ function ForgotPasswordForm() {
                 </div>
             </div>
 
-            {/* Right Visual Section */}
+            {/* Right side */}
             <div className="hidden lg:block lg:w-[52%] bg-black relative overflow-hidden group">
                 <img
                     src={FORGOT_IMAGE_PATH}
                     alt="Reset Visual"
-                    className="absolute inset-0 w-full h-full object-cover opacity-50 grayscale transition-transform duration-1000 group-hover:scale-105"
+                    className="absolute inset-0 w-full h-full object-cover opacity-50 grayscale transition-transform duration-1000"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/40 to-transparent flex flex-col justify-center px-20">
                     <div className="max-w-lg">
                         <h3 className="text-white text-6xl font-black italic tracking-tighter leading-[0.9] mb-8 animate-in slide-in-from-left-8 duration-700">
-                            SECURE <br />
-                            <span className="text-white/40">ACCESS??</span>
+                            BHOOL <br />
+                            <span className="text-white/40">GAYE??</span>
                         </h3>
                         <div className="space-y-2 animate-in slide-in-from-left-12 duration-1000">
                             <p className="text-white/80 text-2xl font-bold tracking-tight uppercase">
-                                Protect your account.
+                               DON'T WORRY.
                             </p>
                             <p className="text-white/50 text-xl font-medium leading-relaxed italic">
-                                Use Multi-Factor verification <br />
-                                and keep your data safe..
+                                Use Email verification <br />
+                                and reset your password..
                             </p>
                         </div>
                     </div>
