@@ -7,20 +7,23 @@ import FeedPage from './pages/feed'
 import ProfilePage from './pages/profile'
 import OtherProfilePage from './pages/otherProfile'
 import ResetPassword from './components/reset-password'
+import ProtectedRoute from './components/protectedRoute'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/landing" />} />
-        <Route path="/landing" element={<LandingPage />} />
+        {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/feed" element={<FeedPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/profile/:userId" element={<OtherProfilePage />} />
+
+        {/* Protected Routes */}
+        <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="/profile/:userId" element={<ProtectedRoute><OtherProfilePage /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   )

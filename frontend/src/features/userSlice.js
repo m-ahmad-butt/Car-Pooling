@@ -1,15 +1,17 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+const defaultProfile = {
+    name: "Ali Ahmed",
+    rollNo: "23L-3067",
+    campus: "Lahore",
+    email: "l233067@lhr.nu.edu.pk",
+    contactNo: "0300-1111111",
+    image: null,
+    stats: { rides: 1, comments: 0, rating: 5.0 },
+};
+
 const initialState = {
-    profile: {
-        name: "Ali Ahmed",
-        rollNo: "23L-3067",
-        campus: "Lahore",
-        email: "l233067@lhr.nu.edu.pk",
-        contactNo: "0300-1111111",
-        image: null,
-        stats: { rides: 1, comments: 0, rating: 5.0 },
-    },
+    profile: JSON.parse(localStorage.getItem('userProfile')) || defaultProfile,
     otherProfiles: {
         "zain-tahir": {
             name: "Zain Tahir",
@@ -67,10 +69,12 @@ const userSlice = createSlice({
             state.profile.rollNo = rollNo;
             state.profile.image = null;
             state.profile.stats = { rides: 0, comments: 0, rating: 0 };
+            localStorage.setItem('userProfile', JSON.stringify(state.profile));
         },
 
         logoutUser: (state) => {
-            state.profile = initialState.profile;
+            state.profile = defaultProfile;
+            localStorage.removeItem('userProfile');
         },
     }
 });

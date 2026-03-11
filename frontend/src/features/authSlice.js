@@ -39,7 +39,7 @@ const initialState = {
             rollNo: "23L-3105"
         }
     ],
-    currentUser: null,
+    currentUser: JSON.parse(localStorage.getItem('currentUser')) || null,
     isVerified: false
 };
 
@@ -56,10 +56,16 @@ const authSlice = createSlice({
             if(user){
                 try {
                     state.currentUser = user;
+                    localStorage.setItem('currentUser', JSON.stringify(user));
                 } catch (err) {
                     state.currentUser = null;
                 }
             }
+        },
+
+        logoutAuth: (state) => {
+            state.currentUser = null;
+            localStorage.removeItem('currentUser');
         },
 
         verifyEmail: (state, action) => {
@@ -78,5 +84,5 @@ const authSlice = createSlice({
     }
 });
 
-export const { addUser, loginUser, verifyEmail, changePassword } = authSlice.actions;
+export const { addUser, loginUser, logoutAuth, verifyEmail, changePassword } = authSlice.actions;
 export default authSlice.reducer;
