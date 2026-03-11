@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const RideDetails = ({ ride, onClose, onAccept }) => {
@@ -20,7 +20,6 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
     return (
         <div className="fixed inset-0 z-[200] bg-white overflow-y-auto font-sans text-black">
 
-            {/* Top Nav */}
             <header className="px-6 lg:px-20 py-5 border-b border-gray-50 flex items-center justify-between sticky top-0 bg-white/90 backdrop-blur-md z-50">
                 <button
                     onClick={onClose}
@@ -50,10 +49,8 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                 <div className="w-16" />
             </header>
 
-            {/* Page Body */}
             <div className="max-w-5xl mx-auto px-6 lg:px-12 py-10 flex flex-col lg:flex-row gap-10 lg:items-start">
 
-                {/* LEFT COLUMN: sticky */}
                 <div className="lg:w-2/5 flex flex-col gap-6 lg:sticky lg:top-[73px]">
 
                     <div className="w-full aspect-[4/3] rounded-3xl overflow-hidden bg-gray-50">
@@ -89,7 +86,6 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                         </div>
                     </div>
 
-                    {/* Mobile-only: message form appears below rider card */}
                     {showRequestNote && (
                         <div className="lg:hidden space-y-4">
                             <div>
@@ -129,10 +125,8 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                     )}
                 </div>
 
-                {/* RIGHT COLUMN: scrollable independently */}
                 <div className="lg:w-3/5 lg:max-h-[calc(100vh-73px)] lg:overflow-y-auto lg:pr-2">
 
-                    {/* Message form — desktop only, shown on right */}
                     {showRequestNote && (
                         <div className="hidden lg:block space-y-6 mt-16">
                             <div>
@@ -238,7 +232,6 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                 </div>
             </div>
 
-            {/* Mobile sticky CTA — only when not in message mode */}
             {!showRequestNote && (
                 <div className="lg:hidden fixed bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-50">
                     <button
@@ -250,7 +243,6 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                 </div>
             )}
 
-            {/* Desktop sticky CTA at bottom — only when not in message mode */}
             {!showRequestNote && (
                 <div className="hidden lg:block sticky bottom-0 bg-white border-t border-gray-50">
                     <div className="max-w-5xl mx-auto px-12 py-5 flex justify-end">

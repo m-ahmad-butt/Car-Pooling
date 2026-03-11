@@ -1,7 +1,10 @@
 import { useState } from "react";
-import toast from "react-hot-toast";
-import { extractRollNo, validateEmail } from "../utils/method";
+import { extractRollNo, validateEmail, getCampuses } from "../utils/method";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addUser } from "../features/authSlice";
+import { setProfileFromAuth } from "../features/userSlice";
+import toast from "react-hot-toast";
 
 function RegisterForm() {
     const [emailError, setEmailError] = useState("");
@@ -23,16 +26,10 @@ function RegisterForm() {
         password: "",
     });
 
-    const campuses = [
-        { id: "LHR", name: "Lahore" },
-        { id: "ISB", name: "Islamabad" },
-        { id: "KHI", name: "Karachi" },
-        { id: "PWR", name: "Peshawar" },
-        { id: "MTN", name: "Multan" },
-        { id: "CFD", name: "Faisalabad" }
-    ];
+    const campuses = getCampuses();
 
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const TOTAL_STEPS = 4;
 
@@ -90,6 +87,27 @@ function RegisterForm() {
         }
         setIsLoading(true);
         setTimeout(() => {
+            // Dispatch to Redux - add user to auth slice
+            dispatch(addUser({
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                email: formData.email,
+                password: formData.password,
+                campusId: formData.campusId,
+                contactNo: formData.contactNo,
+                rollNo: formData.rollNo,
+            }));
+
+            // Set user profile in user slice
+            dispatch(setProfileFromAuth({
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                email: formData.email,
+                campusId: campuses.find(c => c.id === formData.campusId)?.name || formData.campusId,
+                contactNo: formData.contactNo,
+                rollNo: formData.rollNo,
+            }));
+
             setIsLoading(false);
             toast.success("Account created successfully!");
             navigate("/login");
@@ -130,21 +148,21 @@ function RegisterForm() {
                             />
                         </div>
 
-                   
+
                     </div>
 
                     <div className="mb-6">
                         <h2 className="text-2xl font-bold tracking-tight mb-1">
                             {step === 1 ? "What's your name?" :
-                             step === 2 ? "Your campus & contact" :
-                             step === 3 ? "Verify student status" :
-                             "Set a password"}
+                                step === 2 ? "Your campus & contact" :
+                                    step === 3 ? "Verify student status" :
+                                        "Set a password"}
                         </h2>
                         <p className="text-sm text-gray-400 leading-relaxed font-medium">
                             {step === 1 ? "Enter your full legal name" :
-                             step === 2 ? "Choose your campus and add a contact number" :
-                             step === 3 ? "Use your FAST university email" :
-                             "Make it strong and secure"}
+                                step === 2 ? "Choose your campus and add a contact number" :
+                                    step === 3 ? "Use your FAST university email" :
+                                        "Make it strong and secure"}
                         </p>
                     </div>
 

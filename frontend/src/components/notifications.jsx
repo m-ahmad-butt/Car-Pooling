@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { removeNotification, clearNotifications } from '../features/notificationSlice';
 
-const Notifications = ({ onClose }) => {
-    const [notifications, setNotifications] = useState([
-        { id: 1, from: 'l233087@lhr.nu.edu.pk', message: 'Kindly check your email for details.' },
-        { id: 2, from: 'l233071@lhr.nu.edu.pk', message: 'Kindly check your email for details.' }
-    ]);
+const Notifications = ({ notifications, onClose }) => {
+    const dispatch = useDispatch();
+    const userProfile = useSelector(state => state.user.profile);
 
-    const removeNotification = (id) => {
-        setNotifications(notifications.filter(n => n.id !== id));
+    const handleRemove = (id) => {
+        dispatch(removeNotification(id));
     };
 
     const clearAll = () => {
-        setNotifications([]);
+        dispatch(clearNotifications(userProfile.email));
     };
 
     return (
@@ -51,7 +50,7 @@ const Notifications = ({ onClose }) => {
                                         <span className="text-gray-900 font-bold">{n.from.split('@')[0]}</span>
                                     </h4>
                                     <button
-                                        onClick={() => removeNotification(n.id)}
+                                        onClick={() => handleRemove(n.id)}
                                         className="text-red-400 p-0.5 hover:bg-red-50 rounded transition-all"
                                     >
                                         <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">

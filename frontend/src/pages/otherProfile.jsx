@@ -1,33 +1,37 @@
-import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import Footer from '../components/footer';
 
 const OtherProfilePage = () => {
     const { userId } = useParams();
     const navigate = useNavigate();
 
-    const userData = {
-        name: "Sara Malik",
-        rollNo: "22L-1234",
-        campus: "Lahore",
-        email: "l221234@lhr.nu.edu.pk",
+    //  profile from Redux store
+    const otherProfiles = useSelector(state => state.user.otherProfiles);
+    const allReviews = useSelector(state => state.reviews.reviews);
+
+    const userData = otherProfiles[userId] || {
+        name: userId ? userId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : "Unknown User",
+        rollNo: "N/A",
+        campus: "N/A",
+        email: "",
         image: null,
-        stats: {
-            rides: 12,
-            comments: 5,
-            rating: 4.8
-        },
-        reviews: [
-            { id: 1, user: "Zainab K.", comment: "Very safe driver, punctuality is top notch!", rating: 5 },
-            { id: 2, user: "Ali R.", comment: "Good experience overall.", rating: 4 }
-        ],
-        rides: [
-            { id: 1, title: "Morning ride to campus", status: "Done", date: "Mar 10, 2026" },
-            { id: 2, title: "Evening commute back", status: "Live", date: "Today, 05:00 PM" }
-        ]
+        stats: { rides: 0, comments: 0, rating: 0 },
     };
 
-    const [activeTab, setActiveTab] = useState('rides');
+    // reviews for this user from Redux store
+    const userReviews = allReviews
+        .filter(r => r.targetEmail === userData.email)
+        .map((r, idx) => ({
+            id: r.id || idx,
+            user: r.user,
+            comment: r.comment,
+            rating: r.rating,
+        }));
+
+    const avgRating = userReviews.length > 0
+        ? (userReviews.reduce((sum, r) => sum + r.rating, 0) / userReviews.length).toFixed(1)
+        : userData.stats.rating;
 
     return (
         <div className="min-h-screen bg-white text-black font-sans">
@@ -71,7 +75,7 @@ const OtherProfilePage = () => {
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mt-1">Rides</p>
                         </div>
                         <div className="bg-gray-50/50 border border-gray-100 px-10 py-4 rounded-3xl text-center">
-                            <p className="text-2xl font-black text-black leading-none">{userData.stats.rating}</p>
+                            <p className="text-2xl font-black text-black leading-none">{avgRating}</p>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mt-1">Rating</p>
                         </div>
                     </div>
@@ -89,7 +93,7 @@ const OtherProfilePage = () => {
                 </div>
 
                 <div className="space-y-4">
-                    {userData.reviews.map(rev => (
+                    {userReviews.length > 0 ? userReviews.map(rev => (
                         <div key={rev.id} className="bg-white border border-gray-100 p-8 rounded-[2.5rem]">
                             <div className="flex justify-between items-center mb-4">
                                 <div className="flex items-center gap-3">
@@ -106,11 +110,15 @@ const OtherProfilePage = () => {
                             </div>
                             <p className="text-sm text-gray-500 font-medium italic leading-relaxed">"{rev.comment}"</p>
                         </div>
-                    ))}
+                    )) : (
+                        <div className="flex flex-col items-center justify-center py-24 text-center opacity-20">
+                            <h3 className="text-xl font-black uppercase tracking-[0.5em]">No reviews yet</h3>
+                        </div>
+                    )}
                 </div>
 
             </main>
-              <Footer />
+            <Footer />
         </div>
     );
 };

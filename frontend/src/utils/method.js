@@ -19,4 +19,13 @@ export const decryptRollno = (rollno) => {
     return atob(rollno)
 }
 
-
+export const getCampuses = () => {
+    return [
+        { id: "LHR", name: "Lahore" },
+        { id: "ISB", name: "Islamabad" },
+        { id: "KHI", name: "Karachi" },
+        { id: "PWR", name: "Peshawar" },
+        { id: "MTN", name: "Multan" },
+        { id: "CFD", name: "Faisalabad" }
+    ];
+}

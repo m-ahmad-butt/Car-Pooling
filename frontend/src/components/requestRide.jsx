@@ -1,51 +1,43 @@
-import { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { approveRequest, declineRequest } from "../features/requestSlice";
+import { decrementSeats, setOngoingRide } from "../features/rideSlice";
 
 
 function RequestRide() {
-    const DUMMY_REQUESTS = [
-        {
-            id: 101,
-            requesterName: "Sara Malik",
-            requesterAvatar: null,
-            requesterRating: 4.7,
-            ride: "Morning commute to Campus",
-            rideDate: "Today, 08:30 AM",
-            seats: 1,
-            note: "Hi! I live near Johar Town. Would love a seat!",
-            status: "pending",
-        },
-        {
-            id: 102,
-            requesterName: "Hamza Rauf",
-            requesterAvatar: null,
-            requesterRating: 4.3,
-            ride: "Weekly grocery run",
-            rideDate: "Tomorrow, 06:00 PM",
-            seats: 2,
-            note: "Need 2 seats for me and a friend. We won't take long!",
-            status: "pending",
-        },
-        {
-            id: 103,
-            requesterName: "Ayesha Tariq",
-            requesterAvatar: null,
-            requesterRating: 4.9,
-            ride: "Morning commute to Campus",
-            rideDate: "Today, 08:30 AM",
-            seats: 1,
-            note: "I'll be at the gate on time, promise!",
-            status: "pending",
-        },
-    ];
+    const dispatch = useDispatch();
+    const rideRequests = useSelector(state => state.requests.requests);
+    const userProfile = useSelector(state => state.user.profile);
+    const rides = useSelector(state => state.rides.rides);
 
-    const [rideRequests, setRideRequests] = useState(DUMMY_REQUESTS);
+    // Filter requests for rides owned by the current user
+    const myRides = rides.filter(r => r.riderEmail === userProfile.email).map(r => r.id);
+    const pendingRequests = rideRequests.filter(r => r.status === 'pending' && myRides.includes(r.rideId));
 
     const handleApproveRequest = (id) => {
-        setRideRequests(prev => prev.map(req => req.id === id ? { ...req, status: 'approved' } : req));
+        const request = rideRequests.find(r => r.id === id);
+        dispatch(approveRequest(id));
+        if (request) {
+            dispatch(decrementSeats(request.rideId));
+
+            // Find the ride to get owner details
+            const ride = rides.find(r => r.id === request.rideId);
+
+            // Set ongoing ride visible to both requester and ride owner
+            dispatch(setOngoingRide({
+                rideId: request.rideId,
+                rider: ride ? ride.riderName : "Rider",
+                riderEmail: ride ? ride.riderEmail : userProfile.email,
+                requesterName: request.requesterName,
+                requesterEmail: request.requesterEmail,
+                from: ride ? (ride.location || "FAST") : "FAST",
+                to: ride ? (ride.destination || "Destination") : "Destination",
+                status: "In Progress"
+            }));
+        }
     };
 
     const handleDeclineRequest = (id) => {
-        setRideRequests(prev => prev.map(req => req.id === id ? { ...req, status: 'declined' } : req));
+        dispatch(declineRequest(id));
     };
 
     return (
@@ -53,16 +45,16 @@ function RequestRide() {
             <div className="flex items-center justify-between mb-8">
                 <div>
                     <h2 className="text-2xl font-black tracking-tight uppercase">Ride Requests</h2>
-                    <p className="text-[11px] font-bold text-gray-400 mt-1 uppercase tracking-widest">{rideRequests.filter(r => r.status === 'pending').length} pending</p>
+                    <p className="text-[11px] font-bold text-gray-400 mt-1 uppercase tracking-widest">{pendingRequests.length} pending</p>
                 </div>
             </div>
-            {rideRequests.filter(r => r.status === 'pending').length === 0 ? (
+            {pendingRequests.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-40 opacity-20">
                     <svg className="w-24 h-24 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     <h3 className="text-xl font-black uppercase tracking-[0.5em]">No pending requests</h3>
                 </div>
             ) : (
-                rideRequests.filter(r => r.status === 'pending').map(req => (
+                pendingRequests.map(req => (
                     <div key={req.id} className="bg-white border border-gray-100 rounded-3xl p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all hover:shadow-xl hover:shadow-black/5">
                         {/* Avatar */}
                         <div className="w-12 h-12 rounded-full bg-black flex-shrink-0 flex items-center justify-center">

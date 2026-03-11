@@ -1,6 +1,6 @@
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 function ResetPassword() {
     const [password, setPassword] = useState("");
@@ -50,7 +50,7 @@ function ResetPassword() {
                         </h1>
                     </div>
 
-                
+
                     <div className="mb-8">
                         <h2 className="text-2xl font-bold tracking-tight mb-1">Reset password</h2>
                         <p className="text-sm text-gray-400 leading-relaxed font-medium">
@@ -66,11 +66,10 @@ function ResetPassword() {
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-1 text-sm placeholder-gray-300 ${
-                                        passwordError && passwordError !== "Passwords do not match."
-                                            ? "border-red-500 focus:ring-red-500"
-                                            : "border-gray-200 focus:border-black focus:ring-black"
-                                    }`}
+                                    className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-1 text-sm placeholder-gray-300 ${passwordError && passwordError !== "Passwords do not match."
+                                        ? "border-red-500 focus:ring-red-500"
+                                        : "border-gray-200 focus:border-black focus:ring-black"
+                                        }`}
                                     placeholder="New password"
                                     required
                                 />
@@ -91,11 +90,10 @@ function ResetPassword() {
                                     type={showConfirmPassword ? "text" : "password"}
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-1 text-sm placeholder-gray-300 ${
-                                        passwordError === "Passwords do not match."
-                                            ? "border-red-500 focus:ring-red-500"
-                                            : "border-gray-200 focus:border-black focus:ring-black"
-                                    }`}
+                                    className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-1 text-sm placeholder-gray-300 ${passwordError === "Passwords do not match."
+                                        ? "border-red-500 focus:ring-red-500"
+                                        : "border-gray-200 focus:border-black focus:ring-black"
+                                        }`}
                                     placeholder="Confirm new password"
                                     required
                                 />

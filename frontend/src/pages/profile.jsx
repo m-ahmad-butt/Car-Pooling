@@ -1,33 +1,51 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from 'react-redux';
 import Footer from '../components/footer';
+import { getCampuses } from '../utils/method';
+import { updateProfile } from '../features/userSlice';
+import { changePassword } from '../features/authSlice';
 
 const ProfilePage = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+
+    // Redux states
+    const userProfile = useSelector(state => state.user.profile);
+    const rides = useSelector(state => state.rides.rides);
+    const requests = useSelector(state => state.requests.requests);
+    const allReviews = useSelector(state => state.reviews.reviews);
+
     const [showEditPanel, setShowEditPanel] = useState(false);
     const [show4fields, setShow4Fields] = useState(true);
 
-    const [userData, setUserData] = useState({
-        name: "Muhammad Ahmad Butt",
-        rollNo: "23L-3059",
-        campus: "Lahore",
-        email: "l233059@lhr.nu.edu.pk",
-        image: null,
-        stats: { rides: 1, comments: 0, rating: 5.0 },
-        reviews: [
-            { id: 1, user: "Zainab K.", comment: "Very safe driver, punctuality is top notch!", rating: 5 },
-            { id: 2, user: "Ali R.", comment: "Good experience overall.", rating: 4 }
-        ],
-        rides: [
-            { id: 1, title: "Morning ride to campus", status: "Done", date: "Mar 10, 2026" },
-            { id: 2, title: "Evening commute back", status: "Live", date: "Today, 05:00 PM" }
-        ],
-        requestedRides: [
-            { id: 101, title: "Trip to Emporium Mall", rider: "Usman Ghani", status: "Pending", date: "Tomorrow, 06:00 PM" }
-        ]
-    });
+    const myRides = rides.filter(r => r.riderEmail === userProfile.email).map(r => ({
+        id: r.id,
+        title: r.title,
+        status: r.status === "active" ? "Live" : "Done",
+        date: r.date,
+    }));
 
-    const [editData, setEditData] = useState({ name: userData.name, campus: userData.campus });
+    const myRequestedRides = requests.filter(r => r.requesterEmail === userProfile.email).map(r => ({
+        id: r.id,
+        title: r.ride,
+        rider: r.requesterName,
+        status: r.status === "pending" ? "Pending" : r.status === "approved" ? "Approved" : "Declined",
+        date: r.rideDate,
+    }));
+
+    const myReviews = allReviews.filter(r => r.targetEmail === userProfile.email).map((r, idx) => ({
+        id: r.id || idx,
+        user: r.user,
+        comment: r.comment,
+        rating: r.rating,
+    }));
+
+    const avgRating = myReviews.length > 0
+        ? (myReviews.reduce((sum, r) => sum + r.rating, 0) / myReviews.length).toFixed(1)
+        : 0;
+
+    const [editData, setEditData] = useState({ name: userProfile.name, campus: userProfile.campus });
     const [activeTab, setActiveTab] = useState('rides');
     const [isEditingName, setIsEditingName] = useState(false);
     const [isEditingCampus, setIsEditingCampus] = useState(false);
@@ -35,14 +53,18 @@ const ProfilePage = () => {
     const [passwordData, setPasswordData] = useState({ new: '', confirm: '' });
 
     const handleSaveProfile = () => {
-        setUserData(prev => ({ ...prev, name: editData.name, campus: editData.campus }));
+        if (isEditingName || isEditingCampus) {
+            dispatch(updateProfile({ name: editData.name, campus: editData.campus }));
+        }
+        if (showPasswordFields && passwordData.new && passwordData.new === passwordData.confirm) {
+            dispatch(changePassword({ email: userProfile.email, newPassword: passwordData.new }));
+        }
         setIsEditingName(false);
         setIsEditingCampus(false);
         setShowPasswordFields(false);
         setShow4Fields(true);
         setShowEditPanel(false);
         setPasswordData({ new: '', confirm: '' });
-        alert("Changes saved successfully!");
     };
 
     const closePanel = () => {
@@ -108,20 +130,20 @@ const ProfilePage = () => {
                             alignItems: 'center',
                             justifyContent: 'center',
                         }}>
-                            {userData.image
-                                ? <img src={userData.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="profile" />
-                                : <span style={{ color: '#fff', fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 900, fontStyle: 'italic' }}>{userData.name.charAt(0)}</span>
+                            {userProfile.image
+                                ? <img src={userProfile.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="profile" />
+                                : <span style={{ color: '#fff', fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 900, fontStyle: 'italic' }}>{userProfile.name.charAt(0)}</span>
                             }
                         </div>
                     </div>
 
-                    <h2 style={{ fontSize: 'clamp(18px, 4vw, 26px)', fontWeight: 900, letterSpacing: '-0.04em', margin: '0 0 6px' }}>{userData.name}</h2>
+                    <h2 style={{ fontSize: 'clamp(18px, 4vw, 26px)', fontWeight: 900, letterSpacing: '-0.04em', margin: '0 0 6px' }}>{userProfile.name}</h2>
                     <p style={{ fontSize: 'clamp(9px, 1.5vw, 11px)', fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 'clamp(20px, 4vw, 32px)', opacity: 0.7 }}>
-                        Roll No: {userData.rollNo}
+                        Roll No: {userProfile.rollNo}
                     </p>
 
                     <div style={{ display: 'flex', gap: 'clamp(8px, 2vw, 16px)', flexWrap: 'wrap', justifyContent: 'center' }}>
-                        {[{ val: userData.stats.rides, label: 'Rides' }, { val: userData.stats.rating, label: 'Rating' }].map(s => (
+                        {[{ val: myRides.length, label: 'Rides' }, { val: avgRating, label: 'Rating' }].map(s => (
                             <div key={s.label} style={{
                                 backgroundColor: 'rgba(249,250,251,0.5)',
                                 border: '1px solid #f3f4f6',
@@ -136,7 +158,7 @@ const ProfilePage = () => {
                     </div>
 
                     <button
-                        onClick={() => { setEditData({ name: userData.name, campus: userData.campus }); setShowEditPanel(true); }}
+                        onClick={() => { setEditData({ name: userProfile.name, campus: userProfile.campus }); setShowEditPanel(true); }}
                         style={{
                             marginTop: 'clamp(20px, 4vw, 32px)',
                             backgroundColor: '#f9fafb',
@@ -204,7 +226,7 @@ const ProfilePage = () => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {activeTab === 'rides' && (
-                        userData.rides.length > 0 ? userData.rides.map(ride => (
+                        myRides.length > 0 ? myRides.map(ride => (
                             <div key={ride.id} style={{
                                 backgroundColor: '#fff',
                                 border: '1px solid #f3f4f6',
@@ -255,7 +277,7 @@ const ProfilePage = () => {
                     )}
 
                     {activeTab === 'requested' && (
-                        userData.requestedRides.length > 0 ? userData.requestedRides.map(req => (
+                        myRequestedRides.length > 0 ? myRequestedRides.map(req => (
                             <div key={req.id} style={{
                                 backgroundColor: '#fff',
                                 border: '1px solid #f3f4f6',
@@ -272,10 +294,20 @@ const ProfilePage = () => {
                                     </div>
                                     <div style={{ minWidth: 0 }}>
                                         <h4 style={{ fontSize: 'clamp(10px, 2vw, 13px)', fontWeight: 900, textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.title}</h4>
-                                        <p style={{ fontSize: 'clamp(8px, 1.3vw, 10px)', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>Driver: {req.rider} · {req.date}</p>
+                                        <p style={{ fontSize: 'clamp(8px, 1.3vw, 10px)', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>Status: {req.status} · {req.date}</p>
                                     </div>
                                 </div>
-                                <span style={{ fontSize: 'clamp(7px, 1.1vw, 9px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', padding: '6px 12px', borderRadius: '9999px', backgroundColor: '#fff7ed', color: '#c2410c', flexShrink: 0 }}>
+                                <span style={{
+                                    fontSize: 'clamp(7px, 1.1vw, 9px)',
+                                    fontWeight: 900,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.15em',
+                                    padding: '6px 12px',
+                                    borderRadius: '9999px',
+                                    backgroundColor: req.status === 'Approved' ? '#dcfce7' : req.status === 'Declined' ? '#fef2f2' : '#fff7ed',
+                                    color: req.status === 'Approved' ? '#15803d' : req.status === 'Declined' ? '#dc2626' : '#c2410c',
+                                    flexShrink: 0,
+                                }}>
                                     {req.status}
                                 </span>
                             </div>
@@ -283,7 +315,7 @@ const ProfilePage = () => {
                     )}
 
                     {activeTab === 'reviews' && (
-                        userData.reviews.length > 0 ? userData.reviews.map(rev => (
+                        myReviews.length > 0 ? myReviews.map(rev => (
                             <div key={rev.id} style={{ backgroundColor: '#fff', border: '1px solid #f3f4f6', padding: 'clamp(16px, 3vw, 32px)', borderRadius: '32px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -332,9 +364,9 @@ const ProfilePage = () => {
                         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'clamp(20px, 4vw, 40px)' }}>
                             <div style={{ position: 'relative' }}>
                                 <div style={{ width: 'clamp(80px, 12vw, 128px)', height: 'clamp(80px, 12vw, 128px)', borderRadius: '9999px', border: '6px solid #fff', boxShadow: '0 10px 30px rgba(0,0,0,0.12)', overflow: 'hidden', backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    {userData.image
-                                        ? <img src={userData.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="profile" />
-                                        : <span style={{ color: '#fff', fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 900, fontStyle: 'italic' }}>{userData.name.charAt(0)}</span>
+                                    {userProfile.image
+                                        ? <img src={userProfile.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="profile" />
+                                        : <span style={{ color: '#fff', fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 900, fontStyle: 'italic' }}>{userProfile.name.charAt(0)}</span>
                                     }
                                 </div>
                                 <button style={{ position: 'absolute', bottom: 2, right: 2, backgroundColor: '#fff', width: 30, height: 30, borderRadius: '9999px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #f3f4f6', cursor: 'pointer' }}>
@@ -362,13 +394,13 @@ const ProfilePage = () => {
 
                         {show4fields && (
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 'clamp(10px, 2vw, 20px)', marginBottom: 'clamp(16px, 3vw, 40px)' }}>
-                                <InfoCard label="Roll Number" value={userData.rollNo} />
+                                <InfoCard label="Roll Number" value={userProfile.rollNo} />
 
                                 <div style={{ backgroundColor: '#f8fafc', padding: 'clamp(16px, 2.5vw, 28px)', borderRadius: '24px', position: 'relative' }}>
                                     <h5 style={{ fontSize: '10px', fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '10px' }}>Full Name</h5>
                                     {isEditingName
                                         ? <input type="text" value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.5)', border: 'none', borderRadius: '14px', padding: '10px 14px', fontSize: '14px', fontWeight: 900, outline: 'none', boxSizing: 'border-box' }} autoFocus />
-                                        : <p style={{ fontSize: 'clamp(14px, 2.5vw, 17px)', fontWeight: 900, margin: 0 }}>{userData.name}</p>
+                                        : <p style={{ fontSize: 'clamp(14px, 2.5vw, 17px)', fontWeight: 900, margin: 0 }}>{userProfile.name}</p>
                                     }
                                     <EditButton active={isEditingName} onClick={() => setIsEditingName(!isEditingName)} />
                                 </div>
@@ -377,14 +409,14 @@ const ProfilePage = () => {
                                     <h5 style={{ fontSize: '10px', fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '10px' }}>Campus</h5>
                                     {isEditingCampus
                                         ? <select value={editData.campus} onChange={e => setEditData({ ...editData, campus: e.target.value })} style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.5)', border: 'none', borderRadius: '14px', padding: '10px 14px', fontSize: '14px', fontWeight: 900, outline: 'none', boxSizing: 'border-box' }} autoFocus>
-                                            {['Lahore', 'Islamabad', 'Karachi', 'Peshawar'].map(c => <option key={c}>{c}</option>)}
-                                          </select>
-                                        : <p style={{ fontSize: 'clamp(14px, 2.5vw, 17px)', fontWeight: 900, margin: 0 }}>{userData.campus}</p>
+                                            {getCampuses().map(c => <option key={c.id}>{c.name}</option>)}
+                                        </select>
+                                        : <p style={{ fontSize: 'clamp(14px, 2.5vw, 17px)', fontWeight: 900, margin: 0 }}>{userProfile.campus}</p>
                                     }
                                     <EditButton active={isEditingCampus} onClick={() => setIsEditingCampus(!isEditingCampus)} />
                                 </div>
 
-                                <InfoCard label="Email Address" value={userData.email} />
+                                <InfoCard label="Email Address" value={userProfile.email} />
                             </div>
                         )}
 
@@ -441,7 +473,7 @@ const ProfilePage = () => {
                     </div>
                 </div>
             )}
-              <Footer />
+            <Footer />
         </div>
     );
 };

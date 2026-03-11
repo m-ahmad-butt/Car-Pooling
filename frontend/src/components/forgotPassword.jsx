@@ -1,16 +1,20 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import Footer from "./footer";
+import { validateEmail } from "../utils/method";
 
 const FORGOT_IMAGE_PATH = "/image.png";
 
 function ForgotPasswordForm() {
     const [step, setStep] = useState(1);
     const [email, setEmail] = useState("");
+    const [emailError, setEmailError] = useState("");
+    const [otpError, setOtpError] = useState("");
     const [otp, setOtp] = useState(["", "", "", "", "", ""]);
     const [timeLeft, setTimeLeft] = useState(300); // 5 mins
     const [isLoading, setIsLoading] = useState(false);
+
+    const DEMO_OTP = "111111";
 
     const navigate = useNavigate();
 
@@ -27,20 +31,36 @@ function ForgotPasswordForm() {
         return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
     };
 
+    const handleEmailChange = (e) => {
+        const value = e.target.value;
+        setEmail(value);
+        if (value && !validateEmail(value)) {
+            setEmailError("Please use a valid university email (e.g. l23XXXX@lhr.nu.edu.pk)");
+        } else {
+            setEmailError("");
+        }
+    };
+
     const handleEmailSubmit = (e) => {
         e.preventDefault();
+        if (!validateEmail(email)) {
+            setEmailError("Please use a valid university email (e.g. l23XXXX@lhr.nu.edu.pk)");
+            return;
+        }
         setIsLoading(true);
         setTimeout(() => {
             setIsLoading(false);
-            alert(`OTP sent to: ${email}`);
+            toast.success(`OTP sent to: ${email}`);
+            toast(`Demo OTP: ${DEMO_OTP}`, { icon: '🔑', duration: 5000 });
             setStep(2);
-            setTimeLeft(300); // Reset timer
+            setTimeLeft(300);
         }, 1500);
     };
 
     const handleOtpChange = (element, index) => {
         if (isNaN(element.value)) return false;
         setOtp([...otp.map((d, idx) => (idx === index ? element.value : d))]);
+        setOtpError("");
         if (element.nextSibling) {
             element.nextSibling.focus();
         }
@@ -53,10 +73,14 @@ function ForgotPasswordForm() {
             toast.error("Please enter the full OTP");
             return;
         }
+        if (otpValue !== DEMO_OTP) {
+            setOtpError("Invalid OTP. Please try again. (Hint: use 111111 for demo)");
+            toast.error("Invalid OTP code");
+            return;
+        }
         setIsLoading(true);
         setTimeout(() => {
             setIsLoading(false);
-            alert(`OTP verified: ${otpValue}`);
             toast.success("Identity verified! Set your new password.");
             navigate("/reset-password");
         }, 1500);
@@ -92,17 +116,23 @@ function ForgotPasswordForm() {
                                 <input
                                     type="email"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all text-sm placeholder-gray-300"
+                                    onChange={handleEmailChange}
+                                    className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all text-sm placeholder-gray-300 ${emailError ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:border-black focus:ring-black"}`}
                                     placeholder="l23XXX@pwr.nu.edu.pk"
                                     required
                                 />
+                                {emailError && (
+                                    <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1.5">
+                                        <span className="w-1 h-1 bg-red-500 rounded-full inline-block"></span>
+                                        {emailError}
+                                    </p>
+                                )}
                             </div>
                             <div className="pt-2">
                                 <button
                                     type="submit"
-                                    disabled={isLoading}
-                                    className={`w-full bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 ${isLoading ? "opacity-50" : ""}`}
+                                    disabled={isLoading || !!emailError}
+                                    className={`w-full bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 ${isLoading || emailError ? "opacity-50" : ""}`}
                                 >
                                     {isLoading ? "..." : "Send OTP"}
                                 </button>
@@ -119,10 +149,17 @@ function ForgotPasswordForm() {
                                         value={data}
                                         onChange={(e) => handleOtpChange(e.target, index)}
                                         onFocus={(e) => e.target.select()}
-                                        className="w-11 h-11 text-center bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all text-lg font-black"
+                                        className={`w-11 h-11 text-center bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all text-lg font-black ${otpError ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:border-black focus:ring-black"}`}
                                     />
                                 ))}
                             </div>
+
+                            {otpError && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-center gap-2">
+                                    <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                                    <p className="text-[11px] text-red-600 font-bold">{otpError}</p>
+                                </div>
+                            )}
 
                             <div className="flex flex-col items-center gap-4">
                                 <div className="text-[11px] font-black text-gray-400 uppercase tracking-widest">
@@ -137,7 +174,7 @@ function ForgotPasswordForm() {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => { setStep(1); setOtp(["", "", "", "", "", ""]); }}
+                                    onClick={() => { setStep(1); setOtp(["", "", "", "", "", ""]); setOtpError(""); }}
                                     className="text-[11px] font-black text-gray-400 uppercase tracking-widest hover:text-black transition-colors"
                                 >
                                     Resend email
@@ -167,7 +204,7 @@ function ForgotPasswordForm() {
                         </h3>
                         <div className="space-y-2 animate-in slide-in-from-left-12 duration-1000">
                             <p className="text-white/80 text-2xl font-bold tracking-tight uppercase">
-                               DON'T WORRY.
+                                DON'T WORRY.
                             </p>
                             <p className="text-white/50 text-xl font-medium leading-relaxed italic">
                                 Use Email verification <br />

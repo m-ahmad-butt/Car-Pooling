@@ -1,32 +1,69 @@
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { loginUser } from "../features/authSlice";
+import { setProfileFromAuth } from "../features/userSlice";
+import { validateEmail } from "../utils/method";
+import toast from "react-hot-toast";
 
 const LOGIN_IMAGE_PATH = "/image.png";
 
 function LoginForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [emailError, setEmailError] = useState("");
+    const [loginError, setLoginError] = useState("");
     const [formData, setFormData] = useState({
         email: "",
         password: ""
     });
 
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const users = useSelector(state => state.auth.users);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+        setLoginError("");
+
+        if (name === "email") {
+            if (value && !validateEmail(value)) {
+                setEmailError("Please use a valid university email (e.g. l23XXXX@lhr.nu.edu.pk)");
+            } else {
+                setEmailError("");
+            }
+        }
     };
 
     const handleLogin = (e) => {
         e.preventDefault();
+        if (emailError) return;
+        if (!validateEmail(formData.email)) {
+            setEmailError("Please use a valid university email (e.g. l23XXXX@lhr.nu.edu.pk)");
+            return;
+        }
         setIsLoading(true);
+        setLoginError("");
         setTimeout(() => {
+            const user = users.find(u => u.email === formData.email && u.password === formData.password);
+            if (user) {
+                dispatch(loginUser({ email: formData.email }));
+                dispatch(setProfileFromAuth({
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    email: user.email,
+                    campusId: user.campusId,
+                    contactNo: user.contactNo,
+                    rollNo: user.rollNo
+                }));
+                toast.success("Success! Redirecting...");
+                navigate("/feed");
+            } else {
+                setLoginError("Invalid email or password. Please try again.");
+                toast.error("Invalid email or password");
+            }
             setIsLoading(false);
-            alert(`Login attempt with:\nEmail: ${formData.email}\nPassword: ${formData.password}`);
-            toast.success("Success! Redirecting...");
-            navigate("/feed"); 
         }, 1500);
     };
 
@@ -42,7 +79,7 @@ function LoginForm() {
                         </h1>
                     </div>
 
-                  
+
                     <div className="mb-8">
                         <h2 className="text-2xl font-bold tracking-tight mb-1">Welcome back</h2>
                         <p className="text-sm text-gray-400 leading-relaxed font-medium">
@@ -58,10 +95,16 @@ function LoginForm() {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleInputChange}
-                                className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all text-sm placeholder-gray-300"
+                                className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all text-sm placeholder-gray-300 ${emailError ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:border-black focus:ring-black"}`}
                                 placeholder="l23XXX@pwr.nu.edu.pk"
                                 required
                             />
+                            {emailError && (
+                                <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1.5">
+                                    <span className="w-1 h-1 bg-red-500 rounded-full inline-block"></span>
+                                    {emailError}
+                                </p>
+                            )}
                         </div>
                         <div>
                             <div className="flex justify-between items-center mb-2">
@@ -94,11 +137,18 @@ function LoginForm() {
                             </div>
                         </div>
 
+                        {loginError && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-center gap-2">
+                                <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                                <p className="text-[11px] text-red-600 font-bold">{loginError}</p>
+                            </div>
+                        )}
+
                         <div className="pt-2">
                             <button
                                 type="submit"
-                                disabled={isLoading}
-                                className={`w-full bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 ${isLoading ? "opacity-50" : ""}`}
+                                disabled={isLoading || !!emailError}
+                                className={`w-full bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 ${isLoading || emailError ? "opacity-50" : ""}`}
                             >
                                 {isLoading ? "..." : "Sign In"}
                             </button>

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const ProfileMenu = ({ onClose }) => {
@@ -7,7 +6,7 @@ const ProfileMenu = ({ onClose }) => {
     return (
         <div className="fixed inset-x-4 top-[10rem] lg:absolute lg:top-full lg:right-0 lg:mt-4 lg:w-[180px] bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] animate-in slide-in-from-top-4 duration-300 overflow-hidden">
             <div className="p-1.5">
-                <button 
+                <button
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors group rounded-xl"
                     onClick={() => {
                         navigate('/profile');
@@ -24,7 +23,7 @@ const ProfileMenu = ({ onClose }) => {
 
                 <div className="h-[1px] bg-gray-50 my-1 mx-2"></div>
 
-                <button 
+                <button
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-50 transition-colors group rounded-xl"
                     onClick={() => {
                         alert("Logging out...");
@@ -41,8 +40,8 @@ const ProfileMenu = ({ onClose }) => {
                 </button>
             </div>
 
-            <div 
-                className="fixed inset-0 z-[-1]" 
+            <div
+                className="fixed inset-0 z-[-1]"
                 onClick={onClose}
             ></div>
         </div>

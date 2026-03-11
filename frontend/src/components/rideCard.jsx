@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const RideCard = ({ ride, onViewDetails }) => {
@@ -31,7 +30,7 @@ const RideCard = ({ ride, onViewDetails }) => {
             {/* Content panel */}
             <div className="p-7 flex-1 flex flex-col">
                 <div className="flex items-center gap-3 mb-6">
-                    <button 
+                    <button
                         onClick={() => navigate(`/profile/${ride.riderName.replace(' ', '-').toLowerCase()}`)}
                         className="w-9 h-9 rounded-full bg-white border-2 border-white shadow-md flex items-center justify-center overflow-hidden shrink-0 hover:scale-110 transition-transform"
                     >
@@ -42,7 +41,7 @@ const RideCard = ({ ride, onViewDetails }) => {
                         )}
                     </button>
                     <div className="flex-1 text-left">
-                        <button 
+                        <button
                             onClick={() => navigate(`/profile/${ride.riderName.replace(' ', '-').toLowerCase()}`)}
                             className="text-[13px] font-black text-black leading-none hover:text-gray-500 transition-colors"
                         >
