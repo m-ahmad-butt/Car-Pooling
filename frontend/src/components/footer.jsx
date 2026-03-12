@@ -3,6 +3,18 @@ import { useNavigate } from 'react-router-dom';
 const Footer = () => {
     const navigate = useNavigate();
 
+    const opt = [
+        [{ label: 'Feed', path: '/feed' },
+        { label: 'Post a Ride', path: '/post' },
+        { label: 'My Profile', path: '/profile' },
+        { label: 'Notifications', path: '/notifications' }],
+        [
+            { label: 'Sign In', path: '/login' },
+            { label: 'Register', path: '/register' },
+            { label: 'Forgot Password', path: '/forgot-password' },
+        ]
+    ];
+
     return (
         <footer className="mt-8 bg-black border-t border-white/10 font-sans text-white">
 
@@ -26,12 +38,7 @@ const Footer = () => {
                         <div>
                             <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-5">Navigate</p>
                             <ul className="space-y-3">
-                                {[
-                                    { label: 'Feed', path: '/feed' },
-                                    { label: 'Post a Ride', path: '/post' },
-                                    { label: 'My Profile', path: '/profile' },
-                                    { label: 'Notifications', path: '/notifications' },
-                                ].map(link => (
+                                {opt[0].map(link => (
                                     <li key={link.label}>
                                         <button
                                             onClick={() => navigate(link.path)}
@@ -48,11 +55,7 @@ const Footer = () => {
                         <div>
                             <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-5">Account</p>
                             <ul className="space-y-3">
-                                {[
-                                    { label: 'Sign In', path: '/login' },
-                                    { label: 'Register', path: '/register' },
-                                    { label: 'Forgot Password', path: '/forgot-password' },
-                                ].map(link => (
+                                {opt[1].map(link => (
                                     <li key={link.label}>
                                         <button
                                             onClick={() => navigate(link.path)}
@@ -74,7 +77,7 @@ const Footer = () => {
 
             <div className="max-w-5xl mx-auto px-6 lg:px-12 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">
-                    © {new Date().getFullYear()} dropME · Built for FAST NUCES
+                    &copy; {new Date().getFullYear()} dropME · Built for FAST NUCES
                 </p>
                 <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">
                     Share rides · Save fuel · Make friends

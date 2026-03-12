@@ -4,9 +4,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { loginUser } from "../features/authSlice";
 import { setProfileFromAuth } from "../features/userSlice";
 import { validateEmail } from "../utils/method";
-import toast from "react-hot-toast";
-
-const LOGIN_IMAGE_PATH = "/image.png";
 
 function LoginForm() {
     const [showPassword, setShowPassword] = useState(false);
@@ -22,6 +19,7 @@ function LoginForm() {
     const dispatch = useDispatch();
     const users = useSelector(state => state.auth.users);
 
+    // email validation
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -36,6 +34,7 @@ function LoginForm() {
         }
     };
 
+    // login submit
     const handleLogin = (e) => {
         e.preventDefault();
         if (emailError) return;
@@ -48,7 +47,11 @@ function LoginForm() {
         setTimeout(() => {
             const user = users.find(u => u.email === formData.email && u.password === formData.password);
             if (user) {
+
+                // current-user
                 dispatch(loginUser({ email: formData.email }));
+
+                // user-profile
                 dispatch(setProfileFromAuth({
                     firstName: user.firstName,
                     lastName: user.lastName,
@@ -57,11 +60,9 @@ function LoginForm() {
                     contactNo: user.contactNo,
                     rollNo: user.rollNo
                 }));
-                toast.success("Success! Redirecting...");
                 navigate("/feed");
             } else {
                 setLoginError("Invalid email or password. Please try again.");
-                toast.error("Invalid email or password");
             }
             setIsLoading(false);
         }, 1500);
@@ -163,11 +164,6 @@ function LoginForm() {
 
             {/* Right side */}
             <div className="hidden lg:block lg:w-[52%] bg-black relative overflow-hidden group">
-                <img
-                    src={LOGIN_IMAGE_PATH}
-                    alt="Login Visual"
-                    className="absolute inset-0 w-full h-full object-cover opacity-50 grayscale transition-transform duration-1000"
-                />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/40 to-transparent flex flex-col justify-center px-20">
                     <div className="max-w-lg">
                         <h3 className="text-white text-6xl font-black italic tracking-tighter leading-[0.9] mb-8 animate-in slide-in-from-left-8 duration-700">

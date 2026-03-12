@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import toast from "react-hot-toast";
 import { validatePassword } from "../utils/method";
 import { changePassword, clearResetEmail } from "../features/authSlice";
 
@@ -36,10 +35,8 @@ function ResetPassword() {
             if (resetEmail) {
                 dispatch(changePassword({ email: resetEmail, newPassword: password }));
                 dispatch(clearResetEmail());
-                toast.success("Password reset successfully!");
                 navigate("/login");
             } else {
-                toast.error("Session expired. Please start over.");
                 navigate("/forgot-password");
             }
         }, 1500);

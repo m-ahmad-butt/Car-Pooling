@@ -1,14 +1,11 @@
 import { useState, useEffect } from "react";
-import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { validateEmail } from "../utils/method";
 import { setResetEmail } from "../features/authSlice";
 
-const FORGOT_IMAGE_PATH = "/image.png";
-
 function ForgotPasswordForm() {
-    const [step, setStep] = useState(1);
+    const [step, setStep] = useState(1); // 1: enter email, 2: enter OTP
     const [email, setEmail] = useState("");
     const [emailError, setEmailError] = useState("");
     const [otpError, setOtpError] = useState("");
@@ -22,6 +19,7 @@ function ForgotPasswordForm() {
     const dispatch = useDispatch();
     const users = useSelector(state => state.auth.users);
 
+    // otp timer
     useEffect(() => {
         if (step === 2 && timeLeft > 0) {
             const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
@@ -29,12 +27,14 @@ function ForgotPasswordForm() {
         }
     }, [step, timeLeft]);
 
+    // reset time format
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
     };
 
+    //email input
     const handleEmailChange = (e) => {
         const value = e.target.value;
         setEmail(value);
@@ -45,6 +45,7 @@ function ForgotPasswordForm() {
         }
     };
 
+    // submit email
     const handleEmailSubmit = (e) => {
         e.preventDefault();
         if (!validateEmail(email)) {
@@ -58,17 +59,16 @@ function ForgotPasswordForm() {
             
             if (!userExists) {
                 setEmailError("This email is not registered with us.");
-                toast.error("Account not found");
                 return;
             }
 
-            toast.success(`OTP sent to: ${email}`);
-            toast(`Demo OTP: ${DEMO_OTP}`, { icon: '🔑', duration: 5000 });
+            // otp page
             setStep(2);
             setTimeLeft(300);
         }, 1500);
     };
 
+    // otp input
     const handleOtpChange = (element, index) => {
         if (isNaN(element.value)) return false;
         setOtp([...otp.map((d, idx) => (idx === index ? element.value : d))]);
@@ -78,22 +78,22 @@ function ForgotPasswordForm() {
         }
     };
 
+    // otp input
     const handleVerifyOtp = (e) => {
         e.preventDefault();
         const otpValue = otp.join("");
         if (otpValue.length < 6) {
-            toast.error("Please enter the full OTP");
             return;
         }
         if (otpValue !== DEMO_OTP) {
-            setOtpError("Invalid OTP. Please try again. (Hint: use 111111 for demo)");
-            toast.error("Invalid OTP code");
+            setOtpError("Invalid OTP. Please try again.");
             return;
         }
         setIsLoading(true);
         setTimeout(() => {
             setIsLoading(false);
-            toast.success("Identity verified! Set your new password.");
+
+            // go to change pass page
             dispatch(setResetEmail(email));
             navigate("/reset-password");
         }, 1500);
@@ -204,11 +204,6 @@ function ForgotPasswordForm() {
 
             {/* Right side */}
             <div className="hidden lg:block lg:w-[52%] bg-black relative overflow-hidden group">
-                <img
-                    src={FORGOT_IMAGE_PATH}
-                    alt="Reset Visual"
-                    className="absolute inset-0 w-full h-full object-cover opacity-50 grayscale transition-transform duration-1000"
-                />
                 <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/40 to-transparent flex flex-col justify-center px-20">
                     <div className="max-w-lg">
                         <h3 className="text-white text-6xl font-black italic tracking-tighter leading-[0.9] mb-8 animate-in slide-in-from-left-8 duration-700">

@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { addUser } from "../features/authSlice";
 import { setProfileFromAuth } from "../features/userSlice";
-import toast from "react-hot-toast";
 
 function RegisterForm() {
     const [emailError, setEmailError] = useState("");
@@ -35,6 +34,7 @@ function RegisterForm() {
 
     const stepLabels = ["Name", "Campus", "Email", "Password"];
 
+    // step inputs validation
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -59,7 +59,7 @@ function RegisterForm() {
     };
 
 
-
+    // next step
     const handleNext = (e) => {
         e.preventDefault();
         if (step === 1 && (!formData.firstName || !formData.lastName)) return;
@@ -68,8 +68,10 @@ function RegisterForm() {
         setStep(prev => prev + 1);
     };
 
+    // previous step
     const handleBack = () => setStep(prev => prev - 1);
 
+    // submit
     const handleRegister = async (e) => {
         e.preventDefault();
         setPasswordError("");
@@ -83,7 +85,7 @@ function RegisterForm() {
         }
         setIsLoading(true);
         setTimeout(() => {
-            // Dispatch to Redux - add user to auth slice
+            //all-users
             dispatch(addUser({
                 firstName: formData.firstName,
                 lastName: formData.lastName,
@@ -93,8 +95,8 @@ function RegisterForm() {
                 contactNo: formData.contactNo,
                 rollNo: formData.rollNo,
             }));
-
-            // Set user profile in user slice
+            
+            // user-profile
             dispatch(setProfileFromAuth({
                 firstName: formData.firstName,
                 lastName: formData.lastName,
@@ -105,7 +107,6 @@ function RegisterForm() {
             }));
 
             setIsLoading(false);
-            toast.success("Account created successfully!");
             navigate("/login");
         }, 1500);
     };

@@ -5,13 +5,11 @@ import Footer from '../components/footer';
 import { getCampuses, validatePassword } from '../utils/method';
 import { updateProfile } from '../features/userSlice';
 import { changePassword } from '../features/authSlice';
-import toast from 'react-hot-toast';
 
 const ProfilePage = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    // Redux states
     const userProfile = useSelector(state => state.user.profile);
     const rides = useSelector(state => state.rides.rides);
     const requests = useSelector(state => state.requests.requests);
@@ -61,12 +59,10 @@ const ProfilePage = () => {
     const handleSaveProfile = () => {
         if (isEditingName || isEditingCampus) {
             dispatch(updateProfile({ name: editData.name, campus: editData.campus }));
-            toast.success("Profile updated successfully");
         }
         
         if (showPasswordFields) {
             if (!passwordData.new && !passwordData.confirm) {
-                // Just closing without change
             } else {
                 if (passwordData.new !== passwordData.confirm) {
                     setPasswordError("Passwords do not match");
@@ -77,7 +73,6 @@ const ProfilePage = () => {
                     return;
                 }
                 dispatch(changePassword({ email: userProfile.email, newPassword: passwordData.new }));
-                toast.success("Password changed successfully");
             }
         }
 
@@ -100,145 +95,84 @@ const ProfilePage = () => {
     };
 
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: '#fff', color: '#000', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+        <div className="min-h-screen bg-white text-black">
 
-            <header style={{
+            <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/85 backdrop-blur-sm flex items-center justify-between" style={{
                 padding: 'clamp(12px, 3vw, 24px) clamp(16px, 5vw, 80px)',
-                borderBottom: '1px solid #f3f4f6',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                position: 'sticky',
-                top: 0,
-                backgroundColor: 'rgba(255,255,255,0.85)',
-                backdropFilter: 'blur(12px)',
-                zIndex: 50,
             }}>
-                <h1 style={{ fontSize: 'clamp(14px, 2.5vw, 20px)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '-0.02em', margin: 0 }}>
+                <h1 className="text-sm sm:text-base lg:text-lg font-black uppercase tracking-tight">
                     Profile
                 </h1>
                 <button
                     onClick={() => navigate('/feed')}
+                    className="bg-black text-white rounded-full font-black uppercase tracking-widest text-xs sm:text-sm whitespace-nowrap hover:bg-gray-900 transition"
                     style={{
-                        backgroundColor: '#000',
-                        color: '#fff',
                         padding: 'clamp(8px, 1.5vw, 10px) clamp(14px, 3vw, 24px)',
-                        borderRadius: '9999px',
-                        fontSize: 'clamp(8px, 1.2vw, 10px)',
-                        fontWeight: 800,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.15em',
-                        border: 'none',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
                     }}
                 >
                     Back to Feed
                 </button>
             </header>
 
-            <main style={{ maxWidth: '800px', margin: '0 auto', padding: 'clamp(24px, 5vw, 48px) clamp(16px, 5vw, 32px)' }}>
+            <main className="mx-auto max-w-3xl" style={{ padding: 'clamp(24px, 5vw, 48px) clamp(16px, 5vw, 32px)' }}>
 
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 'clamp(32px, 6vw, 64px)', textAlign: 'center' }}>
-                    <div style={{ position: 'relative', marginBottom: '24px' }}>
-                        <div style={{
+                <div className="flex flex-col items-center" style={{ marginBottom: 'clamp(32px, 6vw, 64px)' }}>
+                    <div className="relative mb-6">
+                        <div className="flex items-center justify-center overflow-hidden rounded-full bg-black border-8 border-white shadow-2xl" style={{
                             width: 'clamp(96px, 15vw, 128px)',
                             height: 'clamp(96px, 15vw, 128px)',
-                            borderRadius: '9999px',
-                            border: '8px solid #fff',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
-                            overflow: 'hidden',
-                            backgroundColor: '#000',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
                         }}>
                             {userProfile.image
-                                ? <img src={userProfile.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="profile" />
-                                : <span style={{ color: '#fff', fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 800 }}>{userProfile.name.charAt(0)}</span>
+                                ? <img src={userProfile.image} className="w-full h-full object-cover" alt="profile" />
+                                : <span className="text-white font-black" style={{ fontSize: 'clamp(24px, 5vw, 36px)' }}>{userProfile.name.charAt(0)}</span>
                             }
                         </div>
                     </div>
 
-                    <h2 style={{ fontSize: 'clamp(18px, 4vw, 26px)', fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 6px' }}>{userProfile.name}</h2>
-                    <p style={{ fontSize: 'clamp(9px, 1.5vw, 11px)', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 'clamp(20px, 4vw, 32px)', opacity: 0.7 }}>
+                    <h2 className="font-black tracking-tight" style={{ fontSize: 'clamp(18px, 4vw, 26px)', marginBottom: '6px' }}>{userProfile.name}</h2>
+                    <p className="text-xs sm:text-sm font-black text-gray-400 uppercase tracking-widest mb-5 opacity-70">
                         Roll No: {userProfile.rollNo}
                     </p>
 
-                    <div style={{ display: 'flex', gap: 'clamp(8px, 2vw, 16px)', flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <div className="flex gap-3 sm:gap-4 flex-wrap justify-center mb-5">
                         {[{ val: myRides.length, label: 'Rides' }, { val: avgRating, label: 'Rating' }].map(s => (
-                            <div key={s.label} style={{
-                                backgroundColor: 'rgba(249,250,251,0.5)',
-                                border: '1px solid #f3f4f6',
+                            <div key={s.label} className="bg-gray-50/50 border border-gray-100 text-center rounded-2xl" style={{
                                 padding: 'clamp(12px, 2vw, 16px) clamp(24px, 5vw, 40px)',
-                                borderRadius: '24px',
-                                textAlign: 'center',
                             }}>
-                                <p style={{ fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800, color: '#000', lineHeight: 1, margin: 0 }}>{s.val}</p>
-                                <p style={{ fontSize: 'clamp(8px, 1.2vw, 10px)', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>{s.label}</p>
+                                <p className="text-black font-black leading-none m-0" style={{ fontSize: 'clamp(18px, 4vw, 24px)' }}>{s.val}</p>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">{s.label}</p>
                             </div>
                         ))}
                     </div>
 
                     <button
                         onClick={() => { setEditData({ name: userProfile.name, campus: userProfile.campus }); setShowEditPanel(true); }}
+                        className="bg-gray-100 text-black rounded-full font-black uppercase tracking-widest text-xs hover:bg-gray-200 transition"
                         style={{
                             marginTop: 'clamp(20px, 4vw, 32px)',
-                            backgroundColor: '#f9fafb',
-                            color: '#000',
                             padding: 'clamp(10px, 1.5vw, 12px) clamp(20px, 4vw, 32px)',
-                            borderRadius: '9999px',
-                            fontSize: 'clamp(9px, 1.3vw, 10px)',
-                            fontWeight: 800,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.15em',
-                            border: 'none',
-                            cursor: 'pointer',
                         }}
                     >
                         Edit Profile
                     </button>
                 </div>
 
-                <div style={{
-                    backgroundColor: 'rgba(243,244,246,0.5)',
-                    padding: '6px',
-                    borderRadius: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px',
-                    marginBottom: 'clamp(20px, 4vw, 40px)',
-                    overflowX: 'auto',
-                    WebkitOverflowScrolling: 'touch',
-                    scrollbarWidth: 'none',
-                    msOverflowStyle: 'none',
-                }}>
+                <div className="bg-gray-50/50 p-1.5 rounded-2xl flex items-center justify-center gap-1 mb-5 overflow-x-auto" style={{ marginBottom: 'clamp(20px, 4vw, 40px)' }}>
                     {[
-                        { id: 'rides', label: 'My Rides', icon: <svg style={{ width: 16, height: 16, flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> },
-                        { id: 'requested', label: 'Requested', icon: <svg style={{ width: 16, height: 16, flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg> },
-                        { id: 'completed', label: 'Completed', icon: <svg style={{ width: 16, height: 16, flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-                        { id: 'reviews', label: 'Reviews', icon: <svg style={{ width: 16, height: 16, flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg> },
+                        { id: 'rides', label: 'My Rides', icon: <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> },
+                        { id: 'requested', label: 'Requested', icon: <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg> },
+                        { id: 'completed', label: 'Completed', icon: <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+                        { id: 'reviews', label: 'Reviews', icon: <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg> },
                     ].map(tab => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
+                            className="rounded-lg font-black uppercase tracking-widest border-none cursor-pointer flex items-center gap-2 flex-shrink-0 transition-all"
                             style={{
                                 padding: 'clamp(8px, 1.5vw, 14px) clamp(12px, 2.5vw, 32px)',
-                                borderRadius: '18px',
                                 fontSize: 'clamp(9px, 1.3vw, 11px)',
-                                fontWeight: 800,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.1em',
-                                border: 'none',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                whiteSpace: 'nowrap',
-                                flexShrink: 0,
-                                backgroundColor: activeTab === tab.id ? '#fff' : 'transparent',
-                                color: activeTab === tab.id ? '#000' : '#9ca3af',
+                                backgroundColor: activeTab === tab.id ? '#000' : 'transparent',
+                                color: activeTab === tab.id ? '#fff' : '#9ca3af',
                                 boxShadow: activeTab === tab.id ? '0 4px 20px rgba(0,0,0,0.06)' : 'none',
                             }}
                         >
@@ -248,52 +182,23 @@ const ProfilePage = () => {
                     ))}
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="flex flex-col gap-3">
                     {activeTab === 'rides' && (
                         myRides.length > 0 ? myRides.map(ride => (
-                            <div key={ride.id} style={{
-                                backgroundColor: '#fff',
-                                border: '1px solid #f3f4f6',
-                                padding: 'clamp(14px, 3vw, 24px)',
-                                borderRadius: '24px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                gap: '12px',
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 3vw, 24px)', minWidth: 0 }}>
-                                    <div style={{
-                                        width: 'clamp(40px, 6vw, 48px)',
-                                        height: 'clamp(40px, 6vw, 48px)',
-                                        borderRadius: '14px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        flexShrink: 0,
-                                        backgroundColor: ride.status === 'Live' ? '#f0fdf4' : '#f9fafb',
-                                        color: ride.status === 'Live' ? '#16a34a' : '#9ca3af',
-                                    }}>
+                            <div key={ride.id} className="bg-white border border-gray-100 rounded-2xl flex items-center justify-between gap-3 p-3 sm:p-6">
+                                <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+                                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${ride.status === 'Live' ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
                                         {ride.status === 'Live'
-                                            ? <div style={{ width: 8, height: 8, backgroundColor: '#22c55e', borderRadius: '9999px' }} />
-                                            : <svg style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                                            ? <div className="w-2 h-2 bg-green-500 rounded-full" />
+                                            : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
                                         }
                                     </div>
-                                    <div style={{ minWidth: 0 }}>
-                                        <h4 style={{ fontSize: 'clamp(10px, 2vw, 13px)', fontWeight: 800, textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ride.title}</h4>
-                                        <p style={{ fontSize: 'clamp(8px, 1.3vw, 10px)', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>{ride.date}</p>
+                                    <div className="min-w-0">
+                                        <h4 className="font-black uppercase text-xs sm:text-sm m-0 truncate">{ride.title}</h4>
+                                        <p className="font-bold text-gray-400 uppercase tracking-wider text-xs mt-1">{ride.date}</p>
                                     </div>
                                 </div>
-                                <span style={{
-                                    fontSize: 'clamp(7px, 1.1vw, 9px)',
-                                    fontWeight: 900,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.15em',
-                                    padding: '6px 12px',
-                                    borderRadius: '9999px',
-                                    backgroundColor: ride.status === 'Live' ? '#dcfce7' : '#f3f4f6',
-                                    color: ride.status === 'Live' ? '#15803d' : '#6b7280',
-                                    flexShrink: 0,
-                                }}>
+                                <span className={`text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full flex-shrink-0 ${ride.status === 'Live' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
                                     {ride.status}
                                 </span>
                             </div>
@@ -302,36 +207,17 @@ const ProfilePage = () => {
 
                     {activeTab === 'requested' && (
                         myRequestedRides.length > 0 ? myRequestedRides.map(req => (
-                            <div key={req.id} style={{
-                                backgroundColor: '#fff',
-                                border: '1px solid #f3f4f6',
-                                padding: 'clamp(14px, 3vw, 24px)',
-                                borderRadius: '24px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                gap: '12px',
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 3vw, 24px)', minWidth: 0 }}>
-                                    <div style={{ width: 'clamp(40px, 6vw, 48px)', height: 'clamp(40px, 6vw, 48px)', borderRadius: '14px', backgroundColor: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#9ca3af' }}>
-                                        <svg style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                            <div key={req.id} className="bg-white border border-gray-100 rounded-2xl flex items-center justify-between gap-3 p-3 sm:p-6">
+                                <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 text-gray-400">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                                     </div>
-                                    <div style={{ minWidth: 0 }}>
-                                        <h4 style={{ fontSize: 'clamp(10px, 2vw, 13px)', fontWeight: 800, textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.title}</h4>
-                                        <p style={{ fontSize: 'clamp(8px, 1.3vw, 10px)', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>Status: {req.status} · {req.date}</p>
+                                    <div className="min-w-0">
+                                        <h4 className="font-black uppercase text-xs sm:text-sm m-0 truncate">{req.title}</h4>
+                                        <p className="font-bold text-gray-400 uppercase tracking-wider text-xs mt-1">Status: {req.status} · {req.date}</p>
                                     </div>
                                 </div>
-                                <span style={{
-                                    fontSize: 'clamp(7px, 1.1vw, 9px)',
-                                    fontWeight: 900,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.15em',
-                                    padding: '6px 12px',
-                                    borderRadius: '9999px',
-                                    backgroundColor: req.status === 'Approved' ? '#dcfce7' : req.status === 'Declined' ? '#fef2f2' : '#fff7ed',
-                                    color: req.status === 'Approved' ? '#15803d' : req.status === 'Declined' ? '#dc2626' : '#c2410c',
-                                    flexShrink: 0,
-                                }}>
+                                <span className={`text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full flex-shrink-0 ${req.status === 'Approved' ? 'bg-green-100 text-green-800' : req.status === 'Declined' ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-800'}`}>
                                     {req.status}
                                 </span>
                             </div>
@@ -340,39 +226,23 @@ const ProfilePage = () => {
 
                     {activeTab === 'completed' && (
                         <div>
-                            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                            <div className="flex gap-2 mb-5 flex-wrap justify-center">
                                 <button
                                     onClick={() => setCompletedRidesFilter('offered')}
+                                    className="px-5 py-2.5 rounded-full font-black uppercase tracking-widest text-xs sm:text-sm border border-gray-100 cursor-pointer transition-all"
                                     style={{
-                                        padding: '10px 20px',
-                                        borderRadius: '9999px',
-                                        fontSize: 'clamp(11px, 1.5vw, 13px)',
-                                        fontWeight: 800,
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.1em',
-                                        border: '1px solid #f3f4f6',
-                                        cursor: 'pointer',
                                         backgroundColor: completedRidesFilter === 'offered' ? '#000' : '#fff',
                                         color: completedRidesFilter === 'offered' ? '#fff' : '#000',
-                                        transition: 'all 0.3s ease',
                                     }}
                                 >
                                     Offer Ride
                                 </button>
                                 <button
                                     onClick={() => setCompletedRidesFilter('took')}
+                                    className="px-5 py-2.5 rounded-full font-black uppercase tracking-widest text-xs sm:text-sm border border-gray-100 cursor-pointer transition-all"
                                     style={{
-                                        padding: '10px 20px',
-                                        borderRadius: '9999px',
-                                        fontSize: 'clamp(11px, 1.5vw, 13px)',
-                                        fontWeight: 800,
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.1em',
-                                        border: '1px solid #f3f4f6',
-                                        cursor: 'pointer',
                                         backgroundColor: completedRidesFilter === 'took' ? '#000' : '#fff',
                                         color: completedRidesFilter === 'took' ? '#fff' : '#000',
-                                        transition: 'all 0.3s ease',
                                     }}
                                 >
                                     Took Ride
@@ -381,84 +251,34 @@ const ProfilePage = () => {
 
                             {completedRidesFilter === 'offered' ? (
                                 completedOfferedRides.length > 0 ? completedOfferedRides.map(ride => (
-                                    <div key={ride.id} style={{
-                                        backgroundColor: '#fff',
-                                        border: '1px solid #f3f4f6',
-                                        padding: 'clamp(14px, 3vw, 24px)',
-                                        borderRadius: '24px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        gap: '12px',
-                                        marginBottom: '12px',
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 3vw, 24px)', minWidth: 0 }}>
-                                            <div style={{
-                                                width: 'clamp(40px, 6vw, 48px)',
-                                                height: 'clamp(40px, 6vw, 48px)',
-                                                borderRadius: '14px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                flexShrink: 0,
-                                                backgroundColor: '#f0fdf4',
-                                                color: '#16a34a',
-                                            }}>
-                                                <svg style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                                    <div key={ride.id} className="bg-white border border-gray-100 rounded-2xl flex items-center justify-between gap-3 p-3 sm:p-6 mb-3">
+                                        <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+                                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0 text-green-600">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
                                             </div>
-                                            <div style={{ minWidth: 0 }}>
-                                                <h4 style={{ fontSize: 'clamp(10px, 2vw, 13px)', fontWeight: 800, textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ride.title}</h4>
-                                                <p style={{ fontSize: 'clamp(8px, 1.3vw, 10px)', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>{ride.date}</p>
+                                            <div className="min-w-0">
+                                                <h4 className="font-black uppercase text-xs sm:text-sm m-0 truncate">{ride.title}</h4>
+                                                <p className="font-bold text-gray-400 uppercase tracking-wider text-xs mt-1">{ride.date}</p>
                                             </div>
                                         </div>
-                                        <span style={{
-                                            fontSize: 'clamp(7px, 1.1vw, 9px)',
-                                            fontWeight: 900,
-                                            textTransform: 'uppercase',
-                                            letterSpacing: '0.15em',
-                                            padding: '6px 12px',
-                                            borderRadius: '9999px',
-                                            backgroundColor: '#dcfce7',
-                                            color: '#15803d',
-                                            flexShrink: 0,
-                                        }}>
+                                        <span className="text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-green-100 text-green-800 flex-shrink-0">
                                             Done
                                         </span>
                                     </div>
                                 )) : <EmptyState message="No offers completed" />
                             ) : (
                                 completedTookRides.length > 0 ? completedTookRides.map(req => (
-                                    <div key={req.id} style={{
-                                        backgroundColor: '#fff',
-                                        border: '1px solid #f3f4f6',
-                                        padding: 'clamp(14px, 3vw, 24px)',
-                                        borderRadius: '24px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        gap: '12px',
-                                        marginBottom: '12px',
-                                    }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 3vw, 24px)', minWidth: 0 }}>
-                                            <div style={{ width: 'clamp(40px, 6vw, 48px)', height: 'clamp(40px, 6vw, 48px)', borderRadius: '14px', backgroundColor: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#16a34a' }}>
-                                                <svg style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                                    <div key={req.id} className="bg-white border border-gray-100 rounded-2xl flex items-center justify-between gap-3 p-3 sm:p-6 mb-3">
+                                        <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+                                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0 text-green-600">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
                                             </div>
-                                            <div style={{ minWidth: 0 }}>
-                                                <h4 style={{ fontSize: 'clamp(10px, 2vw, 13px)', fontWeight: 800, textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.title}</h4>
-                                                <p style={{ fontSize: 'clamp(8px, 1.3vw, 10px)', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>Ride: {req.rider} · {req.date}</p>
+                                            <div className="min-w-0">
+                                                <h4 className="font-black uppercase text-xs sm:text-sm m-0 truncate">{req.title}</h4>
+                                                <p className="font-bold text-gray-400 uppercase tracking-wider text-xs mt-1">Ride: {req.rider} · {req.date}</p>
                                             </div>
                                         </div>
-                                        <span style={{
-                                            fontSize: 'clamp(7px, 1.1vw, 9px)',
-                                            fontWeight: 900,
-                                            textTransform: 'uppercase',
-                                            letterSpacing: '0.15em',
-                                            padding: '6px 12px',
-                                            borderRadius: '9999px',
-                                            backgroundColor: '#dcfce7',
-                                            color: '#15803d',
-                                            flexShrink: 0,
-                                        }}>
+                                        <span className="text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-green-100 text-green-800 flex-shrink-0">
                                             Approved
                                         </span>
                                     </div>
@@ -469,21 +289,21 @@ const ProfilePage = () => {
 
                     {activeTab === 'reviews' && (
                         myReviews.length > 0 ? myReviews.map(rev => (
-                            <div key={rev.id} style={{ backgroundColor: '#fff', border: '1px solid #f3f4f6', padding: 'clamp(16px, 3vw, 32px)', borderRadius: '32px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <div style={{ width: 32, height: 32, borderRadius: '9999px', backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <span style={{ color: '#fff', fontSize: '10px', fontWeight: 800 }}>{rev.user.charAt(0)}</span>
+                            <div key={rev.id} className="bg-white border border-gray-100 rounded-3xl p-4 sm:p-8">
+                                <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center">
+                                            <span className="text-white text-xs font-black">{rev.user.charAt(0)}</span>
                                         </div>
-                                        <span style={{ fontSize: 'clamp(11px, 2vw, 13px)', fontWeight: 800, color: '#000' }}>{rev.user}</span>
+                                        <span className="text-sm sm:text-base font-black text-black">{rev.user}</span>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '2px' }}>
+                                    <div className="flex gap-0.5">
                                         {[...Array(5)].map((_, i) => (
-                                            <span key={i} style={{ fontSize: '12px', color: i < rev.rating ? '#000' : '#f3f4f6' }}>★</span>
+                                            <span key={i} className={`text-sm ${i < rev.rating ? 'text-black' : 'text-gray-100'}`}>★</span>
                                         ))}
                                     </div>
                                 </div>
-                                <p style={{ fontSize: 'clamp(12px, 2vw, 14px)', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>"{rev.comment}"</p>
+                                <p className="text-sm sm:text-base text-gray-600 leading-relaxed m-0">"{rev.comment}"</p>
                             </div>
                         )) : <EmptyState message="No reviews yet" />
                     )}
@@ -491,85 +311,76 @@ const ProfilePage = () => {
             </main>
 
             {showEditPanel && (show4fields || showPasswordFields) && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(12px, 3vw, 32px)' }}>
-                    <div onClick={closePanel} style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(6px)' }} />
+                <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-8">
+                    <div onClick={closePanel} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
-                    <div style={{
-                        position: 'relative',
-                        backgroundColor: '#fff',
-                        width: '100%',
-                        maxWidth: '720px',
-                        borderRadius: 'clamp(20px, 4vw, 40px)',
-                        boxShadow: '0 40px 80px rgba(0,0,0,0.2)',
-                        padding: 'clamp(20px, 4vw, 48px)',
-                        zIndex: 10,
-                        maxHeight: '90vh',
-                        overflowY: 'auto',
-                        scrollbarWidth: 'none',
-                    }}>
+                    <div className="relative bg-white rounded-xl sm:rounded-3xl shadow-2xl p-5 sm:p-12 z-10 max-w-2xl w-full max-h-90vh overflow-y-auto">
                         <button
                             onClick={closePanel}
-                            style={{ position: 'absolute', top: 'clamp(14px, 2.5vw, 24px)', right: 'clamp(14px, 2.5vw, 24px)', width: 36, height: 36, borderRadius: '9999px', backgroundColor: '#f9fafb', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', zIndex: 20 }}
+                            className="absolute top-3 sm:top-6 right-3 sm:right-6 w-9 h-9 rounded-full bg-gray-100 border-0 cursor-pointer flex items-center justify-center text-gray-400 z-20 hover:bg-gray-200"
                         >
-                            <svg style={{ width: 18, height: 18 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                            <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
 
-                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'clamp(20px, 4vw, 40px)' }}>
-                            <div style={{ position: 'relative' }}>
-                                <div style={{ width: 'clamp(80px, 12vw, 128px)', height: 'clamp(80px, 12vw, 128px)', borderRadius: '9999px', border: '6px solid #fff', boxShadow: '0 10px 30px rgba(0,0,0,0.12)', overflow: 'hidden', backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div className="flex justify-center mb-10">
+                            <div className="relative">
+                                <div className="overflow-hidden rounded-full bg-black border-6 border-white shadow-lg flex items-center justify-center" style={{
+                                    width: 'clamp(80px, 12vw, 128px)',
+                                    height: 'clamp(80px, 12vw, 128px)',
+                                }}>
                                     {userProfile.image
-                                        ? <img src={userProfile.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="profile" />
-                                        : <span style={{ color: '#fff', fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 800 }}>{userProfile.name.charAt(0)}</span>
+                                        ? <img src={userProfile.image} className="w-full h-full object-cover" alt="profile" />
+                                        : <span className="text-white font-black" style={{ fontSize: 'clamp(24px, 5vw, 36px)' }}>{userProfile.name.charAt(0)}</span>
                                     }
                                 </div>
-                                <button style={{ position: 'absolute', bottom: 2, right: 2, backgroundColor: '#fff', width: 30, height: 30, borderRadius: '9999px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #f3f4f6', cursor: 'pointer' }}>
-                                    <svg style={{ width: 13, height: 13 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                <button className="absolute bottom-0.5 right-0.5 bg-white w-7.5 h-7.5 rounded-full shadow-md flex items-center justify-center border border-gray-100 cursor-pointer hover:bg-gray-50">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                 </button>
                             </div>
                         </div>
 
                         {showPasswordFields && (
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'clamp(10px, 2vw, 20px)', marginBottom: 'clamp(16px, 3vw, 40px)' }}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mb-5 sm:mb-10">
                                 {[{ label: 'New Password', key: 'new' }, { label: 'Confirm Password', key: 'confirm' }].map(f => (
-                                    <div key={f.key} style={{ backgroundColor: '#f8fafc', padding: 'clamp(16px, 2.5vw, 28px)', borderRadius: '24px' }}>
-                                        <h5 style={{ fontSize: '10px', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '10px' }}>{f.label}</h5>
+                                    <div key={f.key} className="bg-gray-100 p-4 sm:p-7 rounded-2xl">
+                                        <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2.5">{ f.label}</h5>
                                         <input
                                             type="password"
                                             placeholder="••••••••"
-                                            style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.5)', border: 'none', borderRadius: '14px', padding: '10px 14px', fontSize: '14px', fontWeight: 800, outline: 'none', boxSizing: 'border-box' }}
+                                            className="w-full bg-white/50 border-0 rounded-xl p-2.5 sm:p-3.5 font-black outline-none box-border"
                                             value={passwordData[f.key]}
                                             onChange={e => setPasswordData({ ...passwordData, [f.key]: e.target.value })}
                                         />
                                     </div>
                                 ))}
                                 {passwordError && (
-                                    <div style={{ gridColumn: '1 / -1', padding: '12px 20px', backgroundColor: '#fef2f2', borderRadius: '16px', border: '1px solid #fee2e2' }}>
-                                        <p style={{ color: '#dc2626', fontSize: '11px', fontWeight: 700, margin: 0 }}>{passwordError}</p>
+                                    <div className="col-span-full px-5 py-3 bg-red-50 rounded-xl border border-red-200">
+                                        <p className="text-red-600 text-xs font-bold m-0">{passwordError}</p>
                                     </div>
                                 )}
                             </div>
                         )}
 
                         {show4fields && (
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 'clamp(10px, 2vw, 20px)', marginBottom: 'clamp(16px, 3vw, 40px)' }}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mb-5 sm:mb-10">
                                 <InfoCard label="Roll Number" value={userProfile.rollNo} />
 
-                                <div style={{ backgroundColor: '#f8fafc', padding: 'clamp(16px, 2.5vw, 28px)', borderRadius: '24px', position: 'relative' }}>
-                                    <h5 style={{ fontSize: '10px', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '10px' }}>Full Name</h5>
+                                <div className="bg-gray-100 p-4 sm:p-7 rounded-2xl relative">
+                                    <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2.5">Full Name</h5>
                                     {isEditingName
-                                        ? <input type="text" value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.5)', border: 'none', borderRadius: '14px', padding: '10px 14px', fontSize: '14px', fontWeight: 800, outline: 'none', boxSizing: 'border-box' }} autoFocus />
-                                        : <p style={{ fontSize: 'clamp(14px, 2.5vw, 17px)', fontWeight: 800, margin: 0 }}>{userProfile.name}</p>
+                                        ? <input type="text" value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} className="w-full bg-white/50 border-0 rounded-xl p-2.5 sm:p-3.5 font-black outline-none box-border" autoFocus />
+                                        : <p className="font-black m-0" style={{ fontSize: 'clamp(14px, 2.5vw, 17px)' }}>{userProfile.name}</p>
                                     }
                                     <EditButton active={isEditingName} onClick={() => setIsEditingName(!isEditingName)} />
                                 </div>
 
-                                <div style={{ backgroundColor: '#f8fafc', padding: 'clamp(16px, 2.5vw, 28px)', borderRadius: '24px', position: 'relative' }}>
-                                    <h5 style={{ fontSize: '10px', fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '10px' }}>Campus</h5>
+                                <div className="bg-gray-100 p-4 sm:p-7 rounded-2xl relative">
+                                    <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2.5">Campus</h5>
                                     {isEditingCampus
-                                        ? <select value={editData.campus} onChange={e => setEditData({ ...editData, campus: e.target.value })} style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.5)', border: 'none', borderRadius: '14px', padding: '10px 14px', fontSize: '14px', fontWeight: 900, outline: 'none', boxSizing: 'border-box' }} autoFocus>
+                                        ? <select value={editData.campus} onChange={e => setEditData({ ...editData, campus: e.target.value })} className="w-full bg-white/50 border-0 rounded-xl p-2.5 sm:p-3.5 font-black outline-none box-border" autoFocus>
                                             {getCampuses().map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                                         </select>
-                                        : <p style={{ fontSize: 'clamp(14px, 2.5vw, 17px)', fontWeight: 900, margin: 0 }}>{getCampuses().find(c => c.id === userProfile.campus)?.name || userProfile.campus}</p>
+                                        : <p className="font-black m-0" style={{ fontSize: 'clamp(14px, 2.5vw, 17px)' }}>{getCampuses().find(c => c.id === userProfile.campus)?.name || userProfile.campus}</p>
                                     }
                                     <EditButton active={isEditingCampus} onClick={() => setIsEditingCampus(!isEditingCampus)} />
                                 </div>
@@ -578,7 +389,7 @@ const ProfilePage = () => {
                             </div>
                         )}
 
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                        <div className="flex flex-col items-center gap-3">
                             <button
                                 onClick={() => {
                                     if (showPasswordFields || isEditingName || isEditingCampus) {
@@ -588,20 +399,9 @@ const ProfilePage = () => {
                                         setShow4Fields(false);
                                     }
                                 }}
+                                className="bg-black text-white rounded-full font-black uppercase tracking-widest text-xs sm:text-sm w-full max-w-80 shadow-lg hover:bg-gray-900 transition"
                                 style={{
-                                    backgroundColor: '#000',
-                                    color: '#fff',
-                                    padding: 'clamp(14px, 2.5vw, 20px) clamp(24px, 5vw, 40px)',
-                                    borderRadius: '9999px',
-                                    fontSize: 'clamp(11px, 1.8vw, 13px)',
-                                    fontWeight: 900,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.15em',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    width: '100%',
-                                    maxWidth: '320px',
-                                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                                    padding: 'clamp(14px, 2.5vw, 20px)',
                                 }}
                             >
                                 {(showPasswordFields || isEditingName || isEditingCampus) ? 'Save Changes' : 'Change Password'}
@@ -609,19 +409,9 @@ const ProfilePage = () => {
                             {showPasswordFields && (
                                 <button
                                     onClick={() => { setShowPasswordFields(false); setShow4Fields(true); setPasswordData({ new: '', confirm: '' }); }}
+                                    className="bg-gray-100 text-black rounded-full font-black uppercase tracking-widest text-xs sm:text-sm w-full max-w-80 hover:bg-gray-200 transition"
                                     style={{
-                                        backgroundColor: '#f3f4f6',
-                                        color: '#000',
-                                        padding: 'clamp(14px, 2.5vw, 20px) clamp(24px, 5vw, 40px)',
-                                        borderRadius: '9999px',
-                                        fontSize: 'clamp(11px, 1.8vw, 13px)',
-                                        fontWeight: 900,
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.15em',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        width: '100%',
-                                        maxWidth: '320px',
+                                        padding: 'clamp(14px, 2.5vw, 20px)',
                                     }}
                                 >
                                     Cancel
@@ -637,26 +427,26 @@ const ProfilePage = () => {
 };
 
 const InfoCard = ({ label, value }) => (
-    <div style={{ backgroundColor: '#f8fafc', padding: 'clamp(16px, 2.5vw, 28px)', borderRadius: '24px' }}>
-        <h5 style={{ fontSize: '10px', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '10px' }}>{label}</h5>
-        <p style={{ fontSize: 'clamp(13px, 2.5vw, 17px)', fontWeight: 800, margin: 0, wordBreak: 'break-all' }}>{value}</p>
+    <div className="bg-gray-100 p-4 sm:p-7 rounded-2xl">
+        <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2.5">{label}</h5>
+        <p className="font-black m-0 break-all" style={{ fontSize: 'clamp(13px, 2.5vw, 17px)' }}>{value}</p>
     </div>
 );
 
 const EditButton = ({ active, onClick }) => (
     <button
         onClick={onClick}
-        style={{ position: 'absolute', top: 'clamp(14px, 2vw, 24px)', right: 'clamp(14px, 2vw, 24px)', width: 32, height: 32, borderRadius: '9999px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        className="absolute top-3 sm:top-6 right-3 sm:right-6 w-8 h-8 rounded-full bg-transparent border-0 cursor-pointer flex items-center justify-center"
     >
-        <svg style={{ width: 18, height: 18, color: active ? '#000' : 'rgba(0,0,0,0.25)' }} fill="currentColor" viewBox="0 0 20 20">
+        <svg className="w-4.5 h-4.5" style={{ color: active ? '#000' : 'rgba(0,0,0,0.25)' }} fill="currentColor" viewBox="0 0 20 20">
             <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
         </svg>
     </button>
 );
 
 const EmptyState = ({ message }) => (
-    <div style={{ textAlign: 'center', padding: 'clamp(40px, 8vw, 80px) 20px', opacity: 0.2 }}>
-        <h3 style={{ fontSize: 'clamp(14px, 3vw, 20px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em' }}>{message}</h3>
+    <div className="text-center py-20 sm:py-40 px-5 opacity-20">
+        <h3 className="font-black uppercase tracking-widest" style={{ fontSize: 'clamp(14px, 3vw, 20px)' }}>{message}</h3>
     </div>
 );
 

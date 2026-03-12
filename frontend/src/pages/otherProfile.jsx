@@ -6,7 +6,6 @@ const OtherProfilePage = () => {
     const { userId } = useParams();
     const navigate = useNavigate();
 
-    //  profile from Redux store
     const otherProfiles = useSelector(state => state.user.otherProfiles);
     const allUsers = useSelector(state => state.auth.users);
     const allReviews = useSelector(state => state.reviews.reviews);
@@ -43,7 +42,6 @@ const OtherProfilePage = () => {
         };
     }
 
-    // reviews for this user from Redux store
     const userReviews = allReviews
         .filter(r => r.targetEmail === userData.email)
         .map((r, idx) => ({

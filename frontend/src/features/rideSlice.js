@@ -82,7 +82,6 @@ const rideSlice = createSlice({
             if (role === 'rider') state.needsReviewBy.riderNeedsReview = value;
             if (role === 'requester') state.needsReviewBy.requesterNeedsReview = value;
             
-            // If both reviews are done, we can clear the emails too, but better keep them until both are false
             if (!state.needsReviewBy.riderNeedsReview && !state.needsReviewBy.requesterNeedsReview) {
                 state.needsReviewBy.riderEmail = null;
                 state.needsReviewBy.requesterEmail = null;
