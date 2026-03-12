@@ -11,13 +11,29 @@ export const validateEmail = (email) => {
     return regex.test(email);
 };
 
-export const encryptRollno = (rollno) => {
-    return btoa(rollno)
-}
+export const validatePassword = (pass) => {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,})/;
+    return regex.test(pass);
+};
 
-export const decryptRollno = (rollno) => {
-    return atob(rollno)
-}
+export const validatePhone = (phone) => {
+    const digits = phone.replace(/\D/g, "");
+    return /^03/.test(phone) && digits.length === 11;
+};
+
+export const validateVehicleNumber = (vNum) => {
+    const regex = /^[A-Z]{3,}-\d{4}$/i;
+    return regex.test(vNum);
+};
+
+export const convertTo12Hour = (time24) => {
+        if (!time24) return '';
+        const [hours, minutes] = time24.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour % 12 || 12;
+        return `${hour12}:${minutes} ${ampm}`;
+};
 
 export const getCampuses = () => {
     return [

@@ -8,13 +8,23 @@ import RideDetails from '../components/rideDetails';
 import Notifications from '../components/notifications';
 import ProfileMenu from '../components/profileMenu';
 import RequestRide from '../components/requestRide';
+import PostRide from '../components/postRide';
 import Footer from '../components/footer';
-import { addRide, clearOngoingRide, setNeedsReview, setFilters, setActiveTab as setRideActiveTab, addReviewToRide } from '../features/rideSlice';
+import {
+    addRide,
+    setFilters,
+    setActiveTab,
+    clearOngoingRide,
+    setNeedsReview,
+    addReviewToRide,
+    updateRiderRatings
+} from '../features/rideSlice';
 import { addRequest } from '../features/requestSlice';
 import { addReview } from '../features/reviewSlice';
-import { getCampuses } from '../utils/method';
+import { getCampuses, validatePhone, validateVehicleNumber } from '../utils/method';
 import { logoutAuth } from '../features/authSlice';
-import { logoutUser } from '../features/userSlice';
+import { logoutUser, refreshUserStats } from '../features/userSlice';
+import toast from 'react-hot-toast';
 
 const Feed = () => {
     const dispatch = useDispatch();
@@ -23,9 +33,10 @@ const Feed = () => {
     // Redux states
     const rides = useSelector(state => state.rides.rides);
     const ongoingRide = useSelector(state => state.rides.ongoingRide);
-    const needsReview = useSelector(state => state.rides.needsReview);
+    const needsReviewBy = useSelector(state => state.rides.needsReviewBy);
     const filters = useSelector(state => state.rides.filters);
     const activeTab = useSelector(state => state.rides.activeTab);
+    const reviews = useSelector(state => state.reviews.reviews);
     const userProfile = useSelector(state => state.user.profile);
     const allNotifications = useSelector(state => state.notifications.notifications);
     const notifications = allNotifications.filter(n => n.targetEmail === userProfile.email || n.targetEmail === 'all');
@@ -35,6 +46,7 @@ const Feed = () => {
     const [showNotifications, setShowNotifications] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [showMobileMenu, setShowMobileMenu] = useState(false);
+    const [postErrors, setPostErrors] = useState({});
 
     const {
         showReviewModal,
@@ -52,25 +64,47 @@ const Feed = () => {
         postForm,
         handlePostFormChange,
         resetPostForm,
-    } = usePostRide();
+    } = usePostRide(userProfile.contactNo);
 
     const handleSubmitReview = (e) => {
         e.preventDefault();
-        if (ongoingRide) {
-            const targetEmail = userProfile.email === ongoingRide.riderEmail ? ongoingRide.requesterEmail : ongoingRide.riderEmail;
+        const riderEmail = ongoingRide ? ongoingRide.riderEmail : needsReviewBy.riderEmail;
+        const requesterEmail = ongoingRide ? ongoingRide.requesterEmail : needsReviewBy.requesterEmail;
+        const rideId = ongoingRide ? ongoingRide.rideId : needsReviewBy.rideId;
+
+        if (riderEmail && requesterEmail) {
+            const role = userProfile.email === riderEmail ? 'rider' : 'requester';
+            const targetEmail = role === 'rider' ? requesterEmail : riderEmail;
+            
             dispatch(addReview({
-                rideId: ongoingRide.rideId,
+                rideId: rideId,
                 targetEmail: targetEmail,
                 user: userProfile.name,
                 rating: reviewRating,
                 comment: reviewText,
             }));
+
             dispatch(addReviewToRide({
-                rideId: ongoingRide.rideId,
+                rideId: rideId,
                 review: { user: userProfile.name, rating: reviewRating, comment: reviewText }
             }));
+
+            const newReview = { targetEmail, rating: reviewRating };
+            const allTargetReviews = [...reviews.filter(r => r.targetEmail === targetEmail), newReview];
+            const newAvgRating = Number((allTargetReviews.reduce((acc, curr) => acc + curr.rating, 0) / allTargetReviews.length).toFixed(1));
+
+            dispatch(refreshUserStats({ 
+                email: targetEmail, 
+                reviews: [...reviews, newReview] 
+            }));
+
+            dispatch(updateRiderRatings({
+                email: targetEmail,
+                rating: newAvgRating
+            }));
+
+            dispatch(setNeedsReview({ role, value: false }));
         }
-        dispatch(setNeedsReview(false));
         closeReviewModal();
     };
 
@@ -93,11 +127,21 @@ const Feed = () => {
         ongoingRide.requesterEmail === userProfile.email
     );
 
+    const userRole = (ongoingRide && userProfile.email === ongoingRide.riderEmail) || 
+                    (!ongoingRide && userProfile.email === needsReviewBy.riderEmail) ? 'rider' : 
+                    ((ongoingRide && userProfile.email === ongoingRide.requesterEmail) || 
+                    (!ongoingRide && userProfile.email === needsReviewBy.requesterEmail) ? 'requester' : null);
+
+    const userNeedsReview = (userRole === 'rider' && needsReviewBy.riderNeedsReview) || 
+                           (userRole === 'requester' && needsReviewBy.requesterNeedsReview);
+
     const handleCompleteSimulation = () => {
         dispatch(clearOngoingRide());
     };
 
     const filteredRides = rides.filter(ride => {
+        if (ride.status === 'Done') return false;
+        
         const term = filters.searchTerm.toLowerCase();
         const matchesSearch = !term ||
             ride.title.toLowerCase().includes(term) ||
@@ -112,6 +156,29 @@ const Feed = () => {
 
     const handlePostRide = (e) => {
         e.preventDefault();
+
+        const errors = {};
+        if (!validatePhone(postForm.contactNumber)) {
+            errors.contactNumber = "Contact number must start with 03 and be 11 digits";
+        }
+
+        if (!validateVehicleNumber(postForm.vehicleNumber)) {
+            errors.vehicleNumber = "Vehicle number must be like LEC-1234 (3+ letters - 4 digits)";
+        }
+
+        const seatCount = parseInt(postForm.seats);
+        if (isNaN(seatCount) || seatCount <= 0) {
+            errors.seats = "Please enter a valid number of seats (at least 1)";
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setPostErrors(errors);
+            toast.error("Please fix the errors in the form");
+            return;
+        }
+
+        setPostErrors({});
+
         dispatch(addRide({
             title: postForm.title,
             description: postForm.description,
@@ -130,6 +197,7 @@ const Feed = () => {
         }));
         setShowPostModal(false);
         resetPostForm();
+        toast.success("Ride posted successfully!");
     };
 
     return (
@@ -141,7 +209,7 @@ const Feed = () => {
                     <div className="flex items-center justify-between gap-6 lg:gap-8 sticky top-0 py-4 bg-white z-[60] -mt-4">
                         {/* Title + Desktop Search */}
                         <div className="flex items-center lg:justify-start lg:flex-1 gap-6">
-                            <h1 className="text-2xl lg:text-3xl font-black tracking-tighter uppercase whitespace-nowrap leading-none">
+                            <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight uppercase whitespace-nowrap leading-none">
                                 Feed
                             </h1>
 
@@ -154,7 +222,7 @@ const Feed = () => {
                                         placeholder="Search for rides, doston, or places..."
                                         value={filters.searchTerm}
                                         onChange={(e) => dispatch(setFilters({ searchTerm: e.target.value }))}
-                                        className="w-full bg-gray-50 border-none rounded-2xl py-3.5 pl-12 pr-6 text-sm font-bold focus:ring-2 focus:ring-black/5 transition-all outline-none"
+                                        className="w-full bg-gray-50 border-none rounded-2xl py-3.5 pl-12 pr-6 text-sm font-semibold focus:ring-2 focus:ring-black/5 transition-all outline-none placeholder:text-gray-400"
                                     />
                                     <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300 group-focus-within:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                 </div>
@@ -178,7 +246,7 @@ const Feed = () => {
                         <div className="hidden lg:flex items-center gap-4">
                             <button
                                 onClick={() => setShowPostModal(true)}
-                                className="bg-black text-white px-8 py-3.5 rounded-full text-[11px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-black/10"
+                                className="bg-black text-white px-8 py-3.5 rounded-full text-[11px] font-bold uppercase tracking-[0.1em] transition-all hover:bg-gray-800 shadow-xl shadow-black/10"
                             >
                                 Post a Ride
                             </button>
@@ -224,7 +292,7 @@ const Feed = () => {
                             {['All Rides', 'Requests'].map(tab => (
                                 <button
                                     key={tab}
-                                    onClick={() => dispatch(setRideActiveTab(tab))}
+                                    onClick={() => dispatch(setActiveTab(tab))}
                                     className={`px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab ? 'bg-white shadow-sm text-black' : 'text-gray-400 hover:text-gray-600'}`}
                                 >
                                     {tab}
@@ -236,7 +304,7 @@ const Feed = () => {
                         <div className="lg:hidden relative w-full">
                             <select
                                 value={activeTab}
-                                onChange={(e) => dispatch(setRideActiveTab(e.target.value))}
+                                onChange={(e) => dispatch(setActiveTab(e.target.value))}
                                 className="w-full bg-gray-50 border-none pl-12 pr-4 py-4 rounded-xl text-sm font-bold tracking-tight outline-none focus:ring-1 focus:ring-black/5 transition-colors appearance-none"
                             >
                                 {['All Rides', 'Requests'].map(tab => (
@@ -352,7 +420,9 @@ const Feed = () => {
                 </div>
             )}
 
-            {showNotifications && <Notifications notifications={notifications} onClose={() => setShowNotifications(false)} />}
+            <div className="lg:hidden">
+                {showNotifications && <Notifications notifications={notifications} onClose={() => setShowNotifications(false)} />}
+            </div>
 
             {/* Write Review */}
             {showReviewModal && (
@@ -420,7 +490,7 @@ const Feed = () => {
             )}
 
             {/* Main Content */}
-            <main className="px-8 lg:px-20 py-12 max-w-7xl mx-auto">
+            <main className="px-8 lg:px-20 py-0 max-w-7xl mx-auto">
 
                 {/* Mobile Search Bar - visible on mobile only */}
                 {activeTab !== 'Requests' && (
@@ -440,7 +510,7 @@ const Feed = () => {
                     </div>
                 )}
 
-                {activeTab !== 'Requests' && (isUserInOngoingRide || needsReview) && (
+                {activeTab !== 'Requests' && (isUserInOngoingRide || userNeedsReview) && (
                     <div className="mb-10 space-y-4">
                         {isUserInOngoingRide && (
                             <div className="bg-black text-white p-6 rounded-[2rem] flex flex-col sm:flex-row justify-between items-center gap-6 shadow-2xl shadow-black/20">
@@ -449,8 +519,8 @@ const Feed = () => {
                                         <div className="w-3 h-3 bg-white rounded-full"></div>
                                     </div>
                                     <div>
-                                        <h4 className="text-[12px] font-black uppercase tracking-[0.2em] opacity-40 mb-1">Ongoing Ride</h4>
-                                        <p className="text-xl font-black italic tracking-tighter uppercase whitespace-nowrap">Ride with {ongoingRide.rider}</p>
+                                        <h4 className="text-[11px] font-bold uppercase tracking-widest opacity-40 mb-1">Ongoing Ride</h4>
+                                        <p className="text-xl font-bold tracking-tight uppercase whitespace-nowrap">Ride with {ongoingRide.rider}</p>
                                     </div>
                                 </div>
                                 <button
@@ -462,7 +532,7 @@ const Feed = () => {
                             </div>
                         )}
 
-                        {needsReview && (
+                        {userNeedsReview && (
                             <div className="bg-gray-50 border-2 border-dashed border-gray-200 p-6 rounded-[2rem] flex flex-col sm:flex-row justify-between items-center gap-6">
                                 <div className="flex items-center gap-6">
                                     <div className="w-12 h-12 rounded-full bg-black flex items-center justify-center">
@@ -478,7 +548,7 @@ const Feed = () => {
                                         onClick={openReviewModal}
                                         className="bg-black text-white px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all"
                                     >Write Review</button>
-                                    <button onClick={() => dispatch(setNeedsReview(false))} className="text-gray-400 font-bold text-xs hover:text-black">Skip</button>
+                                    <button onClick={() => dispatch(setNeedsReview({ role: userRole, value: false }))} className="text-gray-400 font-bold text-xs hover:text-black">Skip</button>
                                 </div>
                             </div>
                         )}
@@ -496,6 +566,7 @@ const Feed = () => {
                                     key={`${ride.id}-${index}`}
                                     ride={ride}
                                     onViewDetails={(r) => setSelectedRide(r)}
+                                    isOwnRide={ride.riderEmail === userProfile.email}
                                 />
                             ))}
                         </div>
@@ -520,126 +591,17 @@ const Feed = () => {
                 />
             )}
 
-            {showPostModal && (
-                <div className="fixed inset-0 z-[100] bg-white flex flex-col">
-                    {/* Header */}
-                    <div className="px-6 py-6 border-b border-gray-50 flex items-center gap-6">
-                        <button onClick={() => setShowPostModal(false)} className="text-black hover:bg-gray-50 p-1 rounded-lg transition-all">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-                        </button>
-                        <h2 className="text-2xl font-black tracking-tight">Create New Post</h2>
-                    </div>
+            {/* Post Ride Modal */}
+            <PostRide 
+                showPostModal={showPostModal}
+                setShowPostModal={setShowPostModal}
+                postForm={postForm}
+                handlePostFormChange={handlePostFormChange}
+                handlePostRide={handlePostRide}
+                postErrors={postErrors}
+                setPostErrors={setPostErrors}
+            />
 
-                    <div className="flex-1 overflow-y-auto px-6 py-8 bg-gray-50/20">
-                        <div className="max-w-6xl mx-auto">
-                            <form onSubmit={handlePostRide} className="space-y-8">
-                                <div className="flex flex-col lg:flex-row gap-8 items-start">
-
-                                    {/* Left: Profile + Form */}
-                                    <div className="w-full lg:w-2/3 space-y-8">
-                                        {/* Form Fields Section */}
-                                        <div className="space-y-4 bg-white border border-gray-100 p-8 rounded-[2.5rem] shadow-sm">
-                                            <div>
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Title</label>
-                                                    <span className="text-[10px] text-gray-300 font-bold">{postForm.title.length}/20</span>
-                                                </div>
-                                                <input type="text" placeholder="e.g. Ride to CS block" value={postForm.title} onChange={(e) => handlePostFormChange('title', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none" required />
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-gray-400 uppercase mb-2 tracking-widest">Category (Vehicle)</label>
-                                                    <select value={postForm.vehicleType} onChange={(e) => handlePostFormChange('vehicleType', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none appearance-none">
-                                                        <option value="">Select a category</option>
-                                                        <option>CAR</option>
-                                                        <option>BIKE</option>
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-gray-400 uppercase mb-2 tracking-widest">Campus</label>
-                                                    <select value={postForm.campus} onChange={(e) => handlePostFormChange('campus', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none appearance-none">
-                                                        <option value="">Select your campus</option>
-                                                        <option>Lahore</option>
-                                                        <option>Islamabad</option>
-                                                        <option>Karachi</option>
-                                                        <option>Peshawar</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-gray-400 uppercase mb-2 tracking-widest">Vehicle Number</label>
-                                                    <input type="text" placeholder="e.g. LEC-1234" value={postForm.vehicleNumber} onChange={(e) => handlePostFormChange('vehicleNumber', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none" required />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-gray-400 uppercase mb-2 tracking-widest">Available Seats</label>
-                                                    <input type="number" min="1" max="10" placeholder="e.g. 3" value={postForm.seats} onChange={(e) => handlePostFormChange('seats', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none" required />
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-gray-400 uppercase mb-2 tracking-widest">Departure Time</label>
-                                                    <input type="time" value={postForm.departureTime} onChange={(e) => handlePostFormChange('departureTime', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none" required />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-[11px] font-black text-gray-400 uppercase mb-2 tracking-widest">Contact Number</label>
-                                                    <input type="text" placeholder="e.g. 03001234567" value={postForm.contactNumber} onChange={(e) => handlePostFormChange('contactNumber', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none" required />
-                                                </div>
-                                            </div>
-
-
-                                            <div>
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Location</label>
-                                                    <span className="text-[10px] text-gray-300 font-bold">{postForm.location.length}/20</span>
-                                                </div>
-                                                <input type="text" placeholder="Where is the pick-up/drop-off point?" value={postForm.location} onChange={(e) => handlePostFormChange('location', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none" required />
-                                            </div>
-
-                                            <div>
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Destination</label>
-                                                    <span className="text-[10px] text-gray-300 font-bold">{postForm.destination.length}/20</span>
-                                                </div>
-                                                <input type="text" placeholder="Where is the pick-up/drop-off point?" value={postForm.destination} onChange={(e) => handlePostFormChange('destination', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none" required />
-                                            </div>
-
-                                            <div>
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Description</label>
-                                                    <span className="text-[10px] text-gray-300 font-bold">{postForm.description.length}/200</span>
-                                                </div>
-                                                <textarea rows="4" placeholder="Describe your ride rules, timing, etc..." value={postForm.description} onChange={(e) => handlePostFormChange('description', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none resize-none" required></textarea>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Right: Image Upload */}
-                                    <div className="w-full lg:w-1/3 bg-white border border-gray-100 p-8 rounded-[2.5rem] shadow-sm sticky top-0">
-                                        <label className="block text-[11px] font-black text-gray-400 uppercase mb-4 tracking-widest">Item Image (JPEG, PNG, or WEBP, max 1MB)</label>
-                                        <div className="border-2 border-dashed border-gray-100 rounded-[2rem] p-10 flex flex-col items-center justify-center bg-gray-50/30 group hover:border-black/10 transition-all cursor-pointer h-full min-h-[400px]">
-                                            <div className="w-20 h-20 bg-white rounded-[1.5rem] shadow-sm border border-gray-50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                                                <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                            </div>
-                                            <p className="text-sm font-black text-gray-700 mb-2 text-center">Drag and drop an image or click to browse</p>
-                                            <p className="text-[10px] font-bold text-gray-300 uppercase letter tracking-widest">MAX 1MB</p>
-
-                                        </div>
-                                        <div className="max-w-2xl mx-auto pt-6">
-                                            <button type="submit" className="w-full bg-black text-white py-5 rounded-[2rem] text-[13px] font-black uppercase tracking-[0.3em] hover:shadow-2xl hover:shadow-black/20 active:scale-95 transition-all">
-                                                Publish Post
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            )}
             <Footer />
         </div>
     );

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import toast from "react-hot-toast";
+import { validatePassword } from "../utils/method";
+import { changePassword, clearResetEmail } from "../features/authSlice";
 
 function ResetPassword() {
     const [password, setPassword] = useState("");
@@ -11,11 +14,8 @@ function ResetPassword() {
     const [isLoading, setIsLoading] = useState(false);
 
     const navigate = useNavigate();
-
-    const validatePassword = (pass) => {
-        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,})/;
-        return regex.test(pass);
-    };
+    const dispatch = useDispatch();
+    const resetEmail = useSelector(state => state.auth.resetEmail);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -33,8 +33,15 @@ function ResetPassword() {
         setIsLoading(true);
         setTimeout(() => {
             setIsLoading(false);
-            toast.success("Password reset successfully!");
-            navigate("/login");
+            if (resetEmail) {
+                dispatch(changePassword({ email: resetEmail, newPassword: password }));
+                dispatch(clearResetEmail());
+                toast.success("Password reset successfully!");
+                navigate("/login");
+            } else {
+                toast.error("Session expired. Please start over.");
+                navigate("/forgot-password");
+            }
         }, 1500);
     };
 

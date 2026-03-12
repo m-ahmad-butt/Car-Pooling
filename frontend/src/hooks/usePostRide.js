@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
-export const usePostRide = () => {
+export const usePostRide = (initialContactNo = '') => {
     const [showPostModal, setShowPostModal] = useState(false);
     const [postForm, setPostForm] = useState({
         title: '', vehicleType: '', campus: '', vehicleNumber: '',
-        seats: '', departureTime: '', contactNumber: '', location: '',
+        seats: '', departureTime: '', contactNumber: initialContactNo, location: '',
         destination: '', description: '',
     });
 
@@ -15,7 +15,7 @@ export const usePostRide = () => {
     const resetPostForm = () => {
         setPostForm({
             title: '', vehicleType: '', campus: '', vehicleNumber: '',
-            seats: '', departureTime: '', contactNumber: '', location: '',
+            seats: '', departureTime: '', contactNumber: initialContactNo, location: '',
             destination: '', description: '',
         });
     };

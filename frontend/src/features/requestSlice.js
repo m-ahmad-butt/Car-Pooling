@@ -1,49 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-let nextRequestId = 200;
+let nextRequestId = Number(localStorage.getItem('nextRequestId')) || 200;
 
 const initialState = {
-    requests: [
-        {
-            id: 101,
-            rideId: 1,
-            requesterName: "Ali Ahmed",
-            requesterEmail: "l233067@lhr.nu.edu.pk",
-            requesterAvatar: null,
-            requesterRating: 4.7,
-            ride: "Morning commute to Campus",
-            rideDate: "Today, 08:30 AM",
-            seats: 1,
-            note: "Hi! I live near Johar Town. Would love a seat!",
-            status: "pending",
-        },
-        {
-            id: 102,
-            rideId: 3,
-            requesterName: "Saim Arif",
-            requesterEmail: "l233071@lhr.nu.edu.pk",
-            requesterAvatar: null,
-            requesterRating: 4.8,
-            ride: "Weekly grocery run",
-            rideDate: "Tomorrow, 06:00 PM",
-            seats: 2,
-            note: "Need 2 seats for me and a friend. We won't take long!",
-            status: "pending",
-        },
-        {
-            id: 103,
-            rideId: 1,
-            requesterName: "Saim Arif",
-            requesterEmail: "l233071@lhr.nu.edu.pk",
-            requesterAvatar: null,
-            requesterRating: 4.8,
-            ride: "Morning commute to Campus",
-            rideDate: "Today, 08:30 AM",
-            seats: 1,
-            note: "I'll be at the gate on time, promise!",
-            status: "pending",
-        },
-    ],
+    requests: JSON.parse(localStorage.getItem('allRequests')) || [],
 };
 
 const requestSlice = createSlice({
@@ -57,12 +17,15 @@ const requestSlice = createSlice({
                 status: "pending",
             };
             state.requests.unshift(newRequest);
+            localStorage.setItem('allRequests', JSON.stringify(state.requests));
+            localStorage.setItem('nextRequestId', nextRequestId.toString());
         },
 
         approveRequest: (state, action) => {
             const request = state.requests.find(r => r.id === action.payload);
             if (request) {
                 request.status = "approved";
+                localStorage.setItem('allRequests', JSON.stringify(state.requests));
             }
         },
 
@@ -70,11 +33,13 @@ const requestSlice = createSlice({
             const request = state.requests.find(r => r.id === action.payload);
             if (request) {
                 request.status = "declined";
+                localStorage.setItem('allRequests', JSON.stringify(state.requests));
             }
         },
 
         removeRequest: (state, action) => {
             state.requests = state.requests.filter(r => r.id !== action.payload);
+            localStorage.setItem('allRequests', JSON.stringify(state.requests));
         },
     }
 });

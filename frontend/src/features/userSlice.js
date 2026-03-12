@@ -1,43 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const defaultProfile = {
-    name: "Ali Ahmed",
-    rollNo: "23L-3067",
-    campus: "Lahore",
-    email: "l233067@lhr.nu.edu.pk",
-    contactNo: "0300-1111111",
-    image: null,
-    stats: { rides: 1, comments: 0, rating: 5.0 },
-};
-
 const initialState = {
-    profile: JSON.parse(localStorage.getItem('userProfile')) || defaultProfile,
-    otherProfiles: {
-        "zain-tahir": {
-            name: "Zain Tahir",
-            rollNo: "23L-3078",
-            campus: "Lahore",
-            email: "l233078@lhr.nu.edu.pk",
-            image: null,
-            stats: { rides: 12, comments: 5, rating: 4.8 },
-        },
-        "saim-arif": {
-            name: "Saim Arif",
-            rollNo: "23L-3071",
-            campus: "Lahore",
-            email: "l233071@lhr.nu.edu.pk",
-            image: null,
-            stats: { rides: 8, comments: 3, rating: 4.8 },
-        },
-        "abd-ur-rehman": {
-            name: "Abd ur Rehman",
-            rollNo: "23L-3105",
-            campus: "Lahore",
-            email: "l233105@lhr.nu.edu.pk",
-            image: null,
-            stats: { rides: 3, comments: 0, rating: 4.5 },
-        },
+    profile: JSON.parse(localStorage.getItem('userProfile')) || {
+        name: null,
+        rollNo: null,
+        campus: null,
+        email: null,
+        contactNo: null,
+        image: null,
+        stats: { rides: 0, comments: 0, rating: 0 },
     },
+    otherProfiles: {},
 };
 
 const userSlice = createSlice({
@@ -46,18 +19,43 @@ const userSlice = createSlice({
     reducers: {
         updateProfile: (state, action) => {
             state.profile = { ...state.profile, ...action.payload };
+            localStorage.setItem('userProfile', JSON.stringify(state.profile));
         },
 
         updateProfileImage: (state, action) => {
             state.profile.image = action.payload;
+            localStorage.setItem('userProfile', JSON.stringify(state.profile));
         },
 
         updateProfileStats: (state, action) => {
             state.profile.stats = { ...state.profile.stats, ...action.payload };
+            localStorage.setItem('userProfile', JSON.stringify(state.profile));
         },
 
         incrementRideCount: (state) => {
             state.profile.stats.rides += 1;
+            localStorage.setItem('userProfile', JSON.stringify(state.profile));
+        },
+
+        refreshUserStats: (state, action) => {
+            const { email, reviews } = action.payload;
+            const relevantReviews = reviews.filter(r => r.targetEmail === email);
+            const avgRating = relevantReviews.length > 0 
+                ? Number((relevantReviews.reduce((acc, curr) => acc + curr.rating, 0) / relevantReviews.length).toFixed(1))
+                : 0;
+            const commentCount = relevantReviews.length;
+
+            if (state.profile.email === email) {
+                state.profile.stats.rating = avgRating;
+                state.profile.stats.comments = commentCount;
+                localStorage.setItem('userProfile', JSON.stringify(state.profile));
+            } else {
+                const profileKey = Object.keys(state.otherProfiles).find(key => state.otherProfiles[key].email === email);
+                if (profileKey) {
+                    state.otherProfiles[profileKey].stats.rating = avgRating;
+                    state.otherProfiles[profileKey].stats.comments = commentCount;
+                }
+            }
         },
 
         setProfileFromAuth: (state, action) => {
@@ -84,6 +82,7 @@ export const {
     updateProfileImage,
     updateProfileStats,
     incrementRideCount,
+    refreshUserStats,
     setProfileFromAuth,
     logoutUser,
 } = userSlice.actions;

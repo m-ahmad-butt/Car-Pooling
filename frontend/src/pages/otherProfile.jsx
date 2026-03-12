@@ -8,16 +8,40 @@ const OtherProfilePage = () => {
 
     //  profile from Redux store
     const otherProfiles = useSelector(state => state.user.otherProfiles);
+    const allUsers = useSelector(state => state.auth.users);
     const allReviews = useSelector(state => state.reviews.reviews);
 
-    const userData = otherProfiles[userId] || {
-        name: userId ? userId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : "Unknown User",
-        rollNo: "N/A",
-        campus: "N/A",
-        email: "",
-        image: null,
-        stats: { rides: 0, comments: 0, rating: 0 },
-    };
+    let userData = otherProfiles[userId];
+    
+    if (!userData && userId) {
+        const foundUser = allUsers.find(user => {
+            const userName = `${user.firstName} ${user.lastName}`.replace(/\s+/g, '-').toLowerCase();
+            return userName === userId;
+        });
+        
+        if (foundUser) {
+            userData = {
+                name: `${foundUser.firstName} ${foundUser.lastName}`,
+                rollNo: foundUser.rollNo,
+                campus: foundUser.campusId,
+                email: foundUser.email,
+                contactNo: foundUser.contactNo,
+                image: null,
+                stats: { rides: 0, comments: 0, rating: 0 },
+            };
+        }
+    }
+
+    if (!userData) {
+        userData = {
+            name: userId ? userId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : "Unknown User",
+            rollNo: "N/A",
+            campus: "N/A",
+            email: "",
+            image: null,
+            stats: { rides: 0, comments: 0, rating: 0 },
+        };
+    }
 
     // reviews for this user from Redux store
     const userReviews = allReviews
@@ -38,13 +62,13 @@ const OtherProfilePage = () => {
             <header className="px-8 lg:px-20 py-6 border-b border-gray-50 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-50">
                 <div className="flex items-center gap-3">
                     <img src="/logo.png" className="w-8 h-8 opacity-10" alt="" />
-                    <h1 className="text-xl font-black uppercase tracking-tighter italic">
+                    <h1 className="text-xl font-bold uppercase tracking-tight">
                         Profile
                     </h1>
                 </div>
                 <button
                     onClick={() => navigate('/feed')}
-                    className="bg-black text-white px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest active:scale-95"
+                    className="bg-black text-white px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all"
                 >
                     Back to Feed
                 </button>
@@ -58,24 +82,23 @@ const OtherProfilePage = () => {
                             {userData.image ? (
                                 <img src={userData.image} className="w-full h-full object-cover" />
                             ) : (
-                                <span className="text-white text-4xl font-black italic">{userData.name.charAt(0)}</span>
+                                <span className="text-white text-4xl font-extrabold">{userData.name.charAt(0)}</span>
                             )}
                         </div>
                         <div className="absolute inset-0 bg-black/10 rounded-full blur-2xl opacity-20 -z-0"></div>
                     </div>
 
-                    <div className="flex items-center gap-2 mb-1">
-                        <h2 className="text-2xl font-black tracking-tight">{userData.name}</h2>
+                    <div className="flex items-center gap-2 mb-6">
+                        <h2 className="text-2xl font-extrabold tracking-tight">{userData.name}</h2>
                     </div>
-                    <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-8 opacity-60">Roll No: {userData.rollNo}</p>
 
                     <div className="flex gap-4">
                         <div className="bg-gray-50/50 border border-gray-100 px-10 py-4 rounded-3xl text-center">
-                            <p className="text-2xl font-black text-black leading-none">{userData.stats.rides}</p>
+                            <p className="text-2xl font-extrabold text-black leading-none">{userData.stats.rides}</p>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mt-1">Rides</p>
                         </div>
                         <div className="bg-gray-50/50 border border-gray-100 px-10 py-4 rounded-3xl text-center">
-                            <p className="text-2xl font-black text-black leading-none">{avgRating}</p>
+                            <p className="text-2xl font-extrabold text-black leading-none">{avgRating}</p>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mt-1">Rating</p>
                         </div>
                     </div>
@@ -83,7 +106,7 @@ const OtherProfilePage = () => {
 
                 <div className="bg-gray-100/50 p-1.5 rounded-3xl flex items-center justify-center gap-2 mb-10 mx-auto w-fit">
                     <button
-                        className="px-8 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest bg-white shadow-xl shadow-black/5 text-black"
+                        className="px-8 py-3.5 rounded-2xl text-[11px] font-bold uppercase tracking-widest bg-white shadow-xl shadow-black/5 text-black"
                     >
                         <div className="flex items-center gap-3">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>
@@ -98,9 +121,9 @@ const OtherProfilePage = () => {
                             <div className="flex justify-between items-center mb-4">
                                 <div className="flex items-center gap-3">
                                     <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center overflow-hidden">
-                                        <span className="text-white text-[10px] font-black italic">{rev.user.charAt(0)}</span>
+                                        <span className="text-white text-[10px] font-bold">{rev.user.charAt(0)}</span>
                                     </div>
-                                    <span className="text-[13px] font-black text-black">{rev.user}</span>
+                                    <span className="text-[13px] font-bold text-black">{rev.user}</span>
                                 </div>
                                 <div className="flex gap-0.5">
                                     {[...Array(5)].map((_, i) => (

@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
 import Footer from '../components/footer';
-import { getCampuses } from '../utils/method';
+import { getCampuses, validatePassword } from '../utils/method';
 import { updateProfile } from '../features/userSlice';
 import { changePassword } from '../features/authSlice';
+import toast from 'react-hot-toast';
 
 const ProfilePage = () => {
     const navigate = useNavigate();
@@ -41,30 +42,52 @@ const ProfilePage = () => {
         rating: r.rating,
     }));
 
+    const completedOfferedRides = myRides.filter(r => r.status === "Done");
+    const completedTookRides = myRequestedRides.filter(r => r.status === "Approved");
+
     const avgRating = myReviews.length > 0
         ? (myReviews.reduce((sum, r) => sum + r.rating, 0) / myReviews.length).toFixed(1)
         : 0;
 
     const [editData, setEditData] = useState({ name: userProfile.name, campus: userProfile.campus });
     const [activeTab, setActiveTab] = useState('rides');
+    const [completedRidesFilter, setCompletedRidesFilter] = useState('offered');
     const [isEditingName, setIsEditingName] = useState(false);
     const [isEditingCampus, setIsEditingCampus] = useState(false);
     const [showPasswordFields, setShowPasswordFields] = useState(false);
     const [passwordData, setPasswordData] = useState({ new: '', confirm: '' });
+    const [passwordError, setPasswordError] = useState('');
 
     const handleSaveProfile = () => {
         if (isEditingName || isEditingCampus) {
             dispatch(updateProfile({ name: editData.name, campus: editData.campus }));
+            toast.success("Profile updated successfully");
         }
-        if (showPasswordFields && passwordData.new && passwordData.new === passwordData.confirm) {
-            dispatch(changePassword({ email: userProfile.email, newPassword: passwordData.new }));
+        
+        if (showPasswordFields) {
+            if (!passwordData.new && !passwordData.confirm) {
+                // Just closing without change
+            } else {
+                if (passwordData.new !== passwordData.confirm) {
+                    setPasswordError("Passwords do not match");
+                    return;
+                }
+                if (!validatePassword(passwordData.new)) {
+                    setPasswordError("Password must be 8+ chars with uppercase, lowercase & special symbol");
+                    return;
+                }
+                dispatch(changePassword({ email: userProfile.email, newPassword: passwordData.new }));
+                toast.success("Password changed successfully");
+            }
         }
+
         setIsEditingName(false);
         setIsEditingCampus(false);
         setShowPasswordFields(false);
         setShow4Fields(true);
         setShowEditPanel(false);
         setPasswordData({ new: '', confirm: '' });
+        setPasswordError('');
     };
 
     const closePanel = () => {
@@ -77,7 +100,7 @@ const ProfilePage = () => {
     };
 
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: '#fff', color: '#000', fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ minHeight: '100vh', backgroundColor: '#fff', color: '#000', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
 
             <header style={{
                 padding: 'clamp(12px, 3vw, 24px) clamp(16px, 5vw, 80px)',
@@ -91,7 +114,7 @@ const ProfilePage = () => {
                 backdropFilter: 'blur(12px)',
                 zIndex: 50,
             }}>
-                <h1 style={{ fontSize: 'clamp(14px, 2.5vw, 20px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.05em', fontStyle: 'italic', margin: 0 }}>
+                <h1 style={{ fontSize: 'clamp(14px, 2.5vw, 20px)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '-0.02em', margin: 0 }}>
                     Profile
                 </h1>
                 <button
@@ -102,7 +125,7 @@ const ProfilePage = () => {
                         padding: 'clamp(8px, 1.5vw, 10px) clamp(14px, 3vw, 24px)',
                         borderRadius: '9999px',
                         fontSize: 'clamp(8px, 1.2vw, 10px)',
-                        fontWeight: 900,
+                        fontWeight: 800,
                         textTransform: 'uppercase',
                         letterSpacing: '0.15em',
                         border: 'none',
@@ -132,13 +155,13 @@ const ProfilePage = () => {
                         }}>
                             {userProfile.image
                                 ? <img src={userProfile.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="profile" />
-                                : <span style={{ color: '#fff', fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 900, fontStyle: 'italic' }}>{userProfile.name.charAt(0)}</span>
+                                : <span style={{ color: '#fff', fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 800 }}>{userProfile.name.charAt(0)}</span>
                             }
                         </div>
                     </div>
 
-                    <h2 style={{ fontSize: 'clamp(18px, 4vw, 26px)', fontWeight: 900, letterSpacing: '-0.04em', margin: '0 0 6px' }}>{userProfile.name}</h2>
-                    <p style={{ fontSize: 'clamp(9px, 1.5vw, 11px)', fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 'clamp(20px, 4vw, 32px)', opacity: 0.7 }}>
+                    <h2 style={{ fontSize: 'clamp(18px, 4vw, 26px)', fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 6px' }}>{userProfile.name}</h2>
+                    <p style={{ fontSize: 'clamp(9px, 1.5vw, 11px)', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 'clamp(20px, 4vw, 32px)', opacity: 0.7 }}>
                         Roll No: {userProfile.rollNo}
                     </p>
 
@@ -151,7 +174,7 @@ const ProfilePage = () => {
                                 borderRadius: '24px',
                                 textAlign: 'center',
                             }}>
-                                <p style={{ fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 900, color: '#000', lineHeight: 1, margin: 0 }}>{s.val}</p>
+                                <p style={{ fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800, color: '#000', lineHeight: 1, margin: 0 }}>{s.val}</p>
                                 <p style={{ fontSize: 'clamp(8px, 1.2vw, 10px)', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>{s.label}</p>
                             </div>
                         ))}
@@ -166,7 +189,7 @@ const ProfilePage = () => {
                             padding: 'clamp(10px, 1.5vw, 12px) clamp(20px, 4vw, 32px)',
                             borderRadius: '9999px',
                             fontSize: 'clamp(9px, 1.3vw, 10px)',
-                            fontWeight: 900,
+                            fontWeight: 800,
                             textTransform: 'uppercase',
                             letterSpacing: '0.15em',
                             border: 'none',
@@ -194,6 +217,7 @@ const ProfilePage = () => {
                     {[
                         { id: 'rides', label: 'My Rides', icon: <svg style={{ width: 16, height: 16, flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> },
                         { id: 'requested', label: 'Requested', icon: <svg style={{ width: 16, height: 16, flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg> },
+                        { id: 'completed', label: 'Completed', icon: <svg style={{ width: 16, height: 16, flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
                         { id: 'reviews', label: 'Reviews', icon: <svg style={{ width: 16, height: 16, flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg> },
                     ].map(tab => (
                         <button
@@ -203,7 +227,7 @@ const ProfilePage = () => {
                                 padding: 'clamp(8px, 1.5vw, 14px) clamp(12px, 2.5vw, 32px)',
                                 borderRadius: '18px',
                                 fontSize: 'clamp(9px, 1.3vw, 11px)',
-                                fontWeight: 900,
+                                fontWeight: 800,
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.1em',
                                 border: 'none',
@@ -255,8 +279,8 @@ const ProfilePage = () => {
                                         }
                                     </div>
                                     <div style={{ minWidth: 0 }}>
-                                        <h4 style={{ fontSize: 'clamp(10px, 2vw, 13px)', fontWeight: 900, textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ride.title}</h4>
-                                        <p style={{ fontSize: 'clamp(8px, 1.3vw, 10px)', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', marginTop: '4px' }}>{ride.date}</p>
+                                        <h4 style={{ fontSize: 'clamp(10px, 2vw, 13px)', fontWeight: 800, textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ride.title}</h4>
+                                        <p style={{ fontSize: 'clamp(8px, 1.3vw, 10px)', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>{ride.date}</p>
                                     </div>
                                 </div>
                                 <span style={{
@@ -293,7 +317,7 @@ const ProfilePage = () => {
                                         <svg style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                                     </div>
                                     <div style={{ minWidth: 0 }}>
-                                        <h4 style={{ fontSize: 'clamp(10px, 2vw, 13px)', fontWeight: 900, textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.title}</h4>
+                                        <h4 style={{ fontSize: 'clamp(10px, 2vw, 13px)', fontWeight: 800, textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.title}</h4>
                                         <p style={{ fontSize: 'clamp(8px, 1.3vw, 10px)', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>Status: {req.status} · {req.date}</p>
                                     </div>
                                 </div>
@@ -314,15 +338,144 @@ const ProfilePage = () => {
                         )) : <EmptyState message="No requests sent" />
                     )}
 
+                    {activeTab === 'completed' && (
+                        <div>
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                                <button
+                                    onClick={() => setCompletedRidesFilter('offered')}
+                                    style={{
+                                        padding: '10px 20px',
+                                        borderRadius: '9999px',
+                                        fontSize: 'clamp(11px, 1.5vw, 13px)',
+                                        fontWeight: 800,
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.1em',
+                                        border: '1px solid #f3f4f6',
+                                        cursor: 'pointer',
+                                        backgroundColor: completedRidesFilter === 'offered' ? '#000' : '#fff',
+                                        color: completedRidesFilter === 'offered' ? '#fff' : '#000',
+                                        transition: 'all 0.3s ease',
+                                    }}
+                                >
+                                    Offer Ride
+                                </button>
+                                <button
+                                    onClick={() => setCompletedRidesFilter('took')}
+                                    style={{
+                                        padding: '10px 20px',
+                                        borderRadius: '9999px',
+                                        fontSize: 'clamp(11px, 1.5vw, 13px)',
+                                        fontWeight: 800,
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.1em',
+                                        border: '1px solid #f3f4f6',
+                                        cursor: 'pointer',
+                                        backgroundColor: completedRidesFilter === 'took' ? '#000' : '#fff',
+                                        color: completedRidesFilter === 'took' ? '#fff' : '#000',
+                                        transition: 'all 0.3s ease',
+                                    }}
+                                >
+                                    Took Ride
+                                </button>
+                            </div>
+
+                            {completedRidesFilter === 'offered' ? (
+                                completedOfferedRides.length > 0 ? completedOfferedRides.map(ride => (
+                                    <div key={ride.id} style={{
+                                        backgroundColor: '#fff',
+                                        border: '1px solid #f3f4f6',
+                                        padding: 'clamp(14px, 3vw, 24px)',
+                                        borderRadius: '24px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        gap: '12px',
+                                        marginBottom: '12px',
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 3vw, 24px)', minWidth: 0 }}>
+                                            <div style={{
+                                                width: 'clamp(40px, 6vw, 48px)',
+                                                height: 'clamp(40px, 6vw, 48px)',
+                                                borderRadius: '14px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                flexShrink: 0,
+                                                backgroundColor: '#f0fdf4',
+                                                color: '#16a34a',
+                                            }}>
+                                                <svg style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                                            </div>
+                                            <div style={{ minWidth: 0 }}>
+                                                <h4 style={{ fontSize: 'clamp(10px, 2vw, 13px)', fontWeight: 800, textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ride.title}</h4>
+                                                <p style={{ fontSize: 'clamp(8px, 1.3vw, 10px)', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>{ride.date}</p>
+                                            </div>
+                                        </div>
+                                        <span style={{
+                                            fontSize: 'clamp(7px, 1.1vw, 9px)',
+                                            fontWeight: 900,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.15em',
+                                            padding: '6px 12px',
+                                            borderRadius: '9999px',
+                                            backgroundColor: '#dcfce7',
+                                            color: '#15803d',
+                                            flexShrink: 0,
+                                        }}>
+                                            Done
+                                        </span>
+                                    </div>
+                                )) : <EmptyState message="No offers completed" />
+                            ) : (
+                                completedTookRides.length > 0 ? completedTookRides.map(req => (
+                                    <div key={req.id} style={{
+                                        backgroundColor: '#fff',
+                                        border: '1px solid #f3f4f6',
+                                        padding: 'clamp(14px, 3vw, 24px)',
+                                        borderRadius: '24px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        gap: '12px',
+                                        marginBottom: '12px',
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 3vw, 24px)', minWidth: 0 }}>
+                                            <div style={{ width: 'clamp(40px, 6vw, 48px)', height: 'clamp(40px, 6vw, 48px)', borderRadius: '14px', backgroundColor: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#16a34a' }}>
+                                                <svg style={{ width: 20, height: 20 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                                            </div>
+                                            <div style={{ minWidth: 0 }}>
+                                                <h4 style={{ fontSize: 'clamp(10px, 2vw, 13px)', fontWeight: 800, textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.title}</h4>
+                                                <p style={{ fontSize: 'clamp(8px, 1.3vw, 10px)', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>Ride: {req.rider} · {req.date}</p>
+                                            </div>
+                                        </div>
+                                        <span style={{
+                                            fontSize: 'clamp(7px, 1.1vw, 9px)',
+                                            fontWeight: 900,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.15em',
+                                            padding: '6px 12px',
+                                            borderRadius: '9999px',
+                                            backgroundColor: '#dcfce7',
+                                            color: '#15803d',
+                                            flexShrink: 0,
+                                        }}>
+                                            Approved
+                                        </span>
+                                    </div>
+                                )) : <EmptyState message="No rides taken" />
+                            )}
+                        </div>
+                    )}
+
                     {activeTab === 'reviews' && (
                         myReviews.length > 0 ? myReviews.map(rev => (
                             <div key={rev.id} style={{ backgroundColor: '#fff', border: '1px solid #f3f4f6', padding: 'clamp(16px, 3vw, 32px)', borderRadius: '32px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <div style={{ width: 32, height: 32, borderRadius: '9999px', backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <span style={{ color: '#fff', fontSize: '10px', fontWeight: 900, fontStyle: 'italic' }}>{rev.user.charAt(0)}</span>
+                                            <span style={{ color: '#fff', fontSize: '10px', fontWeight: 800 }}>{rev.user.charAt(0)}</span>
                                         </div>
-                                        <span style={{ fontSize: 'clamp(11px, 2vw, 13px)', fontWeight: 900, color: '#000' }}>{rev.user}</span>
+                                        <span style={{ fontSize: 'clamp(11px, 2vw, 13px)', fontWeight: 800, color: '#000' }}>{rev.user}</span>
                                     </div>
                                     <div style={{ display: 'flex', gap: '2px' }}>
                                         {[...Array(5)].map((_, i) => (
@@ -330,7 +483,7 @@ const ProfilePage = () => {
                                         ))}
                                     </div>
                                 </div>
-                                <p style={{ fontSize: 'clamp(12px, 2vw, 14px)', color: '#6b7280', fontStyle: 'italic', lineHeight: 1.6, margin: 0 }}>"{rev.comment}"</p>
+                                <p style={{ fontSize: 'clamp(12px, 2vw, 14px)', color: '#6b7280', lineHeight: 1.6, margin: 0 }}>"{rev.comment}"</p>
                             </div>
                         )) : <EmptyState message="No reviews yet" />
                     )}
@@ -366,7 +519,7 @@ const ProfilePage = () => {
                                 <div style={{ width: 'clamp(80px, 12vw, 128px)', height: 'clamp(80px, 12vw, 128px)', borderRadius: '9999px', border: '6px solid #fff', boxShadow: '0 10px 30px rgba(0,0,0,0.12)', overflow: 'hidden', backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     {userProfile.image
                                         ? <img src={userProfile.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="profile" />
-                                        : <span style={{ color: '#fff', fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 900, fontStyle: 'italic' }}>{userProfile.name.charAt(0)}</span>
+                                        : <span style={{ color: '#fff', fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 800 }}>{userProfile.name.charAt(0)}</span>
                                     }
                                 </div>
                                 <button style={{ position: 'absolute', bottom: 2, right: 2, backgroundColor: '#fff', width: 30, height: 30, borderRadius: '9999px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #f3f4f6', cursor: 'pointer' }}>
@@ -379,16 +532,21 @@ const ProfilePage = () => {
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'clamp(10px, 2vw, 20px)', marginBottom: 'clamp(16px, 3vw, 40px)' }}>
                                 {[{ label: 'New Password', key: 'new' }, { label: 'Confirm Password', key: 'confirm' }].map(f => (
                                     <div key={f.key} style={{ backgroundColor: '#f8fafc', padding: 'clamp(16px, 2.5vw, 28px)', borderRadius: '24px' }}>
-                                        <h5 style={{ fontSize: '10px', fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '10px' }}>{f.label}</h5>
+                                        <h5 style={{ fontSize: '10px', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '10px' }}>{f.label}</h5>
                                         <input
                                             type="password"
                                             placeholder="••••••••"
-                                            style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.5)', border: 'none', borderRadius: '14px', padding: '10px 14px', fontSize: '14px', fontWeight: 900, outline: 'none', boxSizing: 'border-box' }}
+                                            style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.5)', border: 'none', borderRadius: '14px', padding: '10px 14px', fontSize: '14px', fontWeight: 800, outline: 'none', boxSizing: 'border-box' }}
                                             value={passwordData[f.key]}
                                             onChange={e => setPasswordData({ ...passwordData, [f.key]: e.target.value })}
                                         />
                                     </div>
                                 ))}
+                                {passwordError && (
+                                    <div style={{ gridColumn: '1 / -1', padding: '12px 20px', backgroundColor: '#fef2f2', borderRadius: '16px', border: '1px solid #fee2e2' }}>
+                                        <p style={{ color: '#dc2626', fontSize: '11px', fontWeight: 700, margin: 0 }}>{passwordError}</p>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -397,10 +555,10 @@ const ProfilePage = () => {
                                 <InfoCard label="Roll Number" value={userProfile.rollNo} />
 
                                 <div style={{ backgroundColor: '#f8fafc', padding: 'clamp(16px, 2.5vw, 28px)', borderRadius: '24px', position: 'relative' }}>
-                                    <h5 style={{ fontSize: '10px', fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '10px' }}>Full Name</h5>
+                                    <h5 style={{ fontSize: '10px', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '10px' }}>Full Name</h5>
                                     {isEditingName
-                                        ? <input type="text" value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.5)', border: 'none', borderRadius: '14px', padding: '10px 14px', fontSize: '14px', fontWeight: 900, outline: 'none', boxSizing: 'border-box' }} autoFocus />
-                                        : <p style={{ fontSize: 'clamp(14px, 2.5vw, 17px)', fontWeight: 900, margin: 0 }}>{userProfile.name}</p>
+                                        ? <input type="text" value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.5)', border: 'none', borderRadius: '14px', padding: '10px 14px', fontSize: '14px', fontWeight: 800, outline: 'none', boxSizing: 'border-box' }} autoFocus />
+                                        : <p style={{ fontSize: 'clamp(14px, 2.5vw, 17px)', fontWeight: 800, margin: 0 }}>{userProfile.name}</p>
                                     }
                                     <EditButton active={isEditingName} onClick={() => setIsEditingName(!isEditingName)} />
                                 </div>
@@ -409,9 +567,9 @@ const ProfilePage = () => {
                                     <h5 style={{ fontSize: '10px', fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '10px' }}>Campus</h5>
                                     {isEditingCampus
                                         ? <select value={editData.campus} onChange={e => setEditData({ ...editData, campus: e.target.value })} style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.5)', border: 'none', borderRadius: '14px', padding: '10px 14px', fontSize: '14px', fontWeight: 900, outline: 'none', boxSizing: 'border-box' }} autoFocus>
-                                            {getCampuses().map(c => <option key={c.id}>{c.name}</option>)}
+                                            {getCampuses().map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                                         </select>
-                                        : <p style={{ fontSize: 'clamp(14px, 2.5vw, 17px)', fontWeight: 900, margin: 0 }}>{userProfile.campus}</p>
+                                        : <p style={{ fontSize: 'clamp(14px, 2.5vw, 17px)', fontWeight: 900, margin: 0 }}>{getCampuses().find(c => c.id === userProfile.campus)?.name || userProfile.campus}</p>
                                     }
                                     <EditButton active={isEditingCampus} onClick={() => setIsEditingCampus(!isEditingCampus)} />
                                 </div>
@@ -480,8 +638,8 @@ const ProfilePage = () => {
 
 const InfoCard = ({ label, value }) => (
     <div style={{ backgroundColor: '#f8fafc', padding: 'clamp(16px, 2.5vw, 28px)', borderRadius: '24px' }}>
-        <h5 style={{ fontSize: '10px', fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '10px' }}>{label}</h5>
-        <p style={{ fontSize: 'clamp(13px, 2.5vw, 17px)', fontWeight: 900, margin: 0, wordBreak: 'break-all' }}>{value}</p>
+        <h5 style={{ fontSize: '10px', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '10px' }}>{label}</h5>
+        <p style={{ fontSize: 'clamp(13px, 2.5vw, 17px)', fontWeight: 800, margin: 0, wordBreak: 'break-all' }}>{value}</p>
     </div>
 );
 

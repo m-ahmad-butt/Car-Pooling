@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { extractRollNo, validateEmail, getCampuses } from "../utils/method";
+import { extractRollNo, validateEmail, getCampuses, validatePassword, validatePhone } from "../utils/method";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { addUser } from "../features/authSlice";
@@ -40,8 +40,7 @@ function RegisterForm() {
         setFormData(prev => ({ ...prev, [name]: value }));
 
         if (name === "contactNo") {
-            const digits = value.replace(/\D/g, "");
-            if (value && (!/^03/.test(value) || digits.length !== 11)) {
+            if (value && !validatePhone(value)) {
                 setPhoneError("Must start with 03 and be 11 digits");
             } else {
                 setPhoneError("");
@@ -59,10 +58,7 @@ function RegisterForm() {
         }
     };
 
-    const validatePassword = (pass) => {
-        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,})/;
-        return regex.test(pass);
-    };
+
 
     const handleNext = (e) => {
         e.preventDefault();
@@ -123,19 +119,19 @@ function RegisterForm() {
 
                     {/* dropme */}
                     <div className="mb-10 -ml-0.5">
-                        <h1 className="text-4xl font-black tracking-tighter text-black flex items-baseline">
-                            drop<span className="text-gray-300 font-bold italic ml-0.5">ME</span>
+                        <h1 className="text-4xl font-extrabold tracking-tighter text-black flex items-baseline">
+                            drop<span className="text-gray-300 font-bold ml-0.5">ME</span>
                         </h1>
                     </div>
 
                     {/* Steps */}
                     <div className="mb-8">
                         <div className="flex items-center justify-between mb-3">
-                            <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">
+                            <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest">
                                 Step {step} of {TOTAL_STEPS}
                                 <span className="text-black ml-2">— {stepLabels[step - 1]}</span>
                             </p>
-                            <p className="text-[11px] font-black text-gray-300 uppercase tracking-widest">
+                            <p className="text-[11px] font-extrabold text-gray-300 uppercase tracking-widest">
                                 {Math.round((step / TOTAL_STEPS) * 100)}%
                             </p>
                         </div>
@@ -282,7 +278,7 @@ function RegisterForm() {
                                             required
                                         />
                                         <button type="button" onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase text-gray-400">
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-extrabold uppercase text-gray-400">
                                             {showPassword ? "Hide" : "Show"}
                                         </button>
                                     </div>
@@ -299,7 +295,7 @@ function RegisterForm() {
                                             required
                                         />
                                         <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase text-gray-400">
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-extrabold uppercase text-gray-400">
                                             {showConfirmPassword ? "Hide" : "Show"}
                                         </button>
                                     </div>
@@ -318,7 +314,7 @@ function RegisterForm() {
                                 <button
                                     type="button"
                                     onClick={handleBack}
-                                    className="px-6 py-2.5 border border-gray-200 rounded-lg text-sm font-black text-gray-500 uppercase tracking-tighter"
+                                    className="px-6 py-2.5 border border-gray-200 rounded-lg text-sm font-extrabold text-gray-500 uppercase tracking-tighter"
                                 >
                                     Back
                                 </button>
@@ -326,7 +322,7 @@ function RegisterForm() {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className={`flex-1 bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest ${isLoading ? "opacity-50" : ""}`}
+                                className={`flex-1 bg-black text-white py-2.5 rounded-lg text-sm font-extrabold uppercase tracking-widest ${isLoading ? "opacity-50" : ""}`}
                             >
                                 {isLoading ? "..." : step === TOTAL_STEPS ? "Complete" : "Next →"}
                             </button>
@@ -336,7 +332,7 @@ function RegisterForm() {
                     <div className="mt-8 text-center">
                         <p className="text-[12px] font-bold text-gray-400 uppercase tracking-tight">
                             Already registered?{" "}
-                            <button onClick={() => navigate("/login")} className="text-black font-black hover:underline underline-offset-4">
+                            <button onClick={() => navigate("/login")} className="text-black font-extrabold hover:underline underline-offset-4">
                                 Sign in
                             </button>
                         </p>
@@ -348,13 +344,13 @@ function RegisterForm() {
             <div className="hidden lg:block lg:w-[52%] bg-black relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/40 to-transparent flex flex-col justify-center px-20">
                     <div className="max-w-lg">
-                        <h3 className="text-white text-6xl font-black italic tracking-tighter leading-[0.9] mb-8">
+                        <h3 className="text-white text-6xl font-extrabold tracking-tighter leading-[0.9] mb-8">
                             PETROL <br />
                             <span className="text-white/40">320PKR??</span>
                         </h3>
                         <div className="space-y-2">
                             <p className="text-white/80 text-2xl font-bold tracking-tight uppercase">Don't worry.</p>
-                            <p className="text-white/50 text-xl font-medium leading-relaxed italic">
+                            <p className="text-white/50 text-xl font-medium leading-relaxed">
                                 Share rides and save money <br />
                                 and make friends..
                             </p>
@@ -368,7 +364,7 @@ function RegisterForm() {
                 </div>
 
                 <div className="absolute bottom-16 left-20 z-10 pointer-events-none">
-                    <h3 className="text-white/5 text-[10rem] font-black italic tracking-[1.5rem] uppercase select-none leading-none">FAST</h3>
+                    <h3 className="text-white/5 text-[10rem] font-extrabold tracking-[1.5rem] uppercase select-none leading-none">FAST</h3>
                 </div>
             </div>
         </div>

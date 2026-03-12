@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 
-const RideCard = ({ ride, onViewDetails }) => {
+const RideCard = ({ ride, onViewDetails, isOwnRide }) => {
     const navigate = useNavigate();
 
     return (
-        <div className="relative bg-white border border-gray-100 rounded-[2.8rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group flex flex-col h-full ring-1 ring-black/[0.05]">
+        <div className="relative bg-white border border-gray-100 rounded-[1rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group flex flex-col h-full ring-1 ring-black/[0.05]">
             <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none"></div>
             <div className="relative aspect-[16/10] bg-gray-50/50 flex items-center justify-center overflow-hidden">
                 {ride.image ? (
@@ -21,7 +21,7 @@ const RideCard = ({ ride, onViewDetails }) => {
                     </div>
                 )}
                 <div className="absolute top-4 right-4">
-                    <div className="bg-white/90 backdrop-blur-md text-black text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm ring-1 ring-black/5">
+                    <div className="bg-white/90 backdrop-blur-md text-black text-[9px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm ring-1 ring-black/5">
                         {ride.vehicleType}
                     </div>
                 </div>
@@ -37,45 +37,46 @@ const RideCard = ({ ride, onViewDetails }) => {
                         {ride.riderAvatar ? (
                             <img src={ride.riderAvatar} alt={ride.riderName} className="w-full h-full object-cover" />
                         ) : (
-                            <span className="text-[10px] font-black italic">{ride.riderName.charAt(0)}</span>
+                            <span className="text-[10px] font-bold">{ride.riderName.charAt(0)}</span>
                         )}
                     </button>
                     <div className="flex-1 text-left">
                         <button
                             onClick={() => navigate(`/profile/${ride.riderName.replace(' ', '-').toLowerCase()}`)}
-                            className="text-[13px] font-black text-black leading-none hover:text-gray-500 transition-colors"
+                            className="text-[13px] font-bold text-black leading-none hover:text-gray-500 transition-colors"
                         >
                             {ride.riderName}
                         </button>
                         <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">{ride.date}</p>
                     </div>
                     <div className="ml-auto flex items-center gap-1 bg-white/50 px-2 py-1 rounded-full border border-black/5">
-                        <span className="text-black font-black text-[12px]">★</span>
-                        <span className="text-[10px] font-black tracking-tighter">{ride.riderRating}</span>
+                        <span className="text-black font-extrabold text-[12px]">★</span>
+                        <span className="text-[10px] font-bold tracking-tighter">{ride.riderRating}</span>
                     </div>
                 </div>
 
                 <div className="mb-6">
-                    <h3 className="text-lg font-black tracking-tighter text-gray-900 group-hover:text-black line-clamp-2 uppercase italic leading-tight">
+                    <h3 className="text-lg font-extrabold tracking-tight text-gray-900 group-hover:text-black line-clamp-2 uppercase leading-tight">
                         {ride.title}
                     </h3>
                     <div className="flex items-center gap-2 mt-3 opacity-40">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                        <span className="text-[11px] font-black uppercase tracking-widest">{ride.campus}</span>
+                        <span className="text-[11px] font-bold uppercase tracking-widest">{ride.campus}</span>
                     </div>
                 </div>
 
                 <div className="mt-auto pt-6 border-t border-black/[0.03] space-y-5">
                     <div className="flex justify-between items-center">
                         <div>
-                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Available Slots</p>
-                            <p className="text-sm font-black text-black">{ride.seats} Empty seats</p>
+                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Available Slots</p>
+                            <p className="text-sm font-bold text-black">{ride.seats} Empty seats</p>
                         </div>
                         <button
                             onClick={() => onViewDetails(ride)}
-                            className="bg-black text-white px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-black/10"
+                            className={`${isOwnRide ? 'bg-gray-400 opacity-60 cursor-not-allowed' : 'bg-black'} text-white px-8 py-3.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-xl shadow-black/10`}
+                            disabled={isOwnRide}
                         >
-                            View Details
+                            {isOwnRide ? 'Your Ride' : 'View Details'}
                         </button>
                     </div>
                 </div>

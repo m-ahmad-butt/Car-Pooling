@@ -1,13 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-let nextReviewId = 300;
+let nextReviewId = Number(localStorage.getItem('nextReviewId')) || 300;
 
 const initialState = {
-    reviews: [
-        { id: 1, rideId: 1, targetEmail: "l233078@lhr.nu.edu.pk", user: "Ali A.", rating: 5, comment: "Very punctual and safe driver." },
-        { id: 2, rideId: 1, targetEmail: "l233078@lhr.nu.edu.pk", user: "Saim A.", rating: 4, comment: "Nice ride, but was 5 mins late." },
-        { id: 3, rideId: 2, targetEmail: "l233071@lhr.nu.edu.pk", user: "Zain T.", rating: 5, comment: "Best heavy bike experience!" },
-    ],
+    reviews: JSON.parse(localStorage.getItem('allReviews')) || [],
     pendingReview: null,
 };
 
@@ -21,10 +17,13 @@ const reviewSlice = createSlice({
                 id: nextReviewId++,
             };
             state.reviews.push(newReview);
+            localStorage.setItem('allReviews', JSON.stringify(state.reviews));
+            localStorage.setItem('nextReviewId', nextReviewId.toString());
         },
 
         removeReview: (state, action) => {
             state.reviews = state.reviews.filter(r => r.id !== action.payload);
+            localStorage.setItem('allReviews', JSON.stringify(state.reviews));
         },
 
         setPendingReview: (state, action) => {

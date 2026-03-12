@@ -1,6 +1,6 @@
 import { useSelector, useDispatch } from "react-redux";
 import { approveRequest, declineRequest } from "../features/requestSlice";
-import { decrementSeats, setOngoingRide } from "../features/rideSlice";
+import { decrementSeats, setOngoingRide, updateRide } from "../features/rideSlice";
 
 
 function RequestRide() {
@@ -9,7 +9,6 @@ function RequestRide() {
     const userProfile = useSelector(state => state.user.profile);
     const rides = useSelector(state => state.rides.rides);
 
-    // Filter requests for rides owned by the current user
     const myRides = rides.filter(r => r.riderEmail === userProfile.email).map(r => r.id);
     const pendingRequests = rideRequests.filter(r => r.status === 'pending' && myRides.includes(r.rideId));
 
@@ -19,10 +18,13 @@ function RequestRide() {
         if (request) {
             dispatch(decrementSeats(request.rideId));
 
-            // Find the ride to get owner details
             const ride = rides.find(r => r.id === request.rideId);
 
-            // Set ongoing ride visible to both requester and ride owner
+            dispatch(updateRide({
+                id: request.rideId,
+                status: "Done"
+            }));
+
             dispatch(setOngoingRide({
                 rideId: request.rideId,
                 rider: ride ? ride.riderName : "Rider",
@@ -41,7 +43,7 @@ function RequestRide() {
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-6">
             <div className="flex items-center justify-between mb-8">
                 <div>
                     <h2 className="text-2xl font-black tracking-tight uppercase">Ride Requests</h2>

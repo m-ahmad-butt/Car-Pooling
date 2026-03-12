@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import { validateEmail } from "../utils/method";
+import { setResetEmail } from "../features/authSlice";
 
 const FORGOT_IMAGE_PATH = "/image.png";
 
@@ -17,6 +19,8 @@ function ForgotPasswordForm() {
     const DEMO_OTP = "111111";
 
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const users = useSelector(state => state.auth.users);
 
     useEffect(() => {
         if (step === 2 && timeLeft > 0) {
@@ -50,6 +54,14 @@ function ForgotPasswordForm() {
         setIsLoading(true);
         setTimeout(() => {
             setIsLoading(false);
+            const userExists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
+            
+            if (!userExists) {
+                setEmailError("This email is not registered with us.");
+                toast.error("Account not found");
+                return;
+            }
+
             toast.success(`OTP sent to: ${email}`);
             toast(`Demo OTP: ${DEMO_OTP}`, { icon: '🔑', duration: 5000 });
             setStep(2);
@@ -82,6 +94,7 @@ function ForgotPasswordForm() {
         setTimeout(() => {
             setIsLoading(false);
             toast.success("Identity verified! Set your new password.");
+            dispatch(setResetEmail(email));
             navigate("/reset-password");
         }, 1500);
     };

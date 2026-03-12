@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { convertTo12Hour } from '../utils/method';
 
 const RideDetails = ({ ride, onClose, onAccept }) => {
     const navigate = useNavigate();
@@ -23,7 +24,7 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
             <header className="px-6 lg:px-20 py-5 border-b border-gray-50 flex items-center justify-between sticky top-0 bg-white/90 backdrop-blur-md z-50">
                 <button
                     onClick={onClose}
-                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400"
+                    className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
@@ -72,13 +73,13 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                         >
                             {ride.riderAvatar
                                 ? <img src={ride.riderAvatar} className="w-full h-full object-cover" />
-                                : <span className="text-white text-sm font-black italic">{ride.riderName.charAt(0)}</span>
+                                : <span className="text-white text-sm font-bold">{ride.riderName.charAt(0)}</span>
                             }
                         </button>
                         <div>
                             <button
                                 onClick={() => navigate(`/profile/${ride.riderName.replace(' ', '-').toLowerCase()}`)}
-                                className="text-sm font-black text-black leading-none block"
+                                className="text-sm font-bold text-black leading-none block"
                             >
                                 {ride.riderName}
                             </button>
@@ -89,7 +90,7 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                     {showRequestNote && (
                         <div className="lg:hidden space-y-4">
                             <div>
-                                <h2 className="text-xl font-black uppercase tracking-tight mb-1">Add a Message</h2>
+                                <h2 className="text-xl font-extrabold uppercase tracking-tight mb-1">Add a Message</h2>
                                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
                                     Let {ride.riderName} know why you're joining.
                                 </p>
@@ -104,20 +105,20 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                                 />
                                 {!requestNote && (
                                     <div className="absolute bottom-5 right-6 pointer-events-none opacity-20">
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Required</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-widest">Required</span>
                                     </div>
                                 )}
                             </div>
                             <button
                                 onClick={handleRequestRide}
                                 disabled={!requestNote}
-                                className={`w-full bg-black text-white py-4 rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] ${!requestNote ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                className={`w-full bg-black text-white py-4 rounded-2xl text-[12px] font-bold uppercase tracking-[0.2em] ${!requestNote ? 'opacity-40 cursor-not-allowed' : ''}`}
                             >
                                 Send Ride Request
                             </button>
                             <button
                                 onClick={() => setShowRequestNote(false)}
-                                className="w-full py-2 text-[11px] font-black uppercase tracking-widest text-gray-400 text-center"
+                                className="w-full py-2 text-[11px] font-bold uppercase tracking-widest text-gray-400 text-center"
                             >
                                 Cancel
                             </button>
@@ -130,7 +131,7 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                     {showRequestNote && (
                         <div className="hidden lg:block space-y-6 mt-16">
                             <div>
-                                <h2 className="text-2xl font-black uppercase tracking-tight mb-2">Add a Message</h2>
+                                <h2 className="text-2xl font-extrabold uppercase tracking-tight mb-2">Add a Message</h2>
                                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
                                     Let {ride.riderName} know why you're joining this ride.
                                 </p>
@@ -145,20 +146,20 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                                 />
                                 {!requestNote && (
                                     <div className="absolute bottom-6 right-8 pointer-events-none opacity-20">
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Required</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-widest">Required</span>
                                     </div>
                                 )}
                             </div>
                             <button
                                 onClick={handleRequestRide}
                                 disabled={!requestNote}
-                                className={`w-full bg-black text-white py-5 rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] ${!requestNote ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                className={`w-full bg-black text-white py-5 rounded-2xl text-[12px] font-bold uppercase tracking-[0.2em] ${!requestNote ? 'opacity-40 cursor-not-allowed' : ''}`}
                             >
                                 Send Ride Request
                             </button>
                             <button
                                 onClick={() => setShowRequestNote(false)}
-                                className="w-full py-2 text-[11px] font-black uppercase tracking-widest text-gray-400 text-center"
+                                className="w-full py-2 text-[11px] font-bold uppercase tracking-widest text-gray-400 text-center"
                             >
                                 Cancel
                             </button>
@@ -169,29 +170,29 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                     {!showRequestNote && activeTab === 'details' && (
                         <div className="space-y-8">
                             <div>
-                                <h2 className="text-3xl font-black italic tracking-tighter uppercase mb-3">{ride.title}</h2>
+                                <h2 className="text-3xl font-extrabold tracking-tight uppercase mb-3">{ride.title}</h2>
                                 <p className="text-sm text-gray-400 font-medium leading-relaxed">{ride.description}</p>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bg-gray-50 p-6 rounded-2xl">
-                                    <p className="text-[10px] font-black text-gray-300 uppercase mb-2 tracking-widest">Vehicle</p>
+                                    <p className="text-[10px] font-bold text-gray-300 uppercase mb-2 tracking-widest">Vehicle</p>
                                     <p className="text-sm font-bold text-black uppercase">{ride.vehicleType}</p>
                                 </div>
                                 <div className="bg-gray-50 p-6 rounded-2xl">
-                                    <p className="text-[10px] font-black text-gray-300 uppercase mb-2 tracking-widest">Plate No.</p>
+                                    <p className="text-[10px] font-bold text-gray-300 uppercase mb-2 tracking-widest">Plate No.</p>
                                     <p className="text-sm font-bold text-black uppercase">{ride.vehicleNumber}</p>
                                 </div>
                                 <div className="bg-gray-50 p-6 rounded-2xl">
-                                    <p className="text-[10px] font-black text-gray-300 uppercase mb-2 tracking-widest">Available Seats</p>
+                                    <p className="text-[10px] font-bold text-gray-300 uppercase mb-2 tracking-widest">Available Seats</p>
                                     <p className="text-sm font-bold text-black">{ride.seats} Empty slots</p>
                                 </div>
                                 <div className="bg-gray-50 p-6 rounded-2xl">
-                                    <p className="text-[10px] font-black text-gray-300 uppercase mb-2 tracking-widest">Departure</p>
-                                    <p className="text-sm font-bold text-black uppercase">08:30 AM</p>
+                                    <p className="text-[10px] font-bold text-gray-300 uppercase mb-2 tracking-widest">Departure</p>
+                                    <p className="text-sm font-bold text-black uppercase">{convertTo12Hour(ride.departureTime)}</p>
                                 </div>
                                 <div className="bg-gray-50 p-6 rounded-2xl col-span-2">
-                                    <p className="text-[10px] font-black text-gray-300 uppercase mb-2 tracking-widest">Contact Number</p>
-                                    <p className="text-sm font-bold text-black">0312-3456789</p>
+                                    <p className="text-[10px] font-bold text-gray-300 uppercase mb-2 tracking-widest">Contact Number</p>
+                                    <p className="text-sm font-bold text-black">{ride.contactNumber}</p>
                                 </div>
                             </div>
                         </div>
@@ -202,17 +203,19 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                         <div>
                             {ride.reviews && ride.reviews.length > 0 ? (
                                 <div className="space-y-8">
-                                    {ride.reviews.map((rev, idx) => (
+                                    {ride.reviews
+                                        .filter(rev => rev.user !== ride.riderName) // Filter out rider's own review
+                                        .map((rev, idx) => (
                                         <div key={idx}>
                                             <div className="flex justify-between items-center mb-3">
-                                                <span className="text-sm font-black text-black">{rev.user}</span>
+                                                <span className="text-sm font-bold text-black">{rev.user}</span>
                                                 <div className="flex gap-0.5">
                                                     {[...Array(5)].map((_, i) => (
-                                                        <span key={i} className={`text-[12px] ${i < rev.rating ? 'text-black font-black' : 'text-gray-100'}`}>★</span>
+                                                        <span key={i} className={`text-[12px] ${i < rev.rating ? 'text-black font-bold' : 'text-gray-100'}`}>★</span>
                                                     ))}
                                                 </div>
                                             </div>
-                                            <p className="text-[13px] text-gray-400 italic">"{rev.comment}"</p>
+                                            <p className="text-[13px] text-gray-400">"{rev.comment}"</p>
                                         </div>
                                     ))}
                                 </div>
@@ -223,7 +226,7 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                                             <path d="M18 7c.55 0 1-.45 1-1s-.45-1-1-1H6c-.55 0-1 .45-1 1s.45 1 1 1h12zm-3 8c.55 0 1-.45 1-1s-.45-1-1-1H9c-.55 0-1 .45-1 1s.45 1 1 1h6zm5-13H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H11.17L9 18.17V16H4V4h16v12z" />
                                         </svg>
                                     </div>
-                                    <p className="text-gray-400 font-black text-xl mb-1">No reviews yet</p>
+                                    <p className="text-gray-400 font-extrabold text-xl mb-1">No reviews yet</p>
                                     <p className="text-gray-300 text-[13px] font-bold">Be the first to review!</p>
                                 </div>
                             )}
@@ -236,7 +239,7 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                 <div className="lg:hidden fixed bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-50">
                     <button
                         onClick={handleRequestRide}
-                        className="w-full bg-black text-white py-5 rounded-2xl text-[12px] font-black uppercase tracking-[0.2em]"
+                        className="w-full bg-black text-white py-5 rounded-2xl text-[12px] font-bold uppercase tracking-[0.2em]"
                     >
                         Request This Ride
                     </button>
@@ -248,7 +251,7 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                     <div className="max-w-5xl mx-auto px-12 py-5 flex justify-end">
                         <button
                             onClick={handleRequestRide}
-                            className="bg-black text-white py-4 px-12 rounded-2xl text-[12px] font-black uppercase tracking-[0.2em]"
+                            className="bg-black text-white py-4 px-12 rounded-2xl text-[12px] font-bold uppercase tracking-[0.2em]"
                         >
                             Request This Ride
                         </button>
