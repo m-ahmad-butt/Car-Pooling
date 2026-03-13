@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { extractRollNo, validateEmail, getCampuses, validatePassword, validatePhone } from "../utils/method";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { addUser } from "../features/authSlice";
 import { setProfileFromAuth } from "../features/userSlice";
 
@@ -29,6 +29,7 @@ function RegisterForm() {
 
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const allUsers = useSelector(state => state.auth.users);
 
     const TOTAL_STEPS = 4;
 
@@ -85,6 +86,15 @@ function RegisterForm() {
         }
         setIsLoading(true);
         setTimeout(() => {
+            // Check if email already exists
+            const emailExists = allUsers.some(u => u.email === formData.email);
+            if (emailExists) {
+                setEmailError("Email already registered");
+                setStep(3); // Go back to email step
+                setIsLoading(false);
+                return;
+            }
+
             //all-users
             dispatch(addUser({
                 firstName: formData.firstName,

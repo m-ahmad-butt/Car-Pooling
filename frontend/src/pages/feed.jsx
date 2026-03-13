@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import RideDetails from '../components/rideDetails';
-import Notifications from '../components/notifications';
 import ProfileMenu from '../components/profileMenu';
 import RequestRide from '../components/requestRide';
 import PostRide from '../components/postRide';
@@ -24,6 +23,7 @@ import { addRequest } from '../features/requestSlice';
 import { addReview } from '../features/reviewSlice';
 import { validatePhone, validateVehicleNumber } from '../utils/method';
 import { refreshUserStats } from '../features/userSlice';
+import { addNotification } from '../features/notificationSlice';
 
 const Feed = () => {
     const dispatch = useDispatch();
@@ -114,6 +114,14 @@ const Feed = () => {
                 rating: newAvgRating
             }));
 
+            dispatch(addNotification({
+                id: Date.now(),
+                targetEmail: targetEmail,
+                from: userProfile.email,
+                message: `You received a new ${role === 'rider' ? 'rider' : 'requester'} review from ${userProfile.name}!`,
+                type: 'review'
+            }));
+
             dispatch(setNeedsReview({ role, value: false }));
         }
         closeReviewModal();
@@ -130,6 +138,14 @@ const Feed = () => {
             rideDate: ride.date,
             seats: 1,
             note: note,
+        }));
+
+        dispatch(addNotification({
+            id: Date.now(),
+            targetEmail: ride.riderEmail,
+            from: userProfile.email,
+            message: `${userProfile.name} requested your ride: ${ride.title}`,
+            type: 'request'
         }));
     };
 
@@ -217,6 +233,7 @@ const Feed = () => {
                 setShowMobileMenu={setShowMobileMenu}
                 setShowPostModal={setShowPostModal}
                 notifications={notifications}
+                showNotifications={showNotifications}
                 setShowNotifications={setShowNotifications}
                 userProfile={userProfile}
                 setShowProfileMenu={setShowProfileMenu}
@@ -233,9 +250,7 @@ const Feed = () => {
                 navigate={navigate}
             />
 
-            <div className="lg:hidden">
-                {showNotifications && <Notifications notifications={notifications} onClose={() => setShowNotifications(false)} />}
-            </div>
+
 
             <ReviewModal
                 showReviewModal={showReviewModal}

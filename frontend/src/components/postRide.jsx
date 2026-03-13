@@ -5,12 +5,11 @@ const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormCha
 
     return (
         <div className="fixed inset-0 z-[100] bg-white flex flex-col">
-            {/* Header */}
             <div className="px-6 py-6 border-b border-gray-50 flex items-center gap-6">
                 <button onClick={() => setShowPostModal(false)} className="text-black hover:bg-gray-50 p-1 rounded-lg transition-all">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                 </button>
-                <h2 className="text-2xl font-black tracking-tight">Create New Post</h2>
+                <h2 className="text-2xl font-black tracking-tight">Create New Ride</h2>
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-8 bg-gray-50/20">
@@ -27,7 +26,7 @@ const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormCha
                                             <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Title</label>
                                             <span className="text-[10px] text-gray-300 font-bold">{postForm.title.length}/20</span>
                                         </div>
-                                        <input type="text" placeholder="e.g. Ride to CS block" value={postForm.title} onChange={(e) => handlePostFormChange('title', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none" required />
+                                        <input type="text" placeholder="e.g. Ride to Allama Iqbal Airport" value={postForm.title} onChange={(e) => handlePostFormChange('title', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none" required />
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -110,10 +109,10 @@ const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormCha
 
                                     <div>
                                         <div className="flex justify-between items-center mb-2">
-                                            <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Location</label>
+                                            <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Pick up</label>
                                             <span className="text-[10px] text-gray-300 font-bold">{postForm.location.length}/20</span>
                                         </div>
-                                        <input type="text" placeholder="Where is the pick-up/drop-off point?" value={postForm.location} onChange={(e) => handlePostFormChange('location', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none" required />
+                                        <input type="text" placeholder="Where is the pick-up point?" value={postForm.location} onChange={(e) => handlePostFormChange('location', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none" required />
                                     </div>
 
                                     <div>
@@ -121,7 +120,7 @@ const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormCha
                                             <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Destination</label>
                                             <span className="text-[10px] text-gray-300 font-bold">{postForm.destination.length}/20</span>
                                         </div>
-                                        <input type="text" placeholder="Where is the pick-up/drop-off point?" value={postForm.destination} onChange={(e) => handlePostFormChange('destination', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none" required />
+                                        <input type="text" placeholder="Where is the drop-off point?" value={postForm.destination} onChange={(e) => handlePostFormChange('destination', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none" required />
                                     </div>
 
                                     <div>
@@ -147,7 +146,7 @@ const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormCha
                                 </div>
                                 <div className="max-w-2xl mx-auto pt-6">
                                     <button type="submit" className="w-full bg-black text-white py-5 rounded-[2rem] text-[13px] font-black uppercase tracking-[0.3em] hover:shadow-2xl hover:shadow-black/20 active:scale-95 transition-all">
-                                        Publish Post
+                                        Publish Ride
                                     </button>
                                 </div>
                             </div>

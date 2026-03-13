@@ -11,9 +11,12 @@ const authSlice = createSlice({
     name: "auth",
     initialState,
     reducers: {
-        addUser: (state,action)=>{
-            state.users.push(action.payload);
-            localStorage.setItem('allUsers', JSON.stringify(state.users));
+        addUser: (state, action) => {
+            const exists = state.users.some(u => u.email === action.payload.email);
+            if (!exists) {
+                state.users.push(action.payload);
+                localStorage.setItem('allUsers', JSON.stringify(state.users));
+            }
         },
 
         loginUser: (state,action)=>{

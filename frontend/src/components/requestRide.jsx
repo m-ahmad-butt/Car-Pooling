@@ -1,6 +1,7 @@
 import { useSelector, useDispatch } from "react-redux";
 import { approveRequest, declineRequest } from "../features/requestSlice";
 import { decrementSeats, setOngoingRide, updateRide } from "../features/rideSlice";
+import { addNotification } from "../features/notificationSlice";
 
 
 function RequestRide() {
@@ -42,12 +43,31 @@ function RequestRide() {
                 to: ride ? (ride.destination || "Destination") : "Destination",
                 status: "In Progress"
             }));
+
+            dispatch(addNotification({
+                id: Date.now(),
+                targetEmail: request.requesterEmail,
+                from: userProfile.email,
+                message: `Your request for "${ride ? ride.title : 'ride'}" has been approved!`,
+                type: 'approval'
+            }));
         }
     };
 
     //allRequests
     const handleDeclineRequest = (id) => {
+        const request = rideRequests.find(r => r.id === id);
         dispatch(declineRequest(id));
+
+        if (request) {
+            dispatch(addNotification({
+                id: Date.now(),
+                targetEmail: request.requesterEmail,
+                from: userProfile.email,
+                message: `Your request for "${request.ride}" was declined.`,
+                type: 'decline'
+            }));
+        }
     };
 
    return (

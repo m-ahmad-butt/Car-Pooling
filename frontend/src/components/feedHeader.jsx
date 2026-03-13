@@ -1,8 +1,9 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { setFilters, setActiveTab } from '../features/rideSlice';
 import { getCampuses } from '../utils/method';
+import Notifications from './notifications';
 
-const FeedHeader = ({ showMobileMenu, setShowMobileMenu, setShowPostModal, notifications, setShowNotifications, userProfile, setShowProfileMenu, showProfileMenu, ProfileMenu }) => {
+const FeedHeader = ({ showMobileMenu, setShowMobileMenu, setShowPostModal, notifications, showNotifications, setShowNotifications, userProfile, setShowProfileMenu, showProfileMenu, ProfileMenu }) => {
     const dispatch = useDispatch();
     const activeTab = useSelector(state => state.rides.activeTab);
     const filters = useSelector(state => state.rides.filters);
@@ -52,7 +53,7 @@ const FeedHeader = ({ showMobileMenu, setShowMobileMenu, setShowPostModal, notif
 
                         <div className="relative">
                             <button
-                                onClick={() => setShowNotifications(!notifications)}
+                                onClick={() => setShowNotifications(!showNotifications)}
                                 className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-gray-100 hover:bg-gray-50 transition-all group relative"
                             >
                                 <svg className="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 20 20">
@@ -62,6 +63,7 @@ const FeedHeader = ({ showMobileMenu, setShowMobileMenu, setShowPostModal, notif
                                     <span className="absolute top-2 right-2 w-4 h-4 bg-red-500 border-2 border-white rounded-full text-[8px] font-black text-white flex items-center justify-center">{notifications.length}</span>
                                 )}
                             </button>
+                            {showNotifications && <Notifications notifications={notifications} onClose={() => setShowNotifications(false)} />}
                         </div>
 
                         <div className="flex items-center gap-3 pl-6 border-l border-gray-100 relative">
