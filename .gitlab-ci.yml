@@ -54,7 +54,7 @@ build-frontend:
     - main
     - develop
 
-# --- DEPLOY JOBS (PRODUCTION) ---
+# --- DEPLOY JOBS ---
 deploy-eureka:
   stage: deploy
   image: alpine:latest
