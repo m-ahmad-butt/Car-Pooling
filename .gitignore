@@ -1,3 +1,5 @@
 .env
 aws.ps1
 dockers.ps1
+env.ps1
+runner.ps1
