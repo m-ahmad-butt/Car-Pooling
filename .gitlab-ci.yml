@@ -96,6 +96,7 @@ deploy-gateway:
   only:
     - main
 
+
 deploy-auth:
   stage: deploy
   image: alpine:latest
