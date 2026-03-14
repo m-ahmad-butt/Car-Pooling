@@ -1,0 +1,49 @@
+services:
+  auth-service:
+    build: .
+    ports:
+      - "5002:5002"
+    environment:
+      - DATABASE_URL=mongodb://admin:admin123@auth-mongo:27017/auth_db?authSource=admin
+      - AUTH_SERVICE_PORT=5002
+      - EUREKA_URL=http://eureka-server:5001
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+    depends_on:
+      - auth-mongo
+    networks:
+      - carpooling-network
+
+  auth-mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin123
+    volumes:
+      - auth_mongo_data:/data/db
+    networks:
+      - carpooling-network
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: auth-mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=admin123
+      - ME_CONFIG_MONGODB_URL=mongodb://admin:admin123@auth-mongo:27017/
+      - ME_CONFIG_BASICAUTH=false
+    depends_on:
+      - auth-mongo
+    restart: unless-stopped
+    networks:
+      - carpooling-network
+
+networks:
+  carpooling-network:
+    external: true
+
+volumes:
+  auth_mongo_data:

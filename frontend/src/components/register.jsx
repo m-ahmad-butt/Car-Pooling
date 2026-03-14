@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { extractRollNo, validateEmail, getCampuses, validatePassword, validatePhone } from "../utils/method";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { addUser } from "../features/authSlice";
+import { useDispatch } from "react-redux";
+import { useSignUp } from "@clerk/clerk-react";
 import { setProfileFromAuth } from "../features/userSlice";
 
 function RegisterForm() {
@@ -14,6 +14,11 @@ function RegisterForm() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [step, setStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
+    const [serverError, setServerError] = useState("");
+
+    // Step 5: email OTP verification
+    const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""]);
+    const [otpError, setOtpError] = useState("");
 
     const [formData, setFormData] = useState({
         firstName: "",
@@ -26,16 +31,13 @@ function RegisterForm() {
     });
 
     const campuses = getCampuses();
-
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const allUsers = useSelector(state => state.auth.users);
+    const { signUp, isLoaded } = useSignUp();
 
     const TOTAL_STEPS = 4;
-
     const stepLabels = ["Name", "Campus", "Email", "Password"];
 
-    // step inputs validation
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -59,8 +61,6 @@ function RegisterForm() {
         }
     };
 
-
-    // next step
     const handleNext = (e) => {
         e.preventDefault();
         if (step === 1 && (!formData.firstName || !formData.lastName)) return;
@@ -69,13 +69,15 @@ function RegisterForm() {
         setStep(prev => prev + 1);
     };
 
-    // previous step
     const handleBack = () => setStep(prev => prev - 1);
 
-    // submit
+    // Step 4 submit → create Clerk account → triggers email OTP
     const handleRegister = async (e) => {
         e.preventDefault();
+        if (!isLoaded) return;
         setPasswordError("");
+        setServerError("");
+
         if (!validatePassword(formData.password)) {
             setPasswordError("Password must be 8+ chars with uppercase, lowercase & special symbol.");
             return;
@@ -84,41 +86,77 @@ function RegisterForm() {
             setPasswordError("Passwords do not match.");
             return;
         }
+
         setIsLoading(true);
-        setTimeout(() => {
-            // Check if email already exists
-            const emailExists = allUsers.some(u => u.email === formData.email);
-            if (emailExists) {
-                setEmailError("Email already registered");
-                setStep(3); // Go back to email step
-                setIsLoading(false);
-                return;
-            }
-
-            //all-users
-            dispatch(addUser({
-                firstName: formData.firstName,
-                lastName: formData.lastName,
-                email: formData.email,
+        try {
+            await signUp.create({
+                emailAddress: formData.email,
                 password: formData.password,
-                campusId: formData.campusId,
-                contactNo: formData.contactNo,
-                rollNo: formData.rollNo,
-            }));
-            
-            // user-profile
-            dispatch(setProfileFromAuth({
                 firstName: formData.firstName,
                 lastName: formData.lastName,
-                email: formData.email,
-                campusId: campuses.find(c => c.id === formData.campusId)?.name || formData.campusId,
-                contactNo: formData.contactNo,
-                rollNo: formData.rollNo,
-            }));
+            });
 
+            // Trigger email verification OTP
+            await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+            setStep(5); // Go to OTP verification step
+        } catch (err) {
+            const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || "Registration failed.";
+            setServerError(msg);
+        } finally {
             setIsLoading(false);
-            navigate("/login");
-        }, 1500);
+        }
+    };
+
+    // Step 5: verify the OTP sent by Clerk
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault();
+        if (!isLoaded) return;
+        setOtpError("");
+        const code = otpCode.join("");
+        if (code.length < 6) return;
+
+        setIsLoading(true);
+        try {
+            const result = await signUp.attemptEmailAddressVerification({ code });
+
+            if (result.status === "complete") {
+                // Sync profile to Redux
+                dispatch(setProfileFromAuth({
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    email: formData.email,
+                    campusId: campuses.find(c => c.id === formData.campusId)?.name || formData.campusId,
+                    contactNo: formData.contactNo,
+                    rollNo: formData.rollNo,
+                }));
+                navigate("/feed");
+            } else {
+                setOtpError("Verification incomplete. Please try again.");
+            }
+        } catch (err) {
+            const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || "Invalid code.";
+            setOtpError(msg);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleOtpChange = (element, index) => {
+        if (isNaN(element.value)) return;
+        const newOtp = [...otpCode.map((d, idx) => (idx === index ? element.value : d))];
+        setOtpCode(newOtp);
+        setOtpError("");
+        if (element.value && element.nextSibling) element.nextSibling.focus();
+    };
+
+    const handleResendOtp = async () => {
+        try {
+            await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+            setOtpCode(["", "", "", "", "", ""]);
+            setOtpError("");
+        } catch {
+            setOtpError("Failed to resend code. Please try again.");
+        }
     };
 
     return (
@@ -135,210 +173,233 @@ function RegisterForm() {
                         </h1>
                     </div>
 
-                    {/* Steps */}
-                    <div className="mb-8">
-                        <div className="flex items-center justify-between mb-3">
-                            <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest">
-                                Step {step} of {TOTAL_STEPS}
-                                <span className="text-black ml-2">— {stepLabels[step - 1]}</span>
-                            </p>
-                            <p className="text-[11px] font-extrabold text-gray-300 uppercase tracking-widest">
-                                {Math.round((step / TOTAL_STEPS) * 100)}%
-                            </p>
+                    {/* Steps indicator — only show for steps 1-4 */}
+                    {step <= TOTAL_STEPS && (
+                        <div className="mb-8">
+                            <div className="flex items-center justify-between mb-3">
+                                <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest">
+                                    Step {step} of {TOTAL_STEPS}
+                                    <span className="text-black ml-2">— {stepLabels[step - 1]}</span>
+                                </p>
+                                <p className="text-[11px] font-extrabold text-gray-300 uppercase tracking-widest">
+                                    {Math.round((step / TOTAL_STEPS) * 100)}%
+                                </p>
+                            </div>
+                            <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-black rounded-full transition-all duration-300"
+                                    style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
+                                />
+                            </div>
                         </div>
-
-                        {/* Progress bar */}
-                        <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-black rounded-full"
-                                style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
-                            />
-                        </div>
-
-
-                    </div>
+                    )}
 
                     <div className="mb-6">
                         <h2 className="text-2xl font-bold tracking-tight mb-1">
                             {step === 1 ? "What's your name?" :
                                 step === 2 ? "Your campus & contact" :
                                     step === 3 ? "Verify student status" :
-                                        "Set a password"}
+                                        step === 4 ? "Set a password" :
+                                            "Verify your email"}
                         </h2>
                         <p className="text-sm text-gray-400 leading-relaxed font-medium">
                             {step === 1 ? "Enter your full legal name" :
                                 step === 2 ? "Choose your campus and add a contact number" :
                                     step === 3 ? "Use your FAST university email" :
-                                        "Make it strong and secure"}
+                                        step === 4 ? "Make it strong and secure" :
+                                            `We sent a 6-digit code to ${formData.email}`}
                         </p>
                     </div>
 
-                    <form onSubmit={step === TOTAL_STEPS ? handleRegister : handleNext} className="space-y-5">
+                    {/* ── Steps 1–4 ── */}
+                    {step <= TOTAL_STEPS && (
+                        <form onSubmit={step === TOTAL_STEPS ? handleRegister : handleNext} className="space-y-5">
 
-                        {step === 1 && (
-                            <div className="space-y-5">
-                                <div>
-                                    <label className="block text-[12px] font-bold text-gray-800 mb-2">First Name</label>
-                                    <input
-                                        type="text"
-                                        name="firstName"
-                                        value={formData.firstName}
-                                        onChange={handleInputChange}
-                                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black text-sm placeholder-gray-300"
-                                        placeholder="First name"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[12px] font-bold text-gray-800 mb-2">Last Name</label>
-                                    <input
-                                        type="text"
-                                        name="lastName"
-                                        value={formData.lastName}
-                                        onChange={handleInputChange}
-                                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black text-sm placeholder-gray-300"
-                                        placeholder="Last name"
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        {step === 2 && (
-                            <div className="space-y-5">
-                                <div>
-                                    <label className="block text-[12px] font-bold text-gray-800 mb-2">Campus</label>
-                                    <div className="relative">
-                                        <select
-                                            name="campusId"
-                                            value={formData.campusId}
+                            {step === 1 && (
+                                <div className="space-y-5">
+                                    <div>
+                                        <label className="block text-[12px] font-bold text-gray-800 mb-2">First Name</label>
+                                        <input
+                                            type="text" name="firstName" value={formData.firstName}
                                             onChange={handleInputChange}
-                                            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black text-sm appearance-none text-gray-600"
-                                            required
-                                        >
-                                            <option value="">Choose campus</option>
-                                            {campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                        </select>
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                                            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black text-sm placeholder-gray-300"
+                                            placeholder="First name" required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-bold text-gray-800 mb-2">Last Name</label>
+                                        <input
+                                            type="text" name="lastName" value={formData.lastName}
+                                            onChange={handleInputChange}
+                                            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black text-sm placeholder-gray-300"
+                                            placeholder="Last name" required
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {step === 2 && (
+                                <div className="space-y-5">
+                                    <div>
+                                        <label className="block text-[12px] font-bold text-gray-800 mb-2">Campus</label>
+                                        <div className="relative">
+                                            <select
+                                                name="campusId" value={formData.campusId} onChange={handleInputChange}
+                                                className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black text-sm appearance-none text-gray-600"
+                                                required
+                                            >
+                                                <option value="">Choose campus</option>
+                                                {campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                            </select>
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-bold text-gray-800 mb-2">Contact Number</label>
+                                        <input
+                                            type="tel" name="contactNo" value={formData.contactNo}
+                                            onChange={handleInputChange}
+                                            className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-1 text-sm placeholder-gray-300 ${phoneError ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:border-black focus:ring-black"}`}
+                                            placeholder="03XX-XXXXXXX" required
+                                        />
+                                        {phoneError && (
+                                            <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1.5">
+                                                <span className="w-1 h-1 bg-red-500 rounded-full inline-block"></span>
+                                                {phoneError}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {step === 3 && (
+                                <div className="space-y-5">
+                                    <div>
+                                        <label className="block text-[12px] font-bold text-gray-800 mb-2">University Email</label>
+                                        <input
+                                            type="email" name="email" value={formData.email}
+                                            onChange={handleInputChange}
+                                            className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-1 text-sm placeholder-gray-300 ${emailError ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:border-black focus:ring-black"}`}
+                                            placeholder="l23XXX@lhr.nu.edu.pk" required
+                                        />
+                                        {emailError && (
+                                            <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1.5">
+                                                <span className="w-1 h-1 bg-red-500 rounded-full inline-block"></span>
+                                                {emailError}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-bold text-gray-800 mb-2">Student ID</label>
+                                        <div className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-gray-400 font-mono text-xs">
+                                            {formData.rollNo || "Auto-extracted from email..."}
                                         </div>
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-[12px] font-bold text-gray-800 mb-2">Contact Number</label>
-                                    <input
-                                        type="tel"
-                                        name="contactNo"
-                                        value={formData.contactNo}
-                                        onChange={handleInputChange}
-                                        className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-1 text-sm placeholder-gray-300 ${phoneError ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:border-black focus:ring-black"}`}
-                                        placeholder="03XX-XXXXXXX"
-                                        required
-                                    />
-                                    {phoneError && (
-                                        <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1.5">
-                                            <span className="w-1 h-1 bg-red-500 rounded-full inline-block"></span>
-                                            {phoneError}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {step === 3 && (
-                            <div className="space-y-5">
-                                <div>
-                                    <label className="block text-[12px] font-bold text-gray-800 mb-2">University Email</label>
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleInputChange}
-                                        className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-1 text-sm placeholder-gray-300 ${emailError ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:border-black focus:ring-black"}`}
-                                        placeholder="l23XXX@lhr.nu.edu.pk"
-                                        required
-                                    />
-                                    {emailError && (
-                                        <p className="text-[10px] text-red-500 font-bold mt-1.5 ml-1 flex items-center gap-1.5">
-                                            <span className="w-1 h-1 bg-red-500 rounded-full inline-block"></span>
-                                            {emailError}
-                                        </p>
-                                    )}
-                                </div>
-                                <div>
-                                    <label className="block text-[12px] font-bold text-gray-800 mb-2">Student ID</label>
-                                    <div className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-gray-400 font-mono text-xs">
-                                        {formData.rollNo || "Auto-extracted from email..."}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {step === 4 && (
-                            <div className="space-y-5">
-                                <div>
-                                    <label className="block text-[12px] font-bold text-gray-800 mb-2">Password</label>
-                                    <div className="relative">
-                                        <input
-                                            type={showPassword ? "text" : "password"}
-                                            name="password"
-                                            value={formData.password}
-                                            onChange={handleInputChange}
-                                            className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-1 text-sm placeholder-gray-300 ${passwordError && passwordError !== "Passwords do not match." ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:border-black focus:ring-black"}`}
-                                            placeholder="Password"
-                                            required
-                                        />
-                                        <button type="button" onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-extrabold uppercase text-gray-400">
-                                            {showPassword ? "Hide" : "Show"}
-                                        </button>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-[12px] font-bold text-gray-800 mb-2">Confirm Password</label>
-                                    <div className="relative">
-                                        <input
-                                            type={showConfirmPassword ? "text" : "password"}
-                                            value={confirmPassword}
-                                            onChange={(e) => setConfirmPassword(e.target.value)}
-                                            className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-1 text-sm placeholder-gray-300 ${passwordError === "Passwords do not match." ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:border-black focus:ring-black"}`}
-                                            placeholder="Confirm password"
-                                            required
-                                        />
-                                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-extrabold uppercase text-gray-400">
-                                            {showConfirmPassword ? "Hide" : "Show"}
-                                        </button>
-                                    </div>
-                                </div>
-                                {passwordError && (
-                                    <p className="text-[10px] text-red-500 font-bold ml-1 flex items-center gap-1.5">
-                                        <span className="w-1 h-1 bg-red-500 rounded-full inline-block"></span>
-                                        {passwordError}
-                                    </p>
-                                )}
-                            </div>
-                        )}
-
-                        <div className="flex gap-3 pt-2">
-                            {step > 1 && (
-                                <button
-                                    type="button"
-                                    onClick={handleBack}
-                                    className="px-6 py-2.5 border border-gray-200 rounded-lg text-sm font-extrabold text-gray-500 uppercase tracking-tighter"
-                                >
-                                    Back
-                                </button>
                             )}
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className={`flex-1 bg-black text-white py-2.5 rounded-lg text-sm font-extrabold uppercase tracking-widest ${isLoading ? "opacity-50" : ""}`}
-                            >
-                                {isLoading ? "..." : step === TOTAL_STEPS ? "Complete" : "Next →"}
-                            </button>
-                        </div>
-                    </form>
+
+                            {step === 4 && (
+                                <div className="space-y-5">
+                                    <div>
+                                        <label className="block text-[12px] font-bold text-gray-800 mb-2">Password</label>
+                                        <div className="relative">
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                name="password" value={formData.password}
+                                                onChange={handleInputChange}
+                                                className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-1 text-sm placeholder-gray-300 ${passwordError && passwordError !== "Passwords do not match." ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:border-black focus:ring-black"}`}
+                                                placeholder="Password" required
+                                            />
+                                            <button type="button" onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-extrabold uppercase text-gray-400">
+                                                {showPassword ? "Hide" : "Show"}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-bold text-gray-800 mb-2">Confirm Password</label>
+                                        <div className="relative">
+                                            <input
+                                                type={showConfirmPassword ? "text" : "password"}
+                                                value={confirmPassword}
+                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-1 text-sm placeholder-gray-300 ${passwordError === "Passwords do not match." ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:border-black focus:ring-black"}`}
+                                                placeholder="Confirm password" required
+                                            />
+                                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-extrabold uppercase text-gray-400">
+                                                {showConfirmPassword ? "Hide" : "Show"}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {passwordError && (
+                                        <p className="text-[10px] text-red-500 font-bold ml-1 flex items-center gap-1.5">
+                                            <span className="w-1 h-1 bg-red-500 rounded-full inline-block"></span>
+                                            {passwordError}
+                                        </p>
+                                    )}
+                                    {serverError && (
+                                        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-center gap-2">
+                                            <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                                            <p className="text-[11px] text-red-600 font-bold">{serverError}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="flex gap-3 pt-2">
+                                {step > 1 && (
+                                    <button type="button" onClick={handleBack}
+                                        className="px-6 py-2.5 border border-gray-200 rounded-lg text-sm font-extrabold text-gray-500 uppercase tracking-tighter">
+                                        Back
+                                    </button>
+                                )}
+                                <button type="submit" disabled={isLoading || !isLoaded}
+                                    className={`flex-1 bg-black text-white py-2.5 rounded-lg text-sm font-extrabold uppercase tracking-widest ${isLoading ? "opacity-50" : ""}`}>
+                                    {isLoading ? "..." : step === TOTAL_STEPS ? "Complete" : "Next →"}
+                                </button>
+                            </div>
+                        </form>
+                    )}
+
+                    {/* ── Step 5: Email OTP Verification ── */}
+                    {step === 5 && (
+                        <form onSubmit={handleVerifyOtp} className="space-y-6">
+                            <div className="flex justify-between gap-2">
+                                {otpCode.map((data, index) => (
+                                    <input
+                                        key={index}
+                                        type="text"
+                                        maxLength="1"
+                                        value={data}
+                                        onChange={(e) => handleOtpChange(e.target, index)}
+                                        onFocus={(e) => e.target.select()}
+                                        className={`w-11 h-11 text-center bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all text-lg font-black ${otpError ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:border-black focus:ring-black"}`}
+                                    />
+                                ))}
+                            </div>
+
+                            {otpError && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-center gap-2">
+                                    <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                                    <p className="text-[11px] text-red-600 font-bold">{otpError}</p>
+                                </div>
+                            )}
+
+                            <div className="flex flex-col items-center gap-4">
+                                <button type="submit" disabled={isLoading}
+                                    className={`w-full bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 ${isLoading ? "opacity-50" : ""}`}>
+                                    {isLoading ? "..." : "Verify & Continue"}
+                                </button>
+                                <button type="button" onClick={handleResendOtp}
+                                    className="text-[11px] font-black text-gray-400 uppercase tracking-widest hover:text-black transition-colors">
+                                    Resend code
+                                </button>
+                            </div>
+                        </form>
+                    )}
 
                     <div className="mt-8 text-center">
                         <p className="text-[12px] font-bold text-gray-400 uppercase tracking-tight">
@@ -368,12 +429,10 @@ function RegisterForm() {
                         </div>
                     </div>
                 </div>
-
                 <div className="absolute top-10 right-10">
                     <div className="w-12 h-[1px] bg-white/20 mb-3"></div>
                     <div className="w-12 h-[1px] bg-white/10"></div>
                 </div>
-
                 <div className="absolute bottom-16 left-20 z-10 pointer-events-none">
                     <h3 className="text-white/5 text-[10rem] font-extrabold tracking-[1.5rem] uppercase select-none leading-none">FAST</h3>
                 </div>

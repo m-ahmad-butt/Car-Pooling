@@ -1,15 +1,17 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+const defaultProfile = {
+    name: null,
+    rollNo: null,
+    campus: null,
+    email: null,
+    contactNo: null,
+    image: null,
+    stats: { rides: 0, comments: 0, rating: 0 },
+};
+
 const initialState = {
-    profile: JSON.parse(localStorage.getItem('userProfile')) || {
-        name: null,
-        rollNo: null,
-        campus: null,
-        email: null,
-        contactNo: null,
-        image: null,
-        stats: { rides: 0, comments: 0, rating: 0 },
-    },
+    profile: JSON.parse(localStorage.getItem('userProfile')) || defaultProfile,
     otherProfiles: {},
 };
 

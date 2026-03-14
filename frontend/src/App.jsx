@@ -8,10 +8,12 @@ import ProfilePage from './pages/profile'
 import OtherProfilePage from './pages/otherProfile'
 import ResetPassword from './components/reset-password'
 import ProtectedRoute from './components/protectedRoute'
+import UserSync from './components/userSync'
 
 function App() {
   return (
     <BrowserRouter>
+      <UserSync />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />

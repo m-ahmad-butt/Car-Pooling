@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { useClerk } from '@clerk/clerk-react';
 import { logoutAuth } from '../features/authSlice';
 import { logoutUser } from '../features/userSlice';
 
 const ProfileMenu = ({ onClose }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const { signOut } = useClerk();
 
     return (
         <div className="fixed inset-x-4 top-[10rem] lg:absolute lg:top-full lg:right-0 lg:mt-4 lg:w-[180px] bg-white rounded-2xl shadow-2xl border border-gray-100 z-[100] animate-in slide-in-from-top-4 duration-300 overflow-hidden">
@@ -29,10 +31,11 @@ const ProfileMenu = ({ onClose }) => {
 
                 <button
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-50 transition-colors group rounded-xl"
-                    onClick={() => {
+                    onClick={async () => {
                         dispatch(logoutAuth());
                         dispatch(logoutUser());
-                        navigate('/login');
+                        await signOut();
+                        navigate('/');
                         onClose();
                     }}
                 >

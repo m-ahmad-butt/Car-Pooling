@@ -1,0 +1,7 @@
+services:
+  eureka-server:
+    build: .
+    ports:
+      - "5001:5001"
+    environment:
+      - EUREKA_SERVER_PORT=5001

@@ -4,11 +4,12 @@ import { useSelector, useDispatch } from 'react-redux';
 import Footer from '../components/footer';
 import { getCampuses, validatePassword } from '../utils/method';
 import { updateProfile } from '../features/userSlice';
-import { changePassword } from '../features/authSlice';
+import { useClerk } from "@clerk/clerk-react";
 
 const ProfilePage = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const { openUserProfile } = useClerk();
 
     const userProfile = useSelector(state => state.user.profile);
     const rides = useSelector(state => state.rides.rides);
@@ -52,46 +53,23 @@ const ProfilePage = () => {
     const [completedRidesFilter, setCompletedRidesFilter] = useState('offered');
     const [isEditingName, setIsEditingName] = useState(false);
     const [isEditingCampus, setIsEditingCampus] = useState(false);
-    const [showPasswordFields, setShowPasswordFields] = useState(false);
-    const [passwordData, setPasswordData] = useState({ new: '', confirm: '' });
-    const [passwordError, setPasswordError] = useState('');
 
     const handleSaveProfile = () => {
         if (isEditingName || isEditingCampus) {
             dispatch(updateProfile({ name: editData.name, campus: editData.campus }));
         }
-        
-        if (showPasswordFields) {
-            if (!passwordData.new && !passwordData.confirm) {
-            } else {
-                if (passwordData.new !== passwordData.confirm) {
-                    setPasswordError("Passwords do not match");
-                    return;
-                }
-                if (!validatePassword(passwordData.new)) {
-                    setPasswordError("Password must be 8+ chars with uppercase, lowercase & special symbol");
-                    return;
-                }
-                dispatch(changePassword({ email: userProfile.email, newPassword: passwordData.new }));
-            }
-        }
 
         setIsEditingName(false);
         setIsEditingCampus(false);
-        setShowPasswordFields(false);
         setShow4Fields(true);
         setShowEditPanel(false);
-        setPasswordData({ new: '', confirm: '' });
-        setPasswordError('');
     };
 
     const closePanel = () => {
         setShowEditPanel(false);
         setIsEditingName(false);
         setIsEditingCampus(false);
-        setShowPasswordFields(false);
         setShow4Fields(true);
-        setPasswordData({ new: '', confirm: '' });
     };
 
     return (
@@ -310,11 +288,11 @@ const ProfilePage = () => {
                 </div>
             </main>
 
-            {showEditPanel && (show4fields || showPasswordFields) && (
-                <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-8">
+            {showEditPanel && show4fields && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-8">
                     <div onClick={closePanel} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
-                    <div className="relative bg-white rounded-xl sm:rounded-3xl shadow-2xl p-5 sm:p-12 z-10 max-w-2xl w-full max-h-90vh overflow-y-auto">
+                    <div className="relative bg-white rounded-xl sm:rounded-3xl shadow-2xl p-5 sm:p-12 z-10 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         <button
                             onClick={closePanel}
                             className="absolute top-3 sm:top-6 right-3 sm:right-6 w-9 h-9 rounded-full bg-gray-100 border-0 cursor-pointer flex items-center justify-center text-gray-400 z-20 hover:bg-gray-200"
@@ -330,36 +308,11 @@ const ProfilePage = () => {
                                 }}>
                                     {userProfile.image
                                         ? <img src={userProfile.image} className="w-full h-full object-cover" alt="profile" />
-                                        : <span className="text-white font-black" style={{ fontSize: 'clamp(24px, 5vw, 36px)' }}>{userProfile.name.charAt(0)}</span>
+                                        : <span className="text-white font-black" style={{ fontSize: 'clamp(24px, 5vw, 36px)' }}>{(userProfile.name || 'U').charAt(0)}</span>
                                     }
                                 </div>
-                                <button className="absolute bottom-0.5 right-0.5 bg-white w-7.5 h-7.5 rounded-full shadow-md flex items-center justify-center border border-gray-100 cursor-pointer hover:bg-gray-50">
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                </button>
                             </div>
                         </div>
-
-                        {showPasswordFields && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mb-5 sm:mb-10">
-                                {[{ label: 'New Password', key: 'new' }, { label: 'Confirm Password', key: 'confirm' }].map(f => (
-                                    <div key={f.key} className="bg-gray-100 p-4 sm:p-7 rounded-2xl">
-                                        <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2.5">{ f.label}</h5>
-                                        <input
-                                            type="password"
-                                            placeholder="••••••••"
-                                            className="w-full bg-white/50 border-0 rounded-xl p-2.5 sm:p-3.5 font-black outline-none box-border"
-                                            value={passwordData[f.key]}
-                                            onChange={e => setPasswordData({ ...passwordData, [f.key]: e.target.value })}
-                                        />
-                                    </div>
-                                ))}
-                                {passwordError && (
-                                    <div className="col-span-full px-5 py-3 bg-red-50 rounded-xl border border-red-200">
-                                        <p className="text-red-600 text-xs font-bold m-0">{passwordError}</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
 
                         {show4fields && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mb-5 sm:mb-10">
@@ -369,7 +322,7 @@ const ProfilePage = () => {
                                     <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2.5">Full Name</h5>
                                     {isEditingName
                                         ? <input type="text" value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} className="w-full bg-white/50 border-0 rounded-xl p-2.5 sm:p-3.5 font-black outline-none box-border" autoFocus />
-                                        : <p className="font-black m-0" style={{ fontSize: 'clamp(14px, 2.5vw, 17px)' }}>{userProfile.name}</p>
+                                        : <p className="font-black m-0" style={{ fontSize: 'clamp(14px, 2.5vw, 17px)' }}>{userProfile.name || 'User'}</p>
                                     }
                                     <EditButton active={isEditingName} onClick={() => setIsEditingName(!isEditingName)} />
                                 </div>
@@ -380,7 +333,7 @@ const ProfilePage = () => {
                                         ? <select value={editData.campus} onChange={e => setEditData({ ...editData, campus: e.target.value })} className="w-full bg-white/50 border-0 rounded-xl p-2.5 sm:p-3.5 font-black outline-none box-border" autoFocus>
                                             {getCampuses().map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                                         </select>
-                                        : <p className="font-black m-0" style={{ fontSize: 'clamp(14px, 2.5vw, 17px)' }}>{getCampuses().find(c => c.id === userProfile.campus)?.name || userProfile.campus}</p>
+                                        : <p className="font-black m-0" style={{ fontSize: 'clamp(14px, 2.5vw, 17px)' }}>{getCampuses().find(c => c.id === userProfile.campus)?.name || userProfile.campus || 'NUCES'}</p>
                                     }
                                     <EditButton active={isEditingCampus} onClick={() => setIsEditingCampus(!isEditingCampus)} />
                                 </div>
@@ -392,29 +345,26 @@ const ProfilePage = () => {
                         <div className="flex flex-col items-center gap-3">
                             <button
                                 onClick={() => {
-                                    if (showPasswordFields || isEditingName || isEditingCampus) {
+                                    if (isEditingName || isEditingCampus) {
                                         handleSaveProfile();
                                     } else {
-                                        setShowPasswordFields(true);
-                                        setShow4Fields(false);
+                                        closePanel();
                                     }
                                 }}
                                 className="bg-black text-white rounded-full font-black uppercase tracking-widest text-xs sm:text-sm w-full max-w-80 shadow-lg hover:bg-gray-900 transition"
-                                style={{
-                                    padding: 'clamp(14px, 2.5vw, 20px)',
-                                }}
+                                style={{ padding: 'clamp(14px, 2.5vw, 20px)' }}
                             >
-                                {(showPasswordFields || isEditingName || isEditingCampus) ? 'Save Changes' : 'Change Password'}
+                                {(isEditingName || isEditingCampus) ? 'Save Changes' : 'Close'}
                             </button>
-                            {showPasswordFields && (
+                            
+                            {!(isEditingName || isEditingCampus) && (
                                 <button
-                                    onClick={() => { setShowPasswordFields(false); setShow4Fields(true); setPasswordData({ new: '', confirm: '' }); }}
-                                    className="bg-gray-100 text-black rounded-full font-black uppercase tracking-widest text-xs sm:text-sm w-full max-w-80 hover:bg-gray-200 transition"
-                                    style={{
-                                        padding: 'clamp(14px, 2.5vw, 20px)',
-                                    }}
+                                    onClick={() => openUserProfile()}
+                                    className="bg-gray-100 text-black rounded-full font-black uppercase tracking-widest text-xs sm:text-sm w-full max-w-80 hover:bg-gray-200 transition flex justify-center items-center gap-2"
+                                    style={{ padding: 'clamp(14px, 2.5vw, 20px)' }}
                                 >
-                                    Cancel
+                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-1.998A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clipRule="evenodd" /></svg>
+                                    Security Settings
                                 </button>
                             )}
                         </div>

@@ -68,8 +68,8 @@ const FeedHeader = ({ showMobileMenu, setShowMobileMenu, setShowPostModal, notif
 
                         <div className="flex items-center gap-3 pl-6 border-l border-gray-100 relative">
                             <div className="text-right">
-                                <p className="text-[11px] font-black uppercase leading-none">{userProfile.name}</p>
-                                <p className="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">FAST {userProfile.campus}</p>
+                                <p className="text-[11px] font-black uppercase leading-none">{userProfile.name || 'User'}</p>
+                                <p className="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">FAST {userProfile.campus || 'Campus'}</p>
                             </div>
                             <button
                                 onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -77,7 +77,7 @@ const FeedHeader = ({ showMobileMenu, setShowMobileMenu, setShowPostModal, notif
                             >
                                 {userProfile.image
                                     ? <img src={userProfile.image} className="w-full h-full object-cover" alt="profile" />
-                                    : <span className="text-white text-xs font-black italic">{userProfile.name.charAt(0)}</span>
+                                    : <span className="text-white text-xs font-black italic">{(userProfile.name || 'U').charAt(0)}</span>
                                 }
                             </button>
                             {showProfileMenu && <ProfileMenu onClose={() => setShowProfileMenu(false)} />}

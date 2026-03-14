@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
+import { useNavigate, Navigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { useSignIn, useUser } from "@clerk/clerk-react";
 import { loginUser } from "../features/authSlice";
-import { setProfileFromAuth } from "../features/userSlice";
 import { validateEmail } from "../utils/method";
 
 function LoginForm() {
@@ -10,21 +10,20 @@ function LoginForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [emailError, setEmailError] = useState("");
     const [loginError, setLoginError] = useState("");
-    const [formData, setFormData] = useState({
-        email: "",
-        password: ""
-    });
+    const [formData, setFormData] = useState({ email: "", password: "" });
 
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const users = useSelector(state => state.auth.users);
+    const { signIn, isLoaded } = useSignIn();
+    const { isSignedIn } = useUser();
 
-    // email validation
+    // Already logged in → go straight to feed
+    if (isSignedIn) return <Navigate to="/feed" replace />;
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
         setLoginError("");
-
         if (name === "email") {
             if (value && !validateEmail(value)) {
                 setEmailError("Please use a valid university email (e.g. l23XXXX@lhr.nu.edu.pk)");
@@ -34,38 +33,36 @@ function LoginForm() {
         }
     };
 
-    // login submit
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
+        if (!isLoaded) return;
         if (emailError) return;
         if (!validateEmail(formData.email)) {
             setEmailError("Please use a valid university email (e.g. l23XXXX@lhr.nu.edu.pk)");
             return;
         }
+
         setIsLoading(true);
         setLoginError("");
-        setTimeout(() => {
-            const user = users.find(u => u.email === formData.email && u.password === formData.password);
-            if (user) {
 
-                // current-user
+        try {
+            const result = await signIn.create({
+                identifier: formData.email,
+                password: formData.password,
+            });
+
+            if (result.status === "complete") {
                 dispatch(loginUser({ email: formData.email }));
-
-                // user-profile
-                dispatch(setProfileFromAuth({
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    email: user.email,
-                    campusId: user.campusId,
-                    contactNo: user.contactNo,
-                    rollNo: user.rollNo
-                }));
                 navigate("/feed");
             } else {
-                setLoginError("Invalid email or password. Please try again.");
+                setLoginError("Login incomplete. Please try again.");
             }
+        } catch (err) {
+            const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || "Invalid email or password.";
+            setLoginError(msg);
+        } finally {
             setIsLoading(false);
-        }, 1500);
+        }
     };
 
     return (
@@ -79,7 +76,6 @@ function LoginForm() {
                             drop<span className="text-gray-300 font-bold italic ml-0.5">ME</span>
                         </h1>
                     </div>
-
 
                     <div className="mb-8">
                         <h2 className="text-2xl font-bold tracking-tight mb-1">Welcome back</h2>
@@ -148,7 +144,7 @@ function LoginForm() {
                         <div className="pt-2">
                             <button
                                 type="submit"
-                                disabled={isLoading || !!emailError}
+                                disabled={isLoading || !!emailError || !isLoaded}
                                 className={`w-full bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 ${isLoading || emailError ? "opacity-50" : ""}`}
                             >
                                 {isLoading ? "..." : "Sign In"}

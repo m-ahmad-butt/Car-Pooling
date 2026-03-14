@@ -1,25 +1,24 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
+import { useSignIn } from "@clerk/clerk-react";
 import { validateEmail } from "../utils/method";
-import { setResetEmail } from "../features/authSlice";
 
 function ForgotPasswordForm() {
-    const [step, setStep] = useState(1); // 1: enter email, 2: enter OTP
+    const [step, setStep] = useState(1); // 1: enter email, 2: enter OTP + new password
     const [email, setEmail] = useState("");
     const [emailError, setEmailError] = useState("");
     const [otpError, setOtpError] = useState("");
     const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-    const [timeLeft, setTimeLeft] = useState(300); // 5 mins
+    const [newPassword, setNewPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [timeLeft, setTimeLeft] = useState(300);
     const [isLoading, setIsLoading] = useState(false);
-
-    const DEMO_OTP = "111111";
+    const [serverError, setServerError] = useState("");
 
     const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const users = useSelector(state => state.auth.users);
+    const { signIn, isLoaded } = useSignIn();
 
-    // otp timer
+    // OTP timer
     useEffect(() => {
         if (step === 2 && timeLeft > 0) {
             const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
@@ -27,14 +26,12 @@ function ForgotPasswordForm() {
         }
     }, [step, timeLeft]);
 
-    // reset time format
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
     };
 
-    //email input
     const handleEmailChange = (e) => {
         const value = e.target.value;
         setEmail(value);
@@ -45,58 +42,81 @@ function ForgotPasswordForm() {
         }
     };
 
-    // submit email
-    const handleEmailSubmit = (e) => {
+    // Step 1: send reset code via Clerk
+    const handleEmailSubmit = async (e) => {
         e.preventDefault();
+        if (!isLoaded) return;
         if (!validateEmail(email)) {
             setEmailError("Please use a valid university email (e.g. l23XXXX@lhr.nu.edu.pk)");
             return;
         }
-        setIsLoading(true);
-        setTimeout(() => {
-            setIsLoading(false);
-            const userExists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
-            
-            if (!userExists) {
-                setEmailError("This email is not registered with us.");
-                return;
-            }
 
-            // otp page
+        setIsLoading(true);
+        setServerError("");
+        try {
+            await signIn.create({
+                strategy: "reset_password_email_code",
+                identifier: email,
+            });
             setStep(2);
             setTimeLeft(300);
-        }, 1500);
-    };
-
-    // otp input
-    const handleOtpChange = (element, index) => {
-        if (isNaN(element.value)) return false;
-        setOtp([...otp.map((d, idx) => (idx === index ? element.value : d))]);
-        setOtpError("");
-        if (element.nextSibling) {
-            element.nextSibling.focus();
-        }
-    };
-
-    // otp input
-    const handleVerifyOtp = (e) => {
-        e.preventDefault();
-        const otpValue = otp.join("");
-        if (otpValue.length < 6) {
-            return;
-        }
-        if (otpValue !== DEMO_OTP) {
-            setOtpError("Invalid OTP. Please try again.");
-            return;
-        }
-        setIsLoading(true);
-        setTimeout(() => {
+        } catch (err) {
+            const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || "Failed to send reset code.";
+            setServerError(msg);
+        } finally {
             setIsLoading(false);
+        }
+    };
 
-            // go to change pass page
-            dispatch(setResetEmail(email));
-            navigate("/reset-password");
-        }, 1500);
+    const handleOtpChange = (element, index) => {
+        if (isNaN(element.value)) return;
+        const newOtp = [...otp.map((d, idx) => (idx === index ? element.value : d))];
+        setOtp(newOtp);
+        setOtpError("");
+        if (element.value && element.nextSibling) element.nextSibling.focus();
+    };
+
+    // Step 2: verify OTP + set new password
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault();
+        if (!isLoaded) return;
+        const code = otp.join("");
+        if (code.length < 6) return;
+
+        setIsLoading(true);
+        setOtpError("");
+        try {
+            const result = await signIn.attemptFirstFactor({
+                strategy: "reset_password_email_code",
+                code,
+                password: newPassword,
+            });
+
+            if (result.status === "complete") {
+                navigate("/feed");
+            } else {
+                setOtpError("Something went wrong. Please try again.");
+            }
+        } catch (err) {
+            const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || "Invalid code.";
+            setOtpError(msg);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleResend = async () => {
+        try {
+            await signIn.create({
+                strategy: "reset_password_email_code",
+                identifier: email,
+            });
+            setOtp(["", "", "", "", "", ""]);
+            setOtpError("");
+            setTimeLeft(300);
+        } catch {
+            setOtpError("Failed to resend. Please try again.");
+        }
     };
 
     return (
@@ -118,7 +138,7 @@ function ForgotPasswordForm() {
                         <p className="text-sm text-gray-400 leading-relaxed font-medium">
                             {step === 1
                                 ? "Enter your email and we'll send you an OTP"
-                                : `Verify the digit code sent to ${email}`}
+                                : `Enter the code sent to ${email} and your new password`}
                         </p>
                     </div>
 
@@ -141,10 +161,16 @@ function ForgotPasswordForm() {
                                     </p>
                                 )}
                             </div>
+                            {serverError && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-center gap-2">
+                                    <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                                    <p className="text-[11px] text-red-600 font-bold">{serverError}</p>
+                                </div>
+                            )}
                             <div className="pt-2">
                                 <button
                                     type="submit"
-                                    disabled={isLoading || !!emailError}
+                                    disabled={isLoading || !!emailError || !isLoaded}
                                     className={`w-full bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 ${isLoading || emailError ? "opacity-50" : ""}`}
                                 >
                                     {isLoading ? "..." : "Send OTP"}
@@ -153,18 +179,41 @@ function ForgotPasswordForm() {
                         </form>
                     ) : (
                         <form onSubmit={handleVerifyOtp} className="space-y-6">
-                            <div className="flex justify-between gap-2">
-                                {otp.map((data, index) => (
+                            {/* OTP Boxes */}
+                            <div>
+                                <label className="block text-[12px] font-bold text-gray-800 mb-3">Verification Code</label>
+                                <div className="flex justify-between gap-2">
+                                    {otp.map((data, index) => (
+                                        <input
+                                            key={index}
+                                            type="text"
+                                            maxLength="1"
+                                            value={data}
+                                            onChange={(e) => handleOtpChange(e.target, index)}
+                                            onFocus={(e) => e.target.select()}
+                                            className={`w-11 h-11 text-center bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all text-lg font-black ${otpError ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:border-black focus:ring-black"}`}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* New Password */}
+                            <div>
+                                <label className="block text-[12px] font-bold text-gray-800 mb-2">New Password</label>
+                                <div className="relative">
                                     <input
-                                        key={index}
-                                        type="text"
-                                        maxLength="1"
-                                        value={data}
-                                        onChange={(e) => handleOtpChange(e.target, index)}
-                                        onFocus={(e) => e.target.select()}
-                                        className={`w-11 h-11 text-center bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all text-lg font-black ${otpError ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:border-black focus:ring-black"}`}
+                                        type={showPassword ? "text" : "password"}
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all text-sm placeholder-gray-300"
+                                        placeholder="New password"
+                                        required
                                     />
-                                ))}
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase text-gray-400 hover:text-black">
+                                        {showPassword ? "Hide" : "Show"}
+                                    </button>
+                                </div>
                             </div>
 
                             {otpError && (
@@ -180,14 +229,14 @@ function ForgotPasswordForm() {
                                 </div>
                                 <button
                                     type="submit"
-                                    disabled={isLoading || timeLeft === 0}
+                                    disabled={isLoading || timeLeft === 0 || !newPassword}
                                     className={`w-full bg-black text-white py-2.5 rounded-lg text-sm font-black uppercase tracking-widest transition-all hover:bg-gray-900 ${isLoading || timeLeft === 0 ? "opacity-50" : ""}`}
                                 >
-                                    {isLoading ? "..." : "Verify OTP"}
+                                    {isLoading ? "..." : "Reset Password"}
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => { setStep(1); setOtp(["", "", "", "", "", ""]); setOtpError(""); }}
+                                    onClick={handleResend}
                                     className="text-[11px] font-black text-gray-400 uppercase tracking-widest hover:text-black transition-colors"
                                 >
                                     Resend email

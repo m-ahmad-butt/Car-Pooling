@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { SignedIn, SignedOut } from "@clerk/clerk-react";
 
 function LandingPage() {
     const navigate = useNavigate();
@@ -12,8 +13,12 @@ function LandingPage() {
                     </h1>
                 </div>
                 <div className="flex gap-6 items-center">
-                    <button onClick={() => navigate("/login")} className="text-sm font-black uppercase tracking-widest hover:text-gray-500 transition-colors">Sign In</button>
-                    <button onClick={() => navigate("/register")} className="bg-black text-white px-6 py-2.5 rounded-lg text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg shadow-black/10">Join Now</button>
+                    <SignedOut>
+                        <button onClick={() => navigate("/login")} className="text-sm font-black uppercase tracking-widest hover:text-gray-500 transition-colors">Sign In</button>
+                        <button onClick={() => navigate("/register")} className="bg-black text-white px-6 py-2.5 rounded-lg text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg shadow-black/10">Join Now</button>
+                    </SignedOut>
+                    <SignedIn>
+                    </SignedIn>
                 </div>
             </nav>
 
