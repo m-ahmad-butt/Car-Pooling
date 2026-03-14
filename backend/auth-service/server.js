@@ -14,15 +14,40 @@ app.use(cors());
 app.use(express.json());
 
 app.post('/auth/sync', async (req, res) => {
-    const { clerkId, email, name } = req.body;
+    const { clerkId, email, name, firstName, lastName, campus, contactNo, rollNo } = req.body;
+    console.log('Syncing user:', { clerkId, email, name });
     try {
-        const user = await prisma.user.upsert({
-            where: { clerkId },
-            update: { email, name },
-            create: { clerkId, email, name }
-        });
+        let user = await prisma.user.findUnique({ where: { clerkId } });
+        
+        const userData = {
+            email,
+            name,
+            firstName,
+            lastName,
+            campus,
+            contactNo,
+            rollNo
+        };
+
+        if (user) {
+            user = await prisma.user.update({
+                where: { clerkId },
+                data: userData
+            });
+            console.log('User updated:', user.clerkId);
+        } else {
+            user = await prisma.user.create({
+                data: {
+                    clerkId,
+                    ...userData
+                }
+            });
+            console.log('User created:', user.clerkId);
+        }
+        
         res.json(user);
     } catch (error) {
+        console.error('Error syncing user:', error);
         res.status(500).json({ error: error.message });
     }
 });

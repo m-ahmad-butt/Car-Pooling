@@ -41,16 +41,21 @@ app.get('/', (req, res) => {
 
 // Route: /auth* -> auth-service
 app.use('/auth', async (req, res) => {
+    console.log(`Gateway received ${req.method} request for ${req.url}`);
     try {
+        const targetUrl = `${SERVICES.auth}/auth${req.url}`;
+        console.log(`Forwarding to: ${targetUrl}`);
         const response = await axios({
             method: req.method,
-            url: `${SERVICES.auth}/auth${req.url}`,
+            url: targetUrl,
             data: req.body,
             params: req.query,
             headers: { 'Content-Type': 'application/json' }
         });
+        console.log(`Response from auth-service: ${response.status}`);
         res.status(response.status).json(response.data);
     } catch (error) {
+        console.error(`Gateway error forwarding to auth-service: ${error.message}`);
         res.status(error.response?.status || 500).json(error.response?.data || { error: error.message });
     }
 });

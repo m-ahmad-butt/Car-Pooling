@@ -13,6 +13,11 @@ model User {
   clerkId   String   @unique
   email     String   @unique
   name      String?
+  firstName String?
+  lastName  String?
+  campus    String?
+  contactNo String?
+  rollNo    String?
   otp       String?
   otpExpiry DateTime?
   createdAt DateTime @default(now())

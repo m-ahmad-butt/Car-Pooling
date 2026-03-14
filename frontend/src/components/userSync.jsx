@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { useUser } from '@clerk/clerk-react';
+import { useSelector } from 'react-redux';
 import axios from 'axios';
 
 const UserSync = () => {
     const { isLoaded, isSignedIn, user } = useUser();
+    const profile = useSelector((state) => state.user.profile);
 
     useEffect(() => {
         const syncUser = async () => {
@@ -13,7 +15,12 @@ const UserSync = () => {
                     await axios.post(`${apiUrl}/auth/sync`, {
                         clerkId: user.id,
                         email: user.primaryEmailAddress?.emailAddress,
-                        name: user.fullName
+                        name: user.fullName,
+                        firstName: user.firstName || profile?.firstName,
+                        lastName: user.lastName || profile?.lastName,
+                        campus: profile?.campusId,
+                        contactNo: profile?.contactNo,
+                        rollNo: profile?.rollNo
                     });
                     console.log('User synced with backend');
                 } catch (error) {
@@ -23,7 +30,7 @@ const UserSync = () => {
         };
 
         syncUser();
-    }, [isLoaded, isSignedIn, user]);
+    }, [isLoaded, isSignedIn, user, profile]);
 
     return null;
 };
