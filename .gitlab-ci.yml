@@ -10,11 +10,13 @@ services:
   - name: docker:24.0.5-dind
     alias: docker
 
-before_script:
-  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+.docker-login: &docker-login
+  before_script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 # --- BUILD JOBS ---
 build-eureka:
+  <<: *docker-login
   stage: build
   image: docker:24.0.5
   script:
@@ -25,6 +27,7 @@ build-eureka:
     - develop
 
 build-gateway:
+  <<: *docker-login
   stage: build
   image: docker:24.0.5
   script:
@@ -35,6 +38,7 @@ build-gateway:
     - develop
 
 build-auth:
+  <<: *docker-login
   stage: build
   image: docker:24.0.5
   script:
@@ -45,6 +49,7 @@ build-auth:
     - develop
 
 build-frontend:
+  <<: *docker-login
   stage: build
   image: docker:24.0.5
   script:
