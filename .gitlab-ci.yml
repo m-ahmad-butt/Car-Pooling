@@ -93,15 +93,25 @@ deploy-auth:
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
+    # Clean up old containers, volumes, and images
     - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker rm -f auth auth-db mongo-express 2>/dev/null || true && docker volume rm auth_mongo_data 2>/dev/null || true && docker image prune -f"
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "openssl rand -base64 756 > /tmp/mongo-keyfile && chmod 400 /tmp/mongo-keyfile && sudo chown 999:999 /tmp/mongo-keyfile"
+    # Create keyfile for replica set auth (sudo rm first in case old one exists with root/999 ownership)
+    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "sudo rm -f /tmp/mongo-keyfile && openssl rand -base64 756 > /tmp/mongo-keyfile && chmod 400 /tmp/mongo-keyfile && sudo chown 999:999 /tmp/mongo-keyfile"
+    # Start MongoDB as replica set with keyfile
     - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker pull mongo:latest && docker run -d --name auth-db -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME=admin -e MONGO_INITDB_ROOT_PASSWORD=admin123 -v auth_mongo_data:/data/db -v /tmp/mongo-keyfile:/data/mongo-keyfile:ro mongo:latest --replSet rs0 --keyFile /data/mongo-keyfile"
+    # Wait for MongoDB to fully start
     - echo "Waiting for MongoDB to start..." && sleep 15
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker logs auth-db --tail 20"
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker exec auth-db mongosh -u admin -p admin123 --authenticationDatabase admin --eval 'rs.initiate({_id:\"rs0\",members:[{_id:0,host:\"localhost:27017\"}]})' || echo 'Replica set may already be initialized'"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker logs auth-db --tail 10"
+    # Initialize replica set
+    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker exec auth-db mongosh -u admin -p admin123 --authenticationDatabase admin --eval 'try{rs.status()}catch(e){rs.initiate({_id:\"rs0\",members:[{_id:0,host:\"localhost:27017\"}]})}'"
     - echo "Waiting for replica set primary..." && sleep 5
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker pull mongo-express:latest && docker run -d --name mongo-express -p 8081:8081 --link auth-db:mongo -e ME_CONFIG_MONGODB_ADMINUSERNAME=admin -e ME_CONFIG_MONGODB_ADMINPASSWORD=admin123 -e ME_CONFIG_MONGODB_URL='mongodb://admin:admin123@mongo:27017/?replicaSet=rs0&directConnection=true' -e ME_CONFIG_BASICAUTH=false mongo-express:latest"
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker pull $DOCKER_USERNAME/fspm-auth-service:latest && docker run -d --name auth -p 5002:5002 --link auth-db:mongodb -e CLERK_SECRET_KEY=$CLERK_SECRET_KEY -e DATABASE_URL='mongodb://admin:admin123@mongodb:27017/auth_db?authSource=admin&replicaSet=rs0&directConnection=true' -e EUREKA_URL=http://$EC2_EUREKA_IP:5001 $DOCKER_USERNAME/fspm-auth-service:latest"
+    # Verify replica set is healthy
+    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker exec auth-db mongosh -u admin -p admin123 --authenticationDatabase admin --eval 'rs.status().ok'"
+    # Start Mongo Express (directConnection=true avoids hostname mismatch)
+    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker pull mongo-express:latest && docker run -d --name mongo-express -p 8081:8081 --link auth-db:mongo -e ME_CONFIG_MONGODB_ADMINUSERNAME=admin -e ME_CONFIG_MONGODB_ADMINPASSWORD=admin123 -e ME_CONFIG_MONGODB_URL='mongodb://admin:admin123@mongo:27017/?directConnection=true' -e ME_CONFIG_BASICAUTH=false mongo-express:latest"
+    # Start Auth Service (directConnection=true so Prisma connects directly without replica set discovery)
+    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker pull $DOCKER_USERNAME/fspm-auth-service:latest && docker run -d --name auth -p 5002:5002 --link auth-db:mongodb -e CLERK_SECRET_KEY=$CLERK_SECRET_KEY -e DATABASE_URL='mongodb://admin:admin123@mongodb:27017/auth_db?authSource=admin&directConnection=true' -e EUREKA_URL=http://$EC2_EUREKA_IP:5001 $DOCKER_USERNAME/fspm-auth-service:latest"
+    # Push Prisma schema
     - sleep 5
     - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker exec auth npx prisma db push"
   only:
