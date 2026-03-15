@@ -94,7 +94,8 @@ deploy-auth:
     - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
     - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker rm -f auth auth-db mongo-express 2>/dev/null || true && docker volume rm auth_mongo_data 2>/dev/null || true && docker image prune -f"
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker pull mongo:latest && docker run -d --name auth-db -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME=admin -e MONGO_INITDB_ROOT_PASSWORD=admin123 -v auth_mongo_data:/data/db mongo:latest --replSet rs0"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "openssl rand -base64 756 > /tmp/mongo-keyfile && chmod 400 /tmp/mongo-keyfile && sudo chown 999:999 /tmp/mongo-keyfile"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker pull mongo:latest && docker run -d --name auth-db -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME=admin -e MONGO_INITDB_ROOT_PASSWORD=admin123 -v auth_mongo_data:/data/db -v /tmp/mongo-keyfile:/data/mongo-keyfile:ro mongo:latest --replSet rs0 --keyFile /data/mongo-keyfile"
     - echo "Waiting for MongoDB to start..." && sleep 15
     - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker logs auth-db --tail 20"
     - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker exec auth-db mongosh -u admin -p admin123 --authenticationDatabase admin --eval 'rs.initiate({_id:\"rs0\",members:[{_id:0,host:\"localhost:27017\"}]})' || echo 'Replica set may already be initialized'"
