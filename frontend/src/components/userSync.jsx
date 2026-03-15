@@ -9,10 +9,16 @@ const UserSync = () => {
 
     useEffect(() => {
         const syncUser = async () => {
+            console.log('UserSync state:', { isLoaded, isSignedIn, userId: user?.id });
             if (isLoaded && isSignedIn && user) {
                 try {
                     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-                    await axios.post(`${apiUrl}/auth/sync`, {
+                    console.log('Syncing user with URL:', `${apiUrl}/auth/sync`, {
+                        clerkId: user.id,
+                        email: user.primaryEmailAddress?.emailAddress,
+                        name: user.fullName
+                    });
+                    const response = await axios.post(`${apiUrl}/auth/sync`, {
                         clerkId: user.id,
                         email: user.primaryEmailAddress?.emailAddress,
                         name: user.fullName,
@@ -22,9 +28,9 @@ const UserSync = () => {
                         contactNo: profile?.contactNo,
                         rollNo: profile?.rollNo
                     });
-                    console.log('User synced with backend');
+                    console.log('User synced with backend success:', response.data);
                 } catch (error) {
-                    console.error('Failed to sync user:', error);
+                    console.error('Failed to sync user error:', error.response?.data || error.message);
                 }
             }
         };

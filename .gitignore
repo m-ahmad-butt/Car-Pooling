@@ -3,3 +3,4 @@ aws.ps1
 dockers.ps1
 env.ps1
 runner.ps1
+/backend/auth-service/node_modules

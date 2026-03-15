@@ -11,22 +11,39 @@ const app = express();
 const PORT = process.env.AUTH_SERVICE_PORT || 5002;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({
+    verify: (req, res, buf) => {
+        req.rawBody = buf.toString();
+    }
+}));
+
+app.use((req, res, next) => {
+    if (req.url === '/auth/sync' && req.method === 'POST') {
+        console.log('Raw body received at Auth Service:', req.rawBody);
+    }
+    next();
+});
 
 app.post('/auth/sync', async (req, res) => {
     const { clerkId, email, name, firstName, lastName, campus, contactNo, rollNo } = req.body;
+    
+    if (!clerkId || !email) {
+        console.error('Sync failed: Missing required fields', { clerkId, email });
+        return res.status(400).json({ error: 'Missing clerkId or email' });
+    }
+
     console.log('Syncing user:', { clerkId, email, name });
     try {
         let user = await prisma.user.findUnique({ where: { clerkId } });
         
         const userData = {
             email,
-            name,
-            firstName,
-            lastName,
-            campus,
-            contactNo,
-            rollNo
+            name: name || `${firstName || ''} ${lastName || ''}`.trim() || null,
+            firstName: firstName || null,
+            lastName: lastName || null,
+            campus: campus || null,
+            contactNo: contactNo || null,
+            rollNo: rollNo || null
         };
 
         if (user) {
@@ -34,7 +51,7 @@ app.post('/auth/sync', async (req, res) => {
                 where: { clerkId },
                 data: userData
             });
-            console.log('User updated:', user.clerkId);
+            console.log('User updated in MongoDB:', user.clerkId);
         } else {
             user = await prisma.user.create({
                 data: {
@@ -42,12 +59,12 @@ app.post('/auth/sync', async (req, res) => {
                     ...userData
                 }
             });
-            console.log('User created:', user.clerkId);
+            console.log('User created in MongoDB:', user.clerkId);
         }
         
         res.json(user);
     } catch (error) {
-        console.error('Error syncing user:', error);
+        console.error('Error syncing user to MongoDB:', error);
         res.status(500).json({ error: error.message });
     }
 });
