@@ -53,7 +53,7 @@ build-frontend:
   stage: build
   image: docker:24.0.5
   script:
-    - docker build --build-arg VITE_CLERK_PUBLISHABLE_KEY=$CLERK_PUBLISHABLE_KEY --build-arg VITE_API_URL=https://api-ec2.duckdns.org -t $DOCKER_USERNAME/fspm-frontend:latest ./frontend
+    - docker build --build-arg VITE_CLERK_PUBLISHABLE_KEY=$CLERK_PUBLISHABLE_KEY --build-arg VITE_API_URL=$API_SERVICE_URL -t $DOCKER_USERNAME/fspm-frontend:latest ./frontend
     - docker push $DOCKER_USERNAME/fspm-frontend:latest
   only:
     - main
