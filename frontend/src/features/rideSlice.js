@@ -5,13 +5,7 @@ let nextRideId = Number(localStorage.getItem('nextRideId')) || 100;
 const initialState = {
     rides: JSON.parse(localStorage.getItem('allRides')) || [],
     ongoingRide: null,
-    needsReviewBy: JSON.parse(localStorage.getItem('needsReviewBy')) || { 
-        riderEmail: null, 
-        requesterEmail: null, 
-        riderNeedsReview: false, 
-        requesterNeedsReview: false,
-        rideId: null 
-    },
+    reviewQueues: JSON.parse(localStorage.getItem('reviewQueues')) || [],
     filters: {
         searchTerm: "",
         campus: "All Campuses",
@@ -29,6 +23,7 @@ const rideSlice = createSlice({
                 ...action.payload,
                 id: nextRideId++,
                 status: "active",
+                totalSeats: action.payload.seats,
                 reviews: [],
                 riderAvatar: null,
                 image: null,
@@ -52,9 +47,10 @@ const rideSlice = createSlice({
         },
 
         decrementSeats: (state, action) => {
-            const ride = state.rides.find(r => r.id === action.payload);
-            if (ride && ride.seats > 0) {
-                ride.seats -= 1;
+            const { rideId, seats } = action.payload;
+            const ride = state.rides.find(r => r.id === rideId);
+            if (ride && ride.seats >= seats) {
+                ride.seats -= seats;
                 localStorage.setItem('allRides', JSON.stringify(state.rides));
             }
         },
@@ -65,30 +61,47 @@ const rideSlice = createSlice({
 
         clearOngoingRide: (state) => {
             if (state.ongoingRide) {
-                state.needsReviewBy = {
-                    riderEmail: state.ongoingRide.riderEmail,
-                    requesterEmail: state.ongoingRide.requesterEmail,
-                    riderNeedsReview: true,
-                    requesterNeedsReview: true,
-                    rideId: state.ongoingRide.rideId
+                const reqEmails = state.ongoingRide.requesterEmails || [state.ongoingRide.requesterEmail];
+                const reqNames = state.ongoingRide.requesterNames || [state.ongoingRide.requesterName];
+
+                const participants = [
+                    { email: state.ongoingRide.riderEmail, name: state.ongoingRide.riderName },
+                    ...reqEmails.map((email, i) => ({ email, name: reqNames[i] }))
+                ].filter(p => p.email);
+
+                const newQueue = {
+                    rideId: state.ongoingRide.rideId,
+                    rideTitle: state.ongoingRide.title || "Shared Ride",
+                    participants: participants,
+                    progress: {}
                 };
+
+                state.reviewQueues.push(newQueue);
                 state.ongoingRide = null;
-                localStorage.setItem('needsReviewBy', JSON.stringify(state.needsReviewBy));
+                localStorage.setItem('reviewQueues', JSON.stringify(state.reviewQueues));
             }
         },
 
-        setNeedsReview: (state, action) => {
-            const { role, value } = action.payload;
-            if (role === 'rider') state.needsReviewBy.riderNeedsReview = value;
-            if (role === 'requester') state.needsReviewBy.requesterNeedsReview = value;
-            
-            if (!state.needsReviewBy.riderNeedsReview && !state.needsReviewBy.requesterNeedsReview) {
-                state.needsReviewBy.riderEmail = null;
-                state.needsReviewBy.requesterEmail = null;
-                state.needsReviewBy.rideId = null;
+        submitReviewForQueue: (state, action) => {
+            const { rideId, userEmail, targetEmail } = action.payload;
+            const queue = state.reviewQueues.find(q => q.rideId === rideId);
+            if (queue) {
+                if (!queue.progress[userEmail]) {
+                    queue.progress[userEmail] = [];
+                }
+                queue.progress[userEmail].push(targetEmail);
+
+                const others = queue.participants.filter(p => p.email !== userEmail);
+                const reviewedCount = queue.progress[userEmail].length;
+
+                localStorage.setItem('reviewQueues', JSON.stringify(state.reviewQueues));
             }
-            
-            localStorage.setItem('needsReviewBy', JSON.stringify(state.needsReviewBy));
+        },
+
+        clearReviewQueue: (state, action) => {
+            const { rideId } = action.payload;
+            state.reviewQueues = state.reviewQueues.filter(q => q.rideId !== rideId);
+            localStorage.setItem('reviewQueues', JSON.stringify(state.reviewQueues));
         },
 
         setFilters: (state, action) => {
@@ -108,11 +121,11 @@ const rideSlice = createSlice({
             }
         },
 
-        updateRiderRatings: (state, action) => {
-            const { email, rating } = action.payload;
+        updateUserRidesCampus: (state, action) => {
+            const { email, campus } = action.payload;
             state.rides.forEach(ride => {
-                if (ride.riderEmail === email) {
-                    ride.riderRating = rating;
+                if (ride.riderEmail.toLowerCase().trim() === email.toLowerCase().trim()) {
+                    ride.campus = campus;
                 }
             });
             localStorage.setItem('allRides', JSON.stringify(state.rides));
@@ -127,11 +140,12 @@ export const {
     decrementSeats,
     setOngoingRide,
     clearOngoingRide,
-    setNeedsReview,
+    submitReviewForQueue,
+    clearReviewQueue,
     setFilters,
     setActiveTab,
     addReviewToRide,
-    updateRiderRatings,
+    updateUserRidesCampus,
 } = rideSlice.actions;
 
 export default rideSlice.reducer;

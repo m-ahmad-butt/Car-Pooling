@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { loginUser } from "../features/authSlice";
-import { setProfileFromAuth } from "../features/userSlice";
 import { validateEmail } from "../utils/method";
 
 function LoginForm() {
@@ -50,16 +49,6 @@ function LoginForm() {
 
                 // current-user
                 dispatch(loginUser({ email: formData.email }));
-
-                // user-profile
-                dispatch(setProfileFromAuth({
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    email: user.email,
-                    campusId: user.campusId,
-                    contactNo: user.contactNo,
-                    rollNo: user.rollNo
-                }));
                 navigate("/feed");
             } else {
                 setLoginError("Invalid email or password. Please try again.");
@@ -97,7 +86,7 @@ function LoginForm() {
                                 value={formData.email}
                                 onChange={handleInputChange}
                                 className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-1 transition-all text-sm placeholder-gray-300 ${emailError ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:border-black focus:ring-black"}`}
-                                placeholder="l23XXX@pwr.nu.edu.pk"
+                                placeholder="l23XXX@lhr.nu.edu.pk"
                                 required
                             />
                             {emailError && (

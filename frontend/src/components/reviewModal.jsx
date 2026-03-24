@@ -1,4 +1,4 @@
-const ReviewModal = ({ showReviewModal, closeReviewModal, handleSubmitReview, reviewRating, setReviewRating, reviewText, setReviewText }) => {
+const ReviewModal = ({ showReviewModal, closeReviewModal, handleSubmitReview, reviewRating, setReviewRating, reviewText, setReviewText, targetName }) => {
     if (!showReviewModal) return null;
 
     return (
@@ -17,8 +17,8 @@ const ReviewModal = ({ showReviewModal, closeReviewModal, handleSubmitReview, re
                     </svg>
                 </button>
 
-                <h2 className="text-2xl font-black tracking-tight uppercase mb-1">Leave a Review</h2>
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-8">Rate your recent ride</p>
+                <h2 className="text-2xl font-black tracking-tight uppercase mb-1">Review {targetName}</h2>
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-8">Share your thoughts on {targetName}</p>
 
                 <form onSubmit={handleSubmitReview} className="space-y-6">
                     <div>

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { validateEmail } from "../utils/method";
-import { setResetEmail } from "../features/authSlice";
 
 function ForgotPasswordForm() {
     const [step, setStep] = useState(1); // 1: enter email, 2: enter OTP
@@ -94,7 +93,6 @@ function ForgotPasswordForm() {
             setIsLoading(false);
 
             // go to change pass page
-            dispatch(setResetEmail(email));
             navigate("/reset-password");
         }, 1500);
     };

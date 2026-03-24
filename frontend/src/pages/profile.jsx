@@ -3,29 +3,31 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
 import Footer from '../components/footer';
 import { getCampuses, validatePassword } from '../utils/method';
-import { updateProfile } from '../features/userSlice';
+import { updateCurrentUser } from '../features/authSlice';
 import { changePassword } from '../features/authSlice';
+import { updateUserRidesCampus } from '../features/rideSlice';
 
 const ProfilePage = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    const userProfile = useSelector(state => state.user.profile);
+    const user = useSelector(state => state.auth.currentUser);
+    const userName = `${user?.firstName} ${user?.lastName}`;
     const rides = useSelector(state => state.rides.rides);
     const requests = useSelector(state => state.requests.requests);
     const allReviews = useSelector(state => state.reviews.reviews);
 
-    const [showEditPanel, setShowEditPanel] = useState(false);
+    const [isSettingsView, setIsSettingsView] = useState(false);
     const [show4fields, setShow4Fields] = useState(true);
 
-    const myRides = rides.filter(r => r.riderEmail === userProfile.email).map(r => ({
+    const myRides = rides.filter(r => r.riderEmail === user?.email).map(r => ({
         id: r.id,
         title: r.title,
         status: r.status === "active" ? "Live" : "Done",
         date: r.date,
     }));
 
-    const myRequestedRides = requests.filter(r => r.requesterEmail === userProfile.email).map(r => ({
+    const myRequestedRides = requests.filter(r => r.requesterEmail === user?.email).map(r => ({
         id: r.id,
         title: r.ride,
         rider: r.requesterName,
@@ -33,7 +35,7 @@ const ProfilePage = () => {
         date: r.rideDate,
     }));
 
-    const myReviews = allReviews.filter(r => r.targetEmail === userProfile.email).map((r, idx) => ({
+    const myReviews = allReviews.filter(r => r.targetEmail?.toLowerCase() === user?.email?.toLowerCase()).map((r, idx) => ({
         id: r.id || idx,
         user: r.user,
         comment: r.comment,
@@ -47,7 +49,7 @@ const ProfilePage = () => {
         ? (myReviews.reduce((sum, r) => sum + r.rating, 0) / myReviews.length).toFixed(1)
         : 0;
 
-    const [editData, setEditData] = useState({ name: userProfile.name, campus: userProfile.campus });
+    const [editData, setEditData] = useState({ name: userName, campus: user?.campusId || user?.campus });
     const [activeTab, setActiveTab] = useState('rides');
     const [completedRidesFilter, setCompletedRidesFilter] = useState('offered');
     const [isEditingName, setIsEditingName] = useState(false);
@@ -58,9 +60,21 @@ const ProfilePage = () => {
 
     const handleSaveProfile = () => {
         if (isEditingName || isEditingCampus) {
-            dispatch(updateProfile({ name: editData.name, campus: editData.campus }));
+            const nameParts = editData.name.trim().split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+
+            dispatch(updateCurrentUser({
+                firstName,
+                lastName,
+                campusId: editData.campus
+            }));
+
+            if (isEditingCampus) {
+                dispatch(updateUserRidesCampus({ email: user?.email, campus: editData.campus }));
+            }
         }
-        
+
         if (showPasswordFields) {
             if (!passwordData.new && !passwordData.confirm) {
             } else {
@@ -72,7 +86,7 @@ const ProfilePage = () => {
                     setPasswordError("Password must be 8+ chars with uppercase, lowercase & special symbol");
                     return;
                 }
-                dispatch(changePassword({ email: userProfile.email, newPassword: passwordData.new }));
+                dispatch(changePassword({ email: user?.email, newPassword: passwordData.new }));
             }
         }
 
@@ -80,13 +94,13 @@ const ProfilePage = () => {
         setIsEditingCampus(false);
         setShowPasswordFields(false);
         setShow4Fields(true);
-        setShowEditPanel(false);
+        setIsSettingsView(false);
         setPasswordData({ new: '', confirm: '' });
         setPasswordError('');
     };
 
     const closePanel = () => {
-        setShowEditPanel(false);
+        setIsSettingsView(false);
         setIsEditingName(false);
         setIsEditingCampus(false);
         setShowPasswordFields(false);
@@ -97,18 +111,16 @@ const ProfilePage = () => {
     return (
         <div className="min-h-screen bg-white text-black">
 
-            <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/85 backdrop-blur-sm flex items-center justify-between" style={{
-                padding: 'clamp(12px, 3vw, 24px) clamp(16px, 5vw, 80px)',
-            }}>
-                <h1 className="text-sm sm:text-base lg:text-lg font-black uppercase tracking-tight">
-                    Profile
-                </h1>
+            <header className="px-8 lg:px-20 py-6 border-b border-gray-50 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-50">
+                <div className="flex items-center gap-3">
+                    <img src="/logo.png" className="w-8 h-8 opacity-10" alt="" />
+                    <h1 className="text-xl font-bold uppercase tracking-tight">
+                        Profile
+                    </h1>
+                </div>
                 <button
                     onClick={() => navigate('/feed')}
-                    className="bg-black text-white rounded-full font-black uppercase tracking-widest text-xs sm:text-sm whitespace-nowrap hover:bg-gray-900 transition"
-                    style={{
-                        padding: 'clamp(8px, 1.5vw, 10px) clamp(14px, 3vw, 24px)',
-                    }}
+                    className="bg-black text-white px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest border-0 cursor-pointer"
                 >
                     Back to Feed
                 </button>
@@ -122,36 +134,38 @@ const ProfilePage = () => {
                             width: 'clamp(96px, 15vw, 128px)',
                             height: 'clamp(96px, 15vw, 128px)',
                         }}>
-                            {userProfile.image
-                                ? <img src={userProfile.image} className="w-full h-full object-cover" alt="profile" />
-                                : <span className="text-white font-black" style={{ fontSize: 'clamp(24px, 5vw, 36px)' }}>{userProfile.name.charAt(0)}</span>
+                            {user?.image
+                                ? <img src={user.image} className="w-full h-full object-cover" alt="profile" />
+                                : <span className="text-white font-black" style={{ fontSize: 'clamp(24px, 5vw, 36px)' }}>{userName.charAt(0)}</span>
                             }
                         </div>
                     </div>
 
-                    <h2 className="font-black tracking-tight" style={{ fontSize: 'clamp(18px, 4vw, 26px)', marginBottom: '6px' }}>{userProfile.name}</h2>
+                    <h2 className="font-black tracking-tight" style={{ fontSize: 'clamp(18px, 4vw, 26px)', marginBottom: '6px' }}>{userName}</h2>
                     <p className="text-xs sm:text-sm font-black text-gray-400 uppercase tracking-widest mb-5 opacity-70">
-                        Roll No: {userProfile.rollNo}
+                        Roll No: {user?.rollNo}
                     </p>
 
                     <div className="flex gap-3 sm:gap-4 flex-wrap justify-center mb-5">
-                        {[{ val: myRides.length, label: 'Rides' }, { val: avgRating, label: 'Rating' }].map(s => (
-                            <div key={s.label} className="bg-gray-50/50 border border-gray-100 text-center rounded-2xl" style={{
-                                padding: 'clamp(12px, 2vw, 16px) clamp(24px, 5vw, 40px)',
-                            }}>
-                                <p className="text-black font-black leading-none m-0" style={{ fontSize: 'clamp(18px, 4vw, 24px)' }}>{s.val}</p>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">{s.label}</p>
-                            </div>
-                        ))}
+                        <div className="flex gap-3 sm:gap-4 flex-wrap justify-center mb-5">
+                            {[
+                                { val: myRides.length, label: 'Rides' },
+                                { val: myReviews.length, label: 'Reviews' },
+                                { val: avgRating, label: 'Rating' }
+                            ].map(s => (
+                                <div key={s.label} className="bg-gray-50/50 border border-gray-100 text-center rounded-2xl" style={{
+                                    padding: 'clamp(10px, 1.5vw, 14px) clamp(16px, 3vw, 24px)',
+                                }}>
+                                    <p className="text-black font-black leading-none m-0" style={{ fontSize: 'clamp(14px, 2.5vw, 18px)' }}>{s.val}</p>
+                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">{s.label}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
                     <button
-                        onClick={() => { setEditData({ name: userProfile.name, campus: userProfile.campus }); setShowEditPanel(true); }}
-                        className="bg-gray-100 text-black rounded-full font-black uppercase tracking-widest text-xs hover:bg-gray-200 transition"
-                        style={{
-                            marginTop: 'clamp(20px, 4vw, 32px)',
-                            padding: 'clamp(10px, 1.5vw, 12px) clamp(20px, 4vw, 32px)',
-                        }}
+                        onClick={() => { setEditData({ name: userName, campus: user?.campusId || user?.campus }); setIsSettingsView(true); }}
+                        className="bg-black text-white px-10 py-4 rounded-[1.5rem] font-bold uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-black/20 hover:bg-gray-900 border-0 cursor-pointer"
                     >
                         Edit Profile
                     </button>
@@ -167,7 +181,7 @@ const ProfilePage = () => {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className="rounded-lg font-black uppercase tracking-widest border-none cursor-pointer flex items-center gap-2 flex-shrink-0 transition-all"
+                            className="rounded-lg font-black uppercase tracking-widest border-none cursor-pointer flex items-center gap-2 flex-shrink-0"
                             style={{
                                 padding: 'clamp(8px, 1.5vw, 14px) clamp(12px, 2.5vw, 32px)',
                                 fontSize: 'clamp(9px, 1.3vw, 11px)',
@@ -229,7 +243,7 @@ const ProfilePage = () => {
                             <div className="flex gap-2 mb-5 flex-wrap justify-center">
                                 <button
                                     onClick={() => setCompletedRidesFilter('offered')}
-                                    className="px-5 py-2.5 rounded-full font-black uppercase tracking-widest text-xs sm:text-sm border border-gray-100 cursor-pointer transition-all"
+                                    className="px-5 py-2.5 rounded-full font-black uppercase tracking-widest text-xs sm:text-sm border border-gray-100 cursor-pointer"
                                     style={{
                                         backgroundColor: completedRidesFilter === 'offered' ? '#000' : '#fff',
                                         color: completedRidesFilter === 'offered' ? '#fff' : '#000',
@@ -239,7 +253,7 @@ const ProfilePage = () => {
                                 </button>
                                 <button
                                     onClick={() => setCompletedRidesFilter('took')}
-                                    className="px-5 py-2.5 rounded-full font-black uppercase tracking-widest text-xs sm:text-sm border border-gray-100 cursor-pointer transition-all"
+                                    className="px-5 py-2.5 rounded-full font-black uppercase tracking-widest text-xs sm:text-sm border border-gray-100 cursor-pointer"
                                     style={{
                                         backgroundColor: completedRidesFilter === 'took' ? '#000' : '#fff',
                                         color: completedRidesFilter === 'took' ? '#fff' : '#000',
@@ -310,113 +324,133 @@ const ProfilePage = () => {
                 </div>
             </main>
 
-            {showEditPanel && (show4fields || showPasswordFields) && (
-                <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-8">
-                    <div onClick={closePanel} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            {isSettingsView && (
+                <div className="fixed inset-0 z-[100] bg-white overflow-y-auto">
+                    <div className="px-8 lg:px-20 py-12">
 
-                    <div className="relative bg-white rounded-xl sm:rounded-3xl shadow-2xl p-5 sm:p-12 z-10 max-w-2xl w-full max-h-90vh overflow-y-auto">
-                        <button
-                            onClick={closePanel}
-                            className="absolute top-3 sm:top-6 right-3 sm:right-6 w-9 h-9 rounded-full bg-gray-100 border-0 cursor-pointer flex items-center justify-center text-gray-400 z-20 hover:bg-gray-200"
-                        >
-                            <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-
-                        <div className="flex justify-center mb-10">
-                            <div className="relative">
-                                <div className="overflow-hidden rounded-full bg-black border-6 border-white shadow-lg flex items-center justify-center" style={{
-                                    width: 'clamp(80px, 12vw, 128px)',
-                                    height: 'clamp(80px, 12vw, 128px)',
-                                }}>
-                                    {userProfile.image
-                                        ? <img src={userProfile.image} className="w-full h-full object-cover" alt="profile" />
-                                        : <span className="text-white font-black" style={{ fontSize: 'clamp(24px, 5vw, 36px)' }}>{userProfile.name.charAt(0)}</span>
-                                    }
+                        <div className="flex items-center justify-between mb-16">
+                            <button
+                                onClick={closePanel}
+                                className="flex items-center gap-3 text-black font-black uppercase tracking-widest text-[10px] group"
+                            >
+                                <div className="p-3 bg-gray-50 rounded-full group-hover:bg-black group-hover:text-white">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
                                 </div>
-                                <button className="absolute bottom-0.5 right-0.5 bg-white w-7.5 h-7.5 rounded-full shadow-md flex items-center justify-center border border-gray-100 cursor-pointer hover:bg-gray-50">
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                </button>
+                                Go Back
+                            </button>
+                            <div className="text-right">
+                                <h3 className="text-3xl font-black uppercase tracking-tighter leading-none">Settings</h3>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">{user?.email}</p>
                             </div>
                         </div>
 
-                        {showPasswordFields && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mb-5 sm:mb-10">
-                                {[{ label: 'New Password', key: 'new' }, { label: 'Confirm Password', key: 'confirm' }].map(f => (
-                                    <div key={f.key} className="bg-gray-100 p-4 sm:p-7 rounded-2xl">
-                                        <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2.5">{ f.label}</h5>
-                                        <input
-                                            type="password"
-                                            placeholder="••••••••"
-                                            className="w-full bg-white/50 border-0 rounded-xl p-2.5 sm:p-3.5 font-black outline-none box-border"
-                                            value={passwordData[f.key]}
-                                            onChange={e => setPasswordData({ ...passwordData, [f.key]: e.target.value })}
-                                        />
+                        <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
+                            <div className="lg:w-48 space-y-1">
+                                <button
+                                    onClick={() => { setShow4Fields(true); setShowPasswordFields(false); }}
+                                    className={`w-full text-left px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] border-0 cursor-pointer ${show4fields ? 'bg-black text-white' : 'bg-transparent text-gray-400 hover:text-black hover:bg-gray-50'}`}
+                                >
+                                    Account
+                                </button>
+                                <button
+                                    onClick={() => { setShowPasswordFields(true); setShow4Fields(false); }}
+                                    className={`w-full text-left px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] border-0 cursor-pointer ${showPasswordFields ? 'bg-black text-white' : 'bg-transparent text-gray-400 hover:text-black hover:bg-gray-50'}`}
+                                >
+                                    Security
+                                </button>
+                            </div>
+
+                            <div className="flex-1 max-w-2xl">
+                                <div className="flex items-center gap-6 mb-10">
+                                    <div className="relative group">
+                                        <div className="w-20 h-20 rounded-3xl bg-black overflow-hidden flex items-center justify-center border-4 border-gray-50 shadow-xl relative">
+                                            {user?.image
+                                                ? <img src={user.image} className="w-full h-full object-cover" alt="profile" />
+                                                : <span className="text-white text-2xl font-black">{userName.charAt(0)}</span>
+                                            }
+                                        </div>
                                     </div>
-                                ))}
-                                {passwordError && (
-                                    <div className="col-span-full px-5 py-3 bg-red-50 rounded-xl border border-red-200">
-                                        <p className="text-red-600 text-xs font-bold m-0">{passwordError}</p>
+                                    <div>
+                                        <h4 className="text-lg font-black uppercase tracking-tight m-0 leading-none">{userName}</h4>
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest m-0 mt-1.5">{getCampuses().find(c => c.id === user?.campusId)?.name || user?.campusId} · Fast Student</p>
+                                    </div>
+                                </div>
+
+                                {show4fields && (
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <InfoCard label="University ID" value={user?.rollNo} />
+                                        <InfoCard label="Official Email" value={user?.email} />
+
+                                        <div className="bg-gray-50/50 border border-gray-100 px-6 py-4 rounded-2xl relative flex flex-col justify-center hover:bg-white hover:shadow-lg hover:shadow-black/[0.01] group">
+                                            <h5 className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-1.5">Preferred Name</h5>
+                                            {isEditingName
+                                                ? <input type="text" value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} className="w-full bg-white border border-gray-100 rounded-xl p-2.5 text-xs font-black outline-none shadow-sm focus:ring-1 focus:ring-black/5" autoFocus />
+                                                : <p className="text-sm font-black text-black m-0 tracking-tight">{userName}</p>
+                                            }
+                                            <EditButton active={isEditingName} onClick={() => setIsEditingName(!isEditingName)} />
+                                        </div>
+
+                                        <div className="bg-gray-50/50 border border-gray-100 px-6 py-4 rounded-2xl relative flex flex-col justify-center hover:bg-white hover:shadow-lg hover:shadow-black/[0.01] group">
+                                            <h5 className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-1.5">Base Campus</h5>
+                                            {isEditingCampus
+                                                ? <select value={editData.campus} onChange={e => setEditData({ ...editData, campus: e.target.value })} className="w-full bg-white border border-gray-100 rounded-xl p-2.5 text-xs font-black outline-none shadow-sm focus:ring-1 focus:ring-black/5 appearance-none" autoFocus>
+                                                    {getCampuses().map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                                </select>
+                                                : <p className="text-sm font-black text-black m-0 tracking-tight">{getCampuses().find(c => c.id === user?.campusId)?.name || user?.campusId}</p>
+                                            }
+                                            <EditButton active={isEditingCampus} onClick={() => setIsEditingCampus(!isEditingCampus)} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {showPasswordFields && (
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-1 gap-4">
+                                            {[{ label: 'New Password', key: 'new' }, { label: 'Re-enter Password', key: 'confirm' }].map(f => (
+                                                <div key={f.key} className="bg-gray-50/50 border border-gray-100 px-6 py-5 rounded-2xl">
+                                                    <h5 className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-3">{f.label}</h5>
+                                                    <input
+                                                        type="password"
+                                                        placeholder="••••••••"
+                                                        className="w-full bg-white border border-gray-100 rounded-xl p-3 text-xs font-black outline-none shadow-sm focus:ring-1 focus:ring-black/5"
+                                                        value={passwordData[f.key]}
+                                                        onChange={e => setPasswordData({ ...passwordData, [f.key]: e.target.value })}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {passwordError && (
+                                            <div className="px-6 py-3 bg-red-50 rounded-xl border border-red-100 text-red-600 font-bold uppercase tracking-widest text-[9px]">
+                                                {passwordError}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {(showPasswordFields || isEditingName || isEditingCampus) && (
+                                    <div className="mt-10 flex flex-col items-center gap-4">
+                                        <button
+                                            onClick={handleSaveProfile}
+                                            className="px-10 py-3.5 rounded-full bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-black/10 hover:bg-gray-900 border-0 cursor-pointer w-full max-w-xs"
+                                        >
+                                            Apply Changes
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setShowPasswordFields(false);
+                                                setShow4Fields(true);
+                                                setIsEditingName(false);
+                                                setIsEditingCampus(false);
+                                                setPasswordData({ new: '', confirm: '' });
+                                                setPasswordError('');
+                                            }}
+                                            className="text-[9px] font-black text-gray-300 hover:text-black uppercase tracking-[0.2em] border-0 bg-transparent cursor-pointer"
+                                        >
+                                            Discard Changes
+                                        </button>
                                     </div>
                                 )}
                             </div>
-                        )}
-
-                        {show4fields && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mb-5 sm:mb-10">
-                                <InfoCard label="Roll Number" value={userProfile.rollNo} />
-
-                                <div className="bg-gray-100 p-4 sm:p-7 rounded-2xl relative">
-                                    <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2.5">Full Name</h5>
-                                    {isEditingName
-                                        ? <input type="text" value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} className="w-full bg-white/50 border-0 rounded-xl p-2.5 sm:p-3.5 font-black outline-none box-border" autoFocus />
-                                        : <p className="font-black m-0" style={{ fontSize: 'clamp(14px, 2.5vw, 17px)' }}>{userProfile.name}</p>
-                                    }
-                                    <EditButton active={isEditingName} onClick={() => setIsEditingName(!isEditingName)} />
-                                </div>
-
-                                <div className="bg-gray-100 p-4 sm:p-7 rounded-2xl relative">
-                                    <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2.5">Campus</h5>
-                                    {isEditingCampus
-                                        ? <select value={editData.campus} onChange={e => setEditData({ ...editData, campus: e.target.value })} className="w-full bg-white/50 border-0 rounded-xl p-2.5 sm:p-3.5 font-black outline-none box-border" autoFocus>
-                                            {getCampuses().map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                                        </select>
-                                        : <p className="font-black m-0" style={{ fontSize: 'clamp(14px, 2.5vw, 17px)' }}>{getCampuses().find(c => c.id === userProfile.campus)?.name || userProfile.campus}</p>
-                                    }
-                                    <EditButton active={isEditingCampus} onClick={() => setIsEditingCampus(!isEditingCampus)} />
-                                </div>
-
-                                <InfoCard label="Email Address" value={userProfile.email} />
-                            </div>
-                        )}
-
-                        <div className="flex flex-col items-center gap-3">
-                            <button
-                                onClick={() => {
-                                    if (showPasswordFields || isEditingName || isEditingCampus) {
-                                        handleSaveProfile();
-                                    } else {
-                                        setShowPasswordFields(true);
-                                        setShow4Fields(false);
-                                    }
-                                }}
-                                className="bg-black text-white rounded-full font-black uppercase tracking-widest text-xs sm:text-sm w-full max-w-80 shadow-lg hover:bg-gray-900 transition"
-                                style={{
-                                    padding: 'clamp(14px, 2.5vw, 20px)',
-                                }}
-                            >
-                                {(showPasswordFields || isEditingName || isEditingCampus) ? 'Save Changes' : 'Change Password'}
-                            </button>
-                            {showPasswordFields && (
-                                <button
-                                    onClick={() => { setShowPasswordFields(false); setShow4Fields(true); setPasswordData({ new: '', confirm: '' }); }}
-                                    className="bg-gray-100 text-black rounded-full font-black uppercase tracking-widest text-xs sm:text-sm w-full max-w-80 hover:bg-gray-200 transition"
-                                    style={{
-                                        padding: 'clamp(14px, 2.5vw, 20px)',
-                                    }}
-                                >
-                                    Cancel
-                                </button>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -427,20 +461,22 @@ const ProfilePage = () => {
 };
 
 const InfoCard = ({ label, value }) => (
-    <div className="bg-gray-100 p-4 sm:p-7 rounded-2xl">
-        <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2.5">{label}</h5>
-        <p className="font-black m-0 break-all" style={{ fontSize: 'clamp(13px, 2.5vw, 17px)' }}>{value}</p>
+    <div className="bg-gray-50/20 border border-gray-100 px-6 py-4 rounded-2xl min-h-[70px] flex flex-col justify-center">
+        <h5 className="text-[9px] font-black text-gray-200 uppercase tracking-[0.2em] mb-1.5">{label}</h5>
+        <p className="font-black m-0 break-all text-xs text-gray-400 tracking-tight">{value}</p>
     </div>
 );
 
 const EditButton = ({ active, onClick }) => (
     <button
         onClick={onClick}
-        className="absolute top-3 sm:top-6 right-3 sm:right-6 w-8 h-8 rounded-full bg-transparent border-0 cursor-pointer flex items-center justify-center"
+        className={`absolute top-1/2 -translate-y-8 right-2 w-6 h-6 rounded-lg border flex items-center justify-center cursor-pointer ${active ? 'bg-black border-black text-white' : 'bg-white border-gray-100 text-gray-100 hover:text-black hover:border-black'}`}
     >
-        <svg className="w-4.5 h-4.5" style={{ color: active ? '#000' : 'rgba(0,0,0,0.25)' }} fill="currentColor" viewBox="0 0 20 20">
-            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-        </svg>
+        {active ? (
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+        ) : (
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+        )}
     </button>
 );
 

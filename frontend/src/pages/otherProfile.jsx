@@ -1,34 +1,33 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { getCampuses } from '../utils/method';
 import Footer from '../components/footer';
 
 const OtherProfilePage = () => {
     const { userId } = useParams();
     const navigate = useNavigate();
 
-    const otherProfiles = useSelector(state => state.user.otherProfiles);
     const allUsers = useSelector(state => state.auth.users);
     const allReviews = useSelector(state => state.reviews.reviews);
+    const allRides = useSelector(state => state.rides.rides);
 
-    let userData = otherProfiles[userId];
+    const foundUser = allUsers.find(user => {
+        const userName = `${user.firstName} ${user.lastName}`.replace(/\s+/g, '-').toLowerCase();
+        return userName === userId?.replace(/[\s%20]+/g, '-').toLowerCase();
+    });
+
+    let userData = null;
     
-    if (!userData && userId) {
-        const foundUser = allUsers.find(user => {
-            const userName = `${user.firstName} ${user.lastName}`.replace(/\s+/g, '-').toLowerCase();
-            return userName === userId;
-        });
-        
-        if (foundUser) {
-            userData = {
-                name: `${foundUser.firstName} ${foundUser.lastName}`,
-                rollNo: foundUser.rollNo,
-                campus: foundUser.campusId,
-                email: foundUser.email,
-                contactNo: foundUser.contactNo,
-                image: null,
-                stats: { rides: 0, comments: 0, rating: 0 },
-            };
-        }
+    if (foundUser) {
+        userData = {
+            name: `${foundUser.firstName} ${foundUser.lastName}`,
+            rollNo: foundUser.rollNo,
+            campus: foundUser.campusId,
+            email: foundUser.email,
+            contactNo: foundUser.contactNo,
+            image: foundUser.image || null,
+            stats: foundUser.stats || { rides: 0, reviews: 0, rating: 0 },
+        };
     }
 
     if (!userData) {
@@ -43,7 +42,7 @@ const OtherProfilePage = () => {
     }
 
     const userReviews = allReviews
-        .filter(r => r.targetEmail === userData.email)
+        .filter(r => r.targetEmail?.toLowerCase() === userData.email?.toLowerCase())
         .map((r, idx) => ({
             id: r.id || idx,
             user: r.user,
@@ -86,16 +85,27 @@ const OtherProfilePage = () => {
                         <div className="absolute inset-0 bg-black/10 rounded-full blur-2xl opacity-20 -z-0"></div>
                     </div>
 
-                    <div className="flex items-center gap-2 mb-6">
+                    <div className="flex flex-col items-center gap-2 mb-6">
                         <h2 className="text-2xl font-extrabold tracking-tight">{userData.name}</h2>
+                        <div className="flex items-center gap-2 text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] opacity-80">
+                            <span>{userData.rollNo}</span>
+                            <span className="w-1 h-1 bg-gray-200 rounded-full"></span>
+                            <span>{getCampuses().find(c => c.id === userData.campus)?.name || userData.campus}</span>
+                        </div>
                     </div>
 
-                    <div className="flex gap-4">
-                        <div className="bg-gray-50/50 border border-gray-100 px-10 py-4 rounded-3xl text-center">
-                            <p className="text-2xl font-extrabold text-black leading-none">{userData.stats.rides}</p>
+                    <div className="flex gap-4 flex-wrap justify-center">
+                        <div className="bg-gray-50/50 border border-gray-100 px-8 py-4 rounded-3xl text-center min-w-[100px]">
+                            <p className="text-2xl font-extrabold text-black leading-none">
+                                {allRides.filter(r => r.riderEmail?.toLowerCase() === userData.email?.toLowerCase()).length}
+                            </p>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mt-1">Rides</p>
                         </div>
-                        <div className="bg-gray-50/50 border border-gray-100 px-10 py-4 rounded-3xl text-center">
+                        <div className="bg-gray-50/50 border border-gray-100 px-8 py-4 rounded-3xl text-center min-w-[100px]">
+                            <p className="text-2xl font-extrabold text-black leading-none">{userReviews.length}</p>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mt-1">Reviews</p>
+                        </div>
+                        <div className="bg-gray-50/50 border border-gray-100 px-8 py-4 rounded-3xl text-center min-w-[100px]">
                             <p className="text-2xl font-extrabold text-black leading-none">{avgRating}</p>
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mt-1">Rating</p>
                         </div>

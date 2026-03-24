@@ -36,11 +36,6 @@ const requestSlice = createSlice({
                 localStorage.setItem('allRequests', JSON.stringify(state.requests));
             }
         },
-
-        removeRequest: (state, action) => {
-            state.requests = state.requests.filter(r => r.id !== action.payload);
-            localStorage.setItem('allRequests', JSON.stringify(state.requests));
-        },
     }
 });
 
@@ -48,7 +43,7 @@ export const {
     addRequest,
     approveRequest,
     declineRequest,
-    removeRequest,
 } = requestSlice.actions;
 
 export default requestSlice.reducer;
+

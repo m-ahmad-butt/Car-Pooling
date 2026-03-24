@@ -1,5 +1,3 @@
-import { getCampuses, validatePhone, validateVehicleNumber } from '../utils/method';
-
 const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormChange, handlePostRide, postErrors, setPostErrors }) => {
     if (!showPostModal) return null;
 
@@ -20,7 +18,7 @@ const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormCha
                             {/* Left: Profile + Form */}
                             <div className="w-full lg:w-2/3 space-y-8">
                                 {/* Form Fields Section */}
-                                <div className="space-y-4 bg-white border border-gray-100 p-8 rounded-[2.5rem] shadow-sm">
+                                <div className="space-y-4 bg-white border border-gray-100 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm">
                                     <div>
                                         <div className="flex justify-between items-center mb-2">
                                             <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Title</label>
@@ -32,20 +30,29 @@ const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormCha
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-[11px] font-black text-gray-400 uppercase mb-2 tracking-widest">Category (Vehicle)</label>
-                                            <select value={postForm.vehicleType} onChange={(e) => handlePostFormChange('vehicleType', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none appearance-none">
+                                            <select 
+                                                value={postForm.vehicleType} 
+                                                onChange={(e) => {
+                                                    handlePostFormChange('vehicleType', e.target.value);
+                                                    setPostErrors(prev => ({ ...prev, vehicleType: '' }));
+                                                }} 
+                                                className={`w-full bg-gray-50 border-2 rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none appearance-none ${postErrors.vehicleType ? 'border-red-500' : 'border-transparent'}`}
+                                            >
                                                 <option value="">Select a category</option>
                                                 <option>CAR</option>
                                                 <option>BIKE</option>
                                             </select>
+                                            {postErrors.vehicleType && <p className="text-[10px] text-red-500 font-bold mt-2 ml-1">{postErrors.vehicleType}</p>}
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-black text-gray-400 uppercase mb-2 tracking-widest">Campus</label>
-                                            <select value={postForm.campus} onChange={(e) => handlePostFormChange('campus', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none appearance-none">
-                                                <option value="">Select your campus</option>
-                                                {getCampuses().map(campus => (
-                                                    <option key={campus.id} value={campus.name}>{campus.name}</option>
-                                                ))}
-                                            </select>
+                                            <input 
+                                                type="text" 
+                                                value={postForm.campus} 
+                                                readOnly 
+                                                className="w-full bg-gray-100 border-none rounded-2xl py-4 px-6 text-sm font-bold text-gray-500 cursor-not-allowed outline-none" 
+                                            />
+                                            <p className="text-[9px] font-bold text-gray-300 uppercase mt-2 ml-1 italic">You can change campus from profile</p>
                                         </div>
                                     </div>
 
@@ -86,25 +93,33 @@ const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormCha
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
-                                            <label className="block text-[11px] font-black text-gray-400 uppercase mb-2 tracking-widest">Departure Time</label>
-                                            <input type="time" value={postForm.departureTime} onChange={(e) => handlePostFormChange('departureTime', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none" required />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[11px] font-black text-gray-400 uppercase mb-2 tracking-widest">Contact Number</label>
+                                            <label className="block text-[11px] font-black text-gray-400 uppercase mb-2 tracking-widest">Departure Date</label>
                                             <input 
-                                                type="text" 
-                                                placeholder="e.g. 03001234567" 
-                                                value={postForm.contactNumber} 
+                                                type="date" 
+                                                value={postForm.date} 
                                                 onChange={(e) => {
-                                                    handlePostFormChange('contactNumber', e.target.value);
-                                                    setPostErrors(prev => ({ ...prev, contactNumber: '' }));
+                                                    handlePostFormChange('date', e.target.value);
+                                                    setPostErrors(prev => ({ ...prev, dateTime: '' }));
                                                 }} 
-                                                className={`w-full bg-gray-50 border-2 rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none ${postErrors.contactNumber ? 'border-red-500' : 'border-transparent'}`} 
+                                                className={`w-full bg-gray-50 border-2 rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none ${postErrors.dateTime ? 'border-red-500' : 'border-transparent'}`} 
                                                 required 
                                             />
-                                            {postErrors.contactNumber && <p className="text-[10px] text-red-500 font-bold mt-2 ml-1">{postErrors.contactNumber}</p>}
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] font-black text-gray-400 uppercase mb-2 tracking-widest">Departure Time</label>
+                                            <input 
+                                                type="time" 
+                                                value={postForm.departureTime} 
+                                                onChange={(e) => {
+                                                    handlePostFormChange('departureTime', e.target.value);
+                                                    setPostErrors(prev => ({ ...prev, dateTime: '' }));
+                                                }} 
+                                                className={`w-full bg-gray-50 border-2 rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none ${postErrors.dateTime ? 'border-red-500' : 'border-transparent'}`} 
+                                                required 
+                                            />
                                         </div>
                                     </div>
+                                    {postErrors.dateTime && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{postErrors.dateTime}</p>}
 
 
                                     <div>

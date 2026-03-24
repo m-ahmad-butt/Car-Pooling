@@ -3,7 +3,6 @@ import { extractRollNo, validateEmail, getCampuses, validatePassword, validatePh
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { addUser } from "../features/authSlice";
-import { setProfileFromAuth } from "../features/userSlice";
 
 function RegisterForm() {
     const [emailError, setEmailError] = useState("");
@@ -35,6 +34,20 @@ function RegisterForm() {
 
     const stepLabels = ["Name", "Campus", "Email", "Password"];
 
+    const validateExistence = (field, value) => {
+        if (field === "email") {
+            const exists = allUsers.some(u => u.email.toLowerCase() === value.toLowerCase());
+            if (exists) setEmailError("Email already registered");
+            return exists;
+        }
+        if (field === "contactNo") {
+            const exists = allUsers.some(u => u.contactNo === value);
+            if (exists) setPhoneError("Phone number already registered");
+            return exists;
+        }
+        return false;
+    };
+
     // step inputs validation
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -45,6 +58,7 @@ function RegisterForm() {
                 setPhoneError("Must start with 03 and be 11 digits");
             } else {
                 setPhoneError("");
+                validateExistence("contactNo", value);
             }
         }
 
@@ -52,6 +66,7 @@ function RegisterForm() {
             if (validateEmail(value)) {
                 setEmailError("");
                 setFormData(prev => ({ ...prev, rollNo: extractRollNo(value) }));
+                validateExistence("email", value);
             } else {
                 setEmailError("Invalid university email");
                 setFormData(prev => ({ ...prev, rollNo: "" }));
@@ -64,8 +79,14 @@ function RegisterForm() {
     const handleNext = (e) => {
         e.preventDefault();
         if (step === 1 && (!formData.firstName || !formData.lastName)) return;
-        if (step === 2 && (!formData.campusId || !formData.contactNo || !!phoneError)) return;
-        if (step === 3 && (!formData.email || !!emailError)) return;
+        if (step === 2) {
+            if (!formData.campusId || !formData.contactNo || !!phoneError) return;
+            if (validateExistence("contactNo", formData.contactNo)) return;
+        }
+        if (step === 3) {
+            if (!formData.email || !!emailError) return;
+            if (validateExistence("email", formData.email)) return;
+        }
         setStep(prev => prev + 1);
     };
 
@@ -86,11 +107,14 @@ function RegisterForm() {
         }
         setIsLoading(true);
         setTimeout(() => {
-            // Check if email already exists
-            const emailExists = allUsers.some(u => u.email === formData.email);
-            if (emailExists) {
-                setEmailError("Email already registered");
-                setStep(3); // Go back to email step
+            // Final check before submission
+            if (validateExistence("email", formData.email)) {
+                setStep(3);
+                setIsLoading(false);
+                return;
+            }
+            if (validateExistence("contactNo", formData.contactNo)) {
+                setStep(2);
                 setIsLoading(false);
                 return;
             }
@@ -102,16 +126,6 @@ function RegisterForm() {
                 email: formData.email,
                 password: formData.password,
                 campusId: formData.campusId,
-                contactNo: formData.contactNo,
-                rollNo: formData.rollNo,
-            }));
-            
-            // user-profile
-            dispatch(setProfileFromAuth({
-                firstName: formData.firstName,
-                lastName: formData.lastName,
-                email: formData.email,
-                campusId: campuses.find(c => c.id === formData.campusId)?.name || formData.campusId,
                 contactNo: formData.contactNo,
                 rollNo: formData.rollNo,
             }));

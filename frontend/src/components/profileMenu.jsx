@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { logoutAuth } from '../features/authSlice';
-import { logoutUser } from '../features/userSlice';
 
 const ProfileMenu = ({ onClose }) => {
     const navigate = useNavigate();
@@ -31,7 +30,6 @@ const ProfileMenu = ({ onClose }) => {
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-50 transition-colors group rounded-xl"
                     onClick={() => {
                         dispatch(logoutAuth());
-                        dispatch(logoutUser());
                         navigate('/login');
                         onClose();
                     }}

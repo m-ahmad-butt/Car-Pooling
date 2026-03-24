@@ -1,7 +1,7 @@
 import { useDispatch } from 'react-redux';
-import { setNeedsReview } from '../features/rideSlice';
+import { clearReviewQueue } from '../features/rideSlice';
 
-const OngoingRideNotification = ({ isUserInOngoingRide, ongoingRide, handleCompleteSimulation, userNeedsReview, userRole, openReviewModal }) => {
+const OngoingRideNotification = ({ isUserInOngoingRide, ongoingRide, handleCompleteSimulation, userNeedsReview, openReviewModal, reviewQueues, userProfile }) => {
     const dispatch = useDispatch();
 
     if (!isUserInOngoingRide && !userNeedsReview) return null;
@@ -9,22 +9,31 @@ const OngoingRideNotification = ({ isUserInOngoingRide, ongoingRide, handleCompl
     return (
         <div className="mb-10 space-y-4">
             {isUserInOngoingRide && (
-                <div className="bg-black text-white p-6 rounded-[2rem] flex flex-col sm:flex-row justify-between items-center gap-6 shadow-2xl shadow-black/20">
-                    <div className="flex items-center gap-6 text-center sm:text-left">
-                        <div className="w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center">
-                            <div className="w-3 h-3 bg-white rounded-full"></div>
+                <div className="bg-black text-white p-6 rounded-[2rem] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 shadow-2xl shadow-black/20">
+                    <div className="flex items-start sm:items-center gap-4 sm:gap-6 text-left">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-white/20 flex items-center justify-center shrink-0">
+                            <div className="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></div>
                         </div>
-                        <div>
-                            <h4 className="text-[11px] font-bold uppercase tracking-widest opacity-40 mb-1">Ongoing Ride</h4>
-                            <p className="text-xl font-bold tracking-tight uppercase whitespace-nowrap">Ride with {ongoingRide?.rider}</p>
+                        <div className="min-w-0">
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">Ongoing Ride</h4>
+                            <p className="text-base sm:text-xl font-bold tracking-tight uppercase leading-tight">
+                                Ride with {ongoingRide?.riderName} ({ongoingRide?.riderRollNo})
+                            </p>
+                            {ongoingRide?.requesterRollNos?.length > 0 && (
+                                <p className="text-[10px] font-bold text-white/50 mt-1 uppercase tracking-widest">
+                                    {ongoingRide.requesterRollNos.join(', ')}
+                                </p>
+                            )}
                         </div>
                     </div>
-                    <button
-                        onClick={handleCompleteSimulation}
-                        className="bg-white text-black px-10 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-xl hover:bg-gray-100"
-                    >
-                        End Ride
-                    </button>
+                    {ongoingRide?.riderEmail === userProfile?.email && (
+                        <button
+                            onClick={handleCompleteSimulation}
+                            className="bg-white text-black px-10 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-xl hover:bg-gray-100 self-end sm:self-center"
+                        >
+                            End Ride
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -45,7 +54,14 @@ const OngoingRideNotification = ({ isUserInOngoingRide, ongoingRide, handleCompl
                             className="bg-black text-white px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all"
                         >Write Review</button>
                         <button 
-                            onClick={() => dispatch(setNeedsReview({ role: userRole, value: false }))} 
+                            onClick={() => {
+                                const q = reviewQueues.find(q => {
+                                    const others = q.participants.filter(p => p.email !== userProfile.email);
+                                    const reviewed = q.progress[userProfile.email] || [];
+                                    return reviewed.length < others.length;
+                                });
+                                if (q) dispatch(clearReviewQueue({ rideId: q.rideId }));
+                            }} 
                             className="text-gray-400 font-bold text-xs hover:text-black transition-colors"
                         >
                             Skip

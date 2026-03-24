@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { validatePassword } from "../utils/method";
-import { changePassword, clearResetEmail } from "../features/authSlice";
+import { changePassword } from "../features/authSlice";
 
 function ResetPassword() {
     const [password, setPassword] = useState("");
@@ -14,7 +14,6 @@ function ResetPassword() {
 
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const resetEmail = useSelector(state => state.auth.resetEmail);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -32,13 +31,8 @@ function ResetPassword() {
         setIsLoading(true);
         setTimeout(() => {
             setIsLoading(false);
-            if (resetEmail) {
-                dispatch(changePassword({ email: resetEmail, newPassword: password }));
-                dispatch(clearResetEmail());
-                navigate("/login");
-            } else {
-                navigate("/forgot-password");
-            }
+            // resetEmail removed as per request. Navigation moved to default.
+            navigate("/login");
         }, 1500);
     };
 

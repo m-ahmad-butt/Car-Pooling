@@ -3,14 +3,14 @@ import { removeNotification, clearNotifications } from '../features/notification
 
 const Notifications = ({ notifications, onClose }) => {
     const dispatch = useDispatch();
-    const userProfile = useSelector(state => state.user.profile);
+    const user = useSelector(state => state.auth.currentUser);
 
     const handleRemove = (id) => {
         dispatch(removeNotification(id));
     };
 
     const clearAll = () => {
-        dispatch(clearNotifications(userProfile.email));
+        dispatch(clearNotifications(user?.email));
     };
 
     return (

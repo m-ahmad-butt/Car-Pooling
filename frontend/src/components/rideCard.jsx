@@ -1,7 +1,45 @@
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { setOngoingRide, updateRide } from '../features/rideSlice';
+import { getCampuses } from '../utils/method';
 
 const RideCard = ({ ride, onViewDetails, isOwnRide }) => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const requests = useSelector(state => state.requests.requests);
+    const ongoingRide = useSelector(state => state.rides.ongoingRide);
+    const allReviews = useSelector(state => state.reviews.reviews);
+
+    const riderReviews = allReviews.filter(r => r.targetEmail?.toLowerCase() === ride.riderEmail?.toLowerCase());
+    const dynamicRating = riderReviews.length > 0 
+        ? (riderReviews.reduce((sum, r) => sum + r.rating, 0) / riderReviews.length).toFixed(1)
+        : ride.riderRating;
+
+    const approvedRequests = requests.filter(r => r.rideId === ride.id && r.status.toLowerCase() === 'approved');
+    const isOccupied = approvedRequests.length > 0;
+    const isStarted = ongoingRide && ongoingRide.rideId === ride.id;
+
+    const handleStartRide = () => {
+        if (!isOccupied) return;
+
+        dispatch(setOngoingRide({
+            rideId: ride.id,
+            riderName: ride.riderName,
+            riderEmail: ride.riderEmail,
+            riderRollNo: ride.riderRollNo,
+            requesterEmails: approvedRequests.map(r => r.requesterEmail),
+            requesterNames: approvedRequests.map(r => r.requesterName),
+            requesterRollNos: approvedRequests.map(r => r.requesterRollNo),
+            from: ride.location,
+            to: ride.destination,
+            status: "In Progress"
+        }));
+
+        dispatch(updateRide({
+            id: ride.id,
+            status: "In Progress"
+        }));
+    };
 
     return (
         <div className="relative bg-white border border-gray-100 rounded-[1rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group flex flex-col h-full ring-1 ring-black/[0.05]">
@@ -20,7 +58,7 @@ const RideCard = ({ ride, onViewDetails, isOwnRide }) => {
                         </svg>
                     </div>
                 )}
-                <div className="absolute top-4 right-4">
+                <div className="absolute top-4 right-4 text-center">
                     <div className="bg-white/90 backdrop-blur-md text-black text-[9px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm ring-1 ring-black/5">
                         {ride.vehicleType}
                     </div>
@@ -28,10 +66,10 @@ const RideCard = ({ ride, onViewDetails, isOwnRide }) => {
             </div>
 
             {/* Content panel */}
-            <div className="p-7 flex-1 flex flex-col">
+            <div className="p-5 sm:p-7 flex-1 flex flex-col">
                 <div className="flex items-center gap-3 mb-6">
                     <button
-                        onClick={() => navigate(`/profile/${ride.riderName.replace(' ', '-').toLowerCase()}`)}
+                        onClick={() => navigate(`/profile/${ride.riderName.replace(/\s+/g, '-').toLowerCase()}`)}
                         className="w-9 h-9 rounded-full bg-white border-2 border-white shadow-md flex items-center justify-center overflow-hidden shrink-0 hover:scale-110 transition-transform"
                     >
                         {ride.riderAvatar ? (
@@ -42,26 +80,28 @@ const RideCard = ({ ride, onViewDetails, isOwnRide }) => {
                     </button>
                     <div className="flex-1 text-left">
                         <button
-                            onClick={() => navigate(`/profile/${ride.riderName.replace(' ', '-').toLowerCase()}`)}
+                            onClick={() => navigate(`/profile/${ride.riderName.replace(/\s+/g, '-').toLowerCase()}`)}
                             className="text-[13px] font-bold text-black leading-none hover:text-gray-500 transition-colors"
                         >
                             {ride.riderName}
                         </button>
-                        <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">{ride.date}</p>
+                        <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">{ride.date} • {ride.departureTime}</p>
                     </div>
                     <div className="ml-auto flex items-center gap-1 bg-white/50 px-2 py-1 rounded-full border border-black/5">
                         <span className="text-black font-extrabold text-[12px]">★</span>
-                        <span className="text-[10px] font-bold tracking-tighter">{ride.riderRating}</span>
+                        <span className="text-[10px] font-bold tracking-tighter">{dynamicRating}</span>
                     </div>
                 </div>
 
                 <div className="mb-6">
-                    <h3 className="text-lg font-extrabold tracking-tight text-gray-900 group-hover:text-black line-clamp-2 uppercase leading-tight">
+                    <h3 className="text-base sm:text-lg font-extrabold tracking-tight text-gray-900 group-hover:text-black line-clamp-2 uppercase leading-tight">
                         {ride.title}
                     </h3>
                     <div className="flex items-center gap-2 mt-3 opacity-40">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                        <span className="text-[11px] font-bold uppercase tracking-widest">{ride.campus}</span>
+                        <span className="text-[11px] font-bold uppercase tracking-widest">
+                            {getCampuses().find(c => c.id === ride.campus)?.name || ride.campus}
+                        </span>
                     </div>
                 </div>
 
@@ -71,13 +111,22 @@ const RideCard = ({ ride, onViewDetails, isOwnRide }) => {
                             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Available Slots</p>
                             <p className="text-sm font-bold text-black">{ride.seats} Empty seats</p>
                         </div>
-                        <button
-                            onClick={() => onViewDetails(ride)}
-                            className={`${isOwnRide ? 'bg-gray-400 opacity-60 cursor-not-allowed' : 'bg-black'} text-white px-8 py-3.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-xl shadow-black/10`}
-                            disabled={isOwnRide}
-                        >
-                            {isOwnRide ? 'Your Ride' : 'View Details'}
-                        </button>
+                        {isOwnRide ? (
+                            <button
+                                onClick={handleStartRide}
+                                className={`${isOccupied && !isStarted ? 'bg-black' : 'bg-gray-400 opacity-60 cursor-not-allowed'} text-white px-8 py-3.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-xl shadow-black/10`}
+                                disabled={!isOccupied || isStarted}
+                            >
+                                {isStarted ? 'Ride Started' : 'Start Ride'}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => onViewDetails(ride)}
+                                className="bg-black text-white px-8 py-3.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-xl shadow-black/10"
+                            >
+                                View Details
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

@@ -1,7 +1,5 @@
 import { useDispatch } from 'react-redux';
 import { logoutAuth } from '../features/authSlice';
-import { logoutUser } from '../features/userSlice';
-import { useNavigate } from 'react-router-dom';
 
 const FeedMobileMenu = ({ showMobileMenu, setShowMobileMenu, setShowPostModal, setShowNotifications, notifications, navigate }) => {
     const dispatch = useDispatch();
@@ -58,7 +56,6 @@ const FeedMobileMenu = ({ showMobileMenu, setShowMobileMenu, setShowPostModal, s
                     <button
                         onClick={() => {
                             dispatch(logoutAuth());
-                            dispatch(logoutUser());
                             navigate('/login');
                             setShowMobileMenu(false);
                         }}

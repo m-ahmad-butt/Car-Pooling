@@ -4,9 +4,10 @@ import { convertTo12Hour } from '../utils/method';
 
 const RideDetails = ({ ride, onClose, onAccept }) => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('details');
     const [showRequestNote, setShowRequestNote] = useState(false);
     const [requestNote, setRequestNote] = useState('');
+
+    const [requestedSeats, setRequestedSeats] = useState(1);
 
     if (!ride) return null;
 
@@ -14,7 +15,7 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
         if (!showRequestNote) {
             setShowRequestNote(true);
         } else {
-            onAccept(requestNote);
+            onAccept(requestNote, requestedSeats);
         }
     };
 
@@ -33,18 +34,9 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                 </button>
 
                 <div className="flex bg-gray-100/80 p-1 rounded-full">
-                    <button
-                        onClick={() => { setActiveTab('details'); setShowRequestNote(false); }}
-                        className={`px-5 py-1.5 rounded-full text-[12px] font-bold ${activeTab === 'details' && !showRequestNote ? 'bg-white shadow-sm text-black' : 'text-gray-500'}`}
-                    >
+                    <div className="px-8 py-1.5 rounded-full text-[12px] font-extrabold bg-white shadow-sm text-black uppercase tracking-widest">
                         Details
-                    </button>
-                    <button
-                        onClick={() => { setActiveTab('reviews'); setShowRequestNote(false); }}
-                        className={`px-5 py-1.5 rounded-full text-[12px] font-bold ${activeTab === 'reviews' && !showRequestNote ? 'bg-white shadow-sm text-black' : 'text-gray-500'}`}
-                    >
-                        Reviews
-                    </button>
+                    </div>
                 </div>
 
                 <div className="w-16" />
@@ -68,7 +60,7 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
 
                     <div className="bg-gray-50 rounded-3xl p-6 flex items-center gap-4">
                         <button
-                            onClick={() => navigate(`/profile/${ride.riderName.replace(' ', '-').toLowerCase()}`)}
+                            onClick={() => navigate(`/profile/${ride.riderName.replace(/\s+/g, '-').toLowerCase()}`)}
                             className="w-12 h-12 rounded-full bg-black flex items-center justify-center overflow-hidden flex-shrink-0"
                         >
                             {ride.riderAvatar
@@ -78,12 +70,17 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                         </button>
                         <div>
                             <button
-                                onClick={() => navigate(`/profile/${ride.riderName.replace(' ', '-').toLowerCase()}`)}
+                                onClick={() => navigate(`/profile/${ride.riderName.replace(/\s+/g, '-').toLowerCase()}`)}
                                 className="text-sm font-bold text-black leading-none block"
                             >
                                 {ride.riderName}
                             </button>
-                            <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">{ride.date}</p>
+                            <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">
+                                {ride.riderRollNo} · {ride.campus}
+                            </p>
+                            <p className="text-[10px] font-bold text-gray-400 mt-0.5 uppercase tracking-widest opacity-60">
+                                {ride.date}
+                            </p>
                         </div>
                     </div>
 
@@ -94,6 +91,20 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
                                     Let {ride.riderName} know why you're joining.
                                 </p>
+                            </div>
+                            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Number of Seats</p>
+                                <div className="flex items-center gap-4">
+                                    <button
+                                        onClick={() => setRequestedSeats(Math.max(1, requestedSeats - 1))}
+                                        className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center font-bold"
+                                    >-</button>
+                                    <span className="text-lg font-black">{requestedSeats}</span>
+                                    <button
+                                        onClick={() => setRequestedSeats(Math.min(ride.seats, requestedSeats + 1))}
+                                        className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center font-bold"
+                                    >+</button>
+                                </div>
                             </div>
                             <div className="relative">
                                 <textarea
@@ -136,6 +147,21 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                                     Let {ride.riderName} know why you're joining this ride.
                                 </p>
                             </div>
+                            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Number of Seats</p>
+                                <div className="flex items-center gap-6">
+                                    <button
+                                        onClick={() => setRequestedSeats(Math.max(1, requestedSeats - 1))}
+                                        className="w-12 h-12 rounded-2xl bg-white border border-gray-100 flex items-center justify-center font-bold hover:bg-gray-50 transition-colors"
+                                    >-</button>
+                                    <span className="text-xl font-black">{requestedSeats}</span>
+                                    <button
+                                        onClick={() => setRequestedSeats(Math.min(ride.seats, requestedSeats + 1))}
+                                        className="w-12 h-12 rounded-2xl bg-white border border-gray-100 flex items-center justify-center font-bold hover:bg-gray-50 transition-colors"
+                                    >+</button>
+                                    <p className="text-[10px] font-bold text-gray-300 uppercase italic ml-auto">{ride.seats} seats available</p>
+                                </div>
+                            </div>
                             <div className="relative">
                                 <textarea
                                     autoFocus
@@ -167,7 +193,7 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                     )}
 
                     {/* Details tab */}
-                    {!showRequestNote && activeTab === 'details' && (
+                    {!showRequestNote && (
                         <div className="space-y-8">
                             <div>
                                 <h2 className="text-3xl font-extrabold tracking-tight uppercase mb-3">{ride.title}</h2>
@@ -198,40 +224,7 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                         </div>
                     )}
 
-                    {/* Reviews tab */}
-                    {!showRequestNote && activeTab === 'reviews' && (
-                        <div>
-                            {ride.reviews && ride.reviews.length > 0 ? (
-                                <div className="space-y-8">
-                                    {ride.reviews
-                                        .filter(rev => rev.user !== ride.riderName) // Filter out rider's own review
-                                        .map((rev, idx) => (
-                                        <div key={idx}>
-                                            <div className="flex justify-between items-center mb-3">
-                                                <span className="text-sm font-bold text-black">{rev.user}</span>
-                                                <div className="flex gap-0.5">
-                                                    {[...Array(5)].map((_, i) => (
-                                                        <span key={i} className={`text-[12px] ${i < rev.rating ? 'text-black font-bold' : 'text-gray-100'}`}>★</span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <p className="text-[13px] text-gray-400">"{rev.comment}"</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center py-24 text-center">
-                                    <div className="w-20 h-20 mb-6 flex items-center justify-center text-gray-200/60">
-                                        <svg className="w-full h-full" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M18 7c.55 0 1-.45 1-1s-.45-1-1-1H6c-.55 0-1 .45-1 1s.45 1 1 1h12zm-3 8c.55 0 1-.45 1-1s-.45-1-1-1H9c-.55 0-1 .45-1 1s.45 1 1 1h6zm5-13H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H11.17L9 18.17V16H4V4h16v12z" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-gray-400 font-extrabold text-xl mb-1">No reviews yet</p>
-                                    <p className="text-gray-300 text-[13px] font-bold">Be the first to review!</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
+
                 </div>
             </div>
 

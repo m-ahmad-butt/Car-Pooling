@@ -69,7 +69,7 @@ const FeedHeader = ({ showMobileMenu, setShowMobileMenu, setShowPostModal, notif
                         <div className="flex items-center gap-3 pl-6 border-l border-gray-100 relative">
                             <div className="text-right">
                                 <p className="text-[11px] font-black uppercase leading-none">{userProfile.name}</p>
-                                <p className="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">FAST {userProfile.campus}</p>
+                                <p className="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">FAST {userProfile.campusId || userProfile.campus}</p>
                             </div>
                             <button
                                 onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -86,7 +86,8 @@ const FeedHeader = ({ showMobileMenu, setShowMobileMenu, setShowPostModal, notif
                 </div>
 
                 <div className={`${showMobileMenu ? 'hidden lg:flex' : 'flex'} flex-col lg:flex-row justify-between lg:items-center gap-4`}>
-                    <div className="lg:flex bg-gray-100/50 p-1.5 rounded-2xl overflow-x-auto no-scrollbar hidden">
+                    {/* Desktop Tabs */}
+                    <div className="lg:flex bg-gray-100/50 p-1.5 rounded-2xl hidden">
                         {['All Rides', 'Requests'].map(tab => (
                             <button
                                 key={tab}
@@ -113,7 +114,7 @@ const FeedHeader = ({ showMobileMenu, setShowMobileMenu, setShowPostModal, notif
                     </div>
 
                     {activeTab !== 'Requests' && (
-                        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                        <div className="flex flex-col lg:flex-row gap-3 w-full lg:w-auto">
                             <div className="relative flex-1 lg:w-64">
                                 <select
                                     value={filters.campus}

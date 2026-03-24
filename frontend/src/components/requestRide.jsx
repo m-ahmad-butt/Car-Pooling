@@ -7,51 +7,41 @@ import { addNotification } from "../features/notificationSlice";
 function RequestRide() {
     const dispatch = useDispatch();
     const rideRequests = useSelector(state => state.requests.requests);
-    const userProfile = useSelector(state => state.user.profile);
+    const user = useSelector(state => state.auth.currentUser);
     const rides = useSelector(state => state.rides.rides);
 
-    const myRides = rides.filter(r => r.riderEmail === userProfile.email).map(r => r.id);
+    const myRides = rides.filter(r => r.riderEmail === user?.email).map(r => r.id);
     const pendingRequests = rideRequests.filter(r => r.status === 'pending' && myRides.includes(r.rideId));
 
 
     const handleApproveRequest = (id) => {
         const request = rideRequests.find(r => r.id === id);
+        if (!request) return;
+
+        const ride = rides.find(r => r.id === request.rideId);
+        const requestedSeats = request.seats || 1;
+
+        if (ride && ride.seats < requestedSeats) {
+            alert(`Cannot approve: only ${ride.seats} seat(s) available, but ${requestedSeats} requested.`);
+            return;
+        }
 
         // allRequests
         dispatch(approveRequest(id));
-        if (request) {
+        
+        // allRides - decrement seats by the amount in request
+        dispatch(decrementSeats({ 
+            rideId: request.rideId, 
+            seats: requestedSeats 
+        }));
 
-            // allRides
-            dispatch(decrementSeats(request.rideId));
-
-            const ride = rides.find(r => r.id === request.rideId);
-
-            // allRides 
-            dispatch(updateRide({
-                id: request.rideId,
-                status: "Done"
-            }));
-
-            // setting ongoing ride [THE RIDER]
-            dispatch(setOngoingRide({
-                rideId: request.rideId,
-                rider: ride ? ride.riderName : "Rider",
-                riderEmail: ride ? ride.riderEmail : userProfile.email,
-                requesterName: request.requesterName,
-                requesterEmail: request.requesterEmail,
-                from: ride ? (ride.location || "FAST") : "FAST",
-                to: ride ? (ride.destination || "Destination") : "Destination",
-                status: "In Progress"
-            }));
-
-            dispatch(addNotification({
-                id: Date.now(),
-                targetEmail: request.requesterEmail,
-                from: userProfile.email,
-                message: `Your request for "${ride ? ride.title : 'ride'}" has been approved!`,
-                type: 'approval'
-            }));
-        }
+        dispatch(addNotification({
+            id: Date.now(),
+            targetEmail: request.requesterEmail,
+            from: user?.email,
+            message: `Your request for "${request.ride || 'ride'}" has been approved!`,
+            type: 'approval'
+        }));
     };
 
     //allRequests
@@ -63,7 +53,7 @@ function RequestRide() {
             dispatch(addNotification({
                 id: Date.now(),
                 targetEmail: request.requesterEmail,
-                from: userProfile.email,
+                from: user?.email,
                 message: `Your request for "${request.ride}" was declined.`,
                 type: 'decline'
             }));

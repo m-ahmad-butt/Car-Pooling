@@ -12,18 +12,12 @@ import ReviewModal from '../components/reviewModal';
 import OngoingRideNotification from '../components/ongoingRideNotification';
 import MobileSearchBar from '../components/mobileSearchBar';
 import RidesList from '../components/ridesList';
-import {
-    addRide,
-    clearOngoingRide,
-    setNeedsReview,
-    addReviewToRide,
-    updateRiderRatings
-} from '../features/rideSlice';
+import { addRide, removeRide, clearOngoingRide, submitReviewForQueue, addReviewToRide, } from '../features/rideSlice';
 import { addRequest } from '../features/requestSlice';
 import { addReview } from '../features/reviewSlice';
-import { validatePhone, validateVehicleNumber } from '../utils/method';
-import { refreshUserStats } from '../features/userSlice';
+import { validatePhone, validateVehicleNumber, getCampuses } from '../utils/method';
 import { addNotification } from '../features/notificationSlice';
+import { syncUserStats, incrementRidesCount } from '../features/authSlice';
 
 const Feed = () => {
     const dispatch = useDispatch();
@@ -31,26 +25,36 @@ const Feed = () => {
 
     const rides = useSelector(state => state.rides.rides);
     const ongoingRide = useSelector(state => state.rides.ongoingRide);
-    const needsReviewBy = useSelector(state => state.rides.needsReviewBy);
     const filters = useSelector(state => state.rides.filters);
     const activeTab = useSelector(state => state.rides.activeTab);
     const reviews = useSelector(state => state.reviews.reviews);
-    const userProfile = useSelector(state => state.user.profile);
+    const user = useSelector(state => state.auth.currentUser);
+    const userName = `${user?.firstName} ${user?.lastName}`;
     const allNotifications = useSelector(state => state.notifications.notifications);
-    const notifications = allNotifications.filter(n => n.targetEmail === userProfile.email || n.targetEmail === 'all');
+    const notifications = allNotifications.filter(n => n.targetEmail === user?.email || n.targetEmail === 'all');
 
     const [selectedRide, setSelectedRide] = useState(null);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [showMobileMenu, setShowMobileMenu] = useState(false);
-    const [postErrors, setPostErrors] = useState({});
+    const [postErrors, setPostErrors] = useState({
+        vehicleNumber: '',
+        seats: '',
+        contactNumber: '',
+        dateTime: '',
+        vehicleType: '',
+    });
 
     // Review Modal State
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [reviewRating, setReviewRating] = useState(0);
     const [reviewText, setReviewText] = useState('');
+    const [reviewTargetIndex, setReviewTargetIndex] = useState(0);
 
-    const openReviewModal = () => setShowReviewModal(true);
+    const openReviewModal = () => {
+        setReviewTargetIndex(0);
+        setShowReviewModal(true);
+    };
     const closeReviewModal = () => {
         setShowReviewModal(false);
         setReviewRating(0);
@@ -60,8 +64,11 @@ const Feed = () => {
     // Post Ride Modal State
     const [showPostModal, setShowPostModal] = useState(false);
     const [postForm, setPostForm] = useState({
-        title: '', vehicleType: '', campus: '', vehicleNumber: '',
-        seats: '', departureTime: '', contactNumber: userProfile.contactNo, location: '',
+        title: '', vehicleType: '',
+        campus: getCampuses().find(c => c.id === user?.campusId)?.name || user?.campusId,
+        vehicleNumber: '',
+        seats: '', date: new Date().toISOString().split('T')[0], departureTime: '',
+        contactNumber: user?.contactNo, location: '',
         destination: '', description: '',
     });
 
@@ -71,104 +78,141 @@ const Feed = () => {
 
     const resetPostForm = () => {
         setPostForm({
-            title: '', vehicleType: '', campus: '', vehicleNumber: '',
-            seats: '', departureTime: '', contactNumber: userProfile.contactNo, location: '',
+            title: '', vehicleType: '',
+            campus: getCampuses().find(c => c.id === user?.campusId)?.name || user?.campusId,
+            vehicleNumber: '',
+            seats: '', date: new Date().toISOString().split('T')[0], departureTime: '',
+            contactNumber: user?.contactNo, location: '',
             destination: '', description: '',
         });
     };
 
     const handleSubmitReview = (e) => {
         e.preventDefault();
-        const riderEmail = ongoingRide ? ongoingRide.riderEmail : needsReviewBy.riderEmail;
-        const requesterEmail = ongoingRide ? ongoingRide.requesterEmail : needsReviewBy.requesterEmail;
-        const rideId = ongoingRide ? ongoingRide.rideId : needsReviewBy.rideId;
 
-        if (riderEmail && requesterEmail) {
-            const role = userProfile.email === riderEmail ? 'rider' : 'requester';
-            const targetEmail = role === 'rider' ? requesterEmail : riderEmail;
-            
-            dispatch(addReview({
-                rideId: rideId,
-                targetEmail: targetEmail,
-                user: userProfile.name,
-                rating: reviewRating,
-                comment: reviewText,
-            }));
+        const currentQueue = reviewQueues.find(q => {
+            const others = q.participants.filter(p => p.email !== user?.email);
+            const reviewed = q.progress[user?.email] || [];
+            return reviewed.length < others.length;
+        });
 
-            dispatch(addReviewToRide({
-                rideId: rideId,
-                review: { user: userProfile.name, rating: reviewRating, comment: reviewText }
-            }));
+        if (currentQueue) {
+            const others = currentQueue.participants.filter(p => p.email !== user?.email);
+            const reviewed = currentQueue.progress[user?.email] || [];
+            const currentTarget = others.find(o => !reviewed.includes(o.email));
 
-            const newReview = { targetEmail, rating: reviewRating };
-            const allTargetReviews = [...reviews.filter(r => r.targetEmail === targetEmail), newReview];
-            const newAvgRating = Number((allTargetReviews.reduce((acc, curr) => acc + curr.rating, 0) / allTargetReviews.length).toFixed(1));
+            if (currentTarget) {
+                // Submit individual review
+                dispatch(addReview({
+                    rideId: currentQueue.rideId,
+                    targetEmail: currentTarget.email,
+                    user: userName,
+                    rating: reviewRating,
+                    comment: reviewText,
+                }));
 
-            dispatch(refreshUserStats({ 
-                email: targetEmail, 
-                reviews: [...reviews, newReview] 
-            }));
+                dispatch(addReviewToRide({
+                    rideId: currentQueue.rideId,
+                    review: { user: userName, rating: reviewRating, comment: reviewText }
+                }));
 
-            dispatch(updateRiderRatings({
-                email: targetEmail,
-                rating: newAvgRating
-            }));
+                dispatch(addNotification({
+                    id: Date.now(),
+                    targetEmail: currentTarget.email,
+                    from: user?.email,
+                    message: `You received a new review from ${userName}!`,
+                    type: 'review'
+                }));
 
-            dispatch(addNotification({
-                id: Date.now(),
-                targetEmail: targetEmail,
-                from: userProfile.email,
-                message: `You received a new ${role === 'rider' ? 'rider' : 'requester'} review from ${userProfile.name}!`,
-                type: 'review'
-            }));
+                // Record that this target was reviewed by the current user
+                dispatch(submitReviewForQueue({
+                    rideId: currentQueue.rideId,
+                    userEmail: user?.email,
+                    targetEmail: currentTarget.email
+                }));
 
-            dispatch(setNeedsReview({ role, value: false }));
+                // Sync stats for the target user (include current reviews list)
+                dispatch(syncUserStats({ email: currentTarget.email, reviews: [...reviews, { targetEmail: currentTarget.email, rating: reviewRating }] }));
+
+                // Sync stats for the current user
+                dispatch(syncUserStats({ email: user?.email, reviews: reviews }));
+
+                // Clear inputs
+                setReviewRating(0);
+                setReviewText('');
+
+                // Check if that was the last person for this specific ride
+                if (reviewed.length + 1 >= others.length) {
+                    closeReviewModal();
+                }
+            } else {
+                closeReviewModal();
+            }
+        } else {
+            closeReviewModal();
         }
-        closeReviewModal();
     };
 
-    const handleAcceptSimulation = (note, ride) => {
+    const handleAcceptSimulation = (note, ride, requestedSeats = 1) => {
         dispatch(addRequest({
             rideId: ride.id,
-            requesterName: userProfile.name,
-            requesterEmail: userProfile.email,
-            requesterAvatar: userProfile.image,
-            requesterRating: userProfile.stats.rating,
+            requesterName: userName,
+            requesterEmail: user?.email,
+            requesterRollNo: user?.rollNo,
+            requesterAvatar: user?.image,
+            requesterRating: user?.stats?.rating || 0,
             ride: ride.title,
             rideDate: ride.date,
-            seats: 1,
+            seats: requestedSeats,
             note: note,
         }));
 
         dispatch(addNotification({
             id: Date.now(),
             targetEmail: ride.riderEmail,
-            from: userProfile.email,
-            message: `${userProfile.name} requested your ride: ${ride.title}`,
+            from: user?.email,
+            message: `${userName} requested ${requestedSeats} seat(s) for your ride: ${ride.title}`,
             type: 'request'
         }));
     };
 
     const isUserInOngoingRide = ongoingRide && (
-        ongoingRide.riderEmail === userProfile.email ||
-        ongoingRide.requesterEmail === userProfile.email
+        ongoingRide.riderEmail === user?.email ||
+        (ongoingRide.requesterEmails && ongoingRide.requesterEmails.includes(user?.email)) ||
+        ongoingRide.requesterEmail === user?.email
     );
 
-    const userRole = (ongoingRide && userProfile.email === ongoingRide.riderEmail) || 
-                    (!ongoingRide && userProfile.email === needsReviewBy.riderEmail) ? 'rider' : 
-                    ((ongoingRide && userProfile.email === ongoingRide.requesterEmail) || 
-                    (!ongoingRide && userProfile.email === needsReviewBy.requesterEmail) ? 'requester' : null);
+    const userRole = ongoingRide
+        ? (user?.email === ongoingRide.riderEmail ? 'rider' : 'requester')
+        : null;
 
-    const userNeedsReview = (userRole === 'rider' && needsReviewBy.riderNeedsReview) || 
-                           (userRole === 'requester' && needsReviewBy.requesterNeedsReview);
+    const reviewQueues = useSelector(state => state.rides.reviewQueues);
+    const userNeedsReview = reviewQueues.some(q => {
+        const others = q.participants.filter(p => p.email !== user?.email);
+        const reviewed = q.progress[user?.email] || [];
+        return others.length > 0 && reviewed.length < others.length;
+    });
 
     const handleCompleteSimulation = () => {
+        if (ongoingRide) {
+            // participants = rider + all requesters
+            const participants = [ongoingRide.riderEmail, ...(ongoingRide.requesterEmails || [])];
+            dispatch(incrementRidesCount({ emails: participants }));
+            dispatch(removeRide(ongoingRide.rideId));
+        }
         dispatch(clearOngoingRide());
     };
 
+    const rideRequests = useSelector(state => state.requests.requests);
+
     const filteredRides = rides.filter(ride => {
         if (ride.status === 'Done') return false;
-        
+
+        if (ride.seats === 0) {
+            const isRider = ride.riderEmail === user?.email;
+            if (!isRider) return false;
+        }
+
         const term = filters.searchTerm.toLowerCase();
         const matchesSearch = !term ||
             ride.title.toLowerCase().includes(term) ||
@@ -185,6 +229,15 @@ const Feed = () => {
         e.preventDefault();
 
         const errors = {};
+
+        // Date and Time Validation
+        const selectedDateTime = new Date(`${postForm.date}T${postForm.departureTime}`);
+        const currentDateTime = new Date();
+
+        if (selectedDateTime < currentDateTime) {
+            errors.dateTime = 'Ride time cannot be in the past';
+        }
+
         if (!validatePhone(postForm.contactNumber)) {
             errors.contactNumber = "Contact number must start with 03 and be 11 digits";
         }
@@ -196,6 +249,10 @@ const Feed = () => {
         const seatCount = parseInt(postForm.seats);
         if (isNaN(seatCount) || seatCount <= 0) {
             errors.seats = "Please enter a valid number of seats (at least 1)";
+        }
+
+        if (!postForm.vehicleType) {
+            errors.vehicleType = "Please select a vehicle category";
         }
 
         if (Object.keys(errors).length > 0) {
@@ -212,10 +269,11 @@ const Feed = () => {
             vehicleType: postForm.vehicleType,
             vehicleNumber: postForm.vehicleNumber,
             seats: parseInt(postForm.seats) || 1,
-            riderName: userProfile.name,
-            riderEmail: userProfile.email,
-            riderRating: userProfile.stats.rating,
-            date: "Just now",
+            riderName: userName,
+            riderEmail: user?.email,
+            riderRollNo: user?.rollNo,
+            riderRating: user?.stats?.rating || 0,
+            date: postForm.date,
             departureTime: postForm.departureTime,
             contactNumber: postForm.contactNumber,
             location: postForm.location,
@@ -228,20 +286,20 @@ const Feed = () => {
     return (
         <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
 
-            <FeedHeader 
+            <FeedHeader
                 showMobileMenu={showMobileMenu}
                 setShowMobileMenu={setShowMobileMenu}
                 setShowPostModal={setShowPostModal}
                 notifications={notifications}
                 showNotifications={showNotifications}
                 setShowNotifications={setShowNotifications}
-                userProfile={userProfile}
+                userProfile={{ ...user, name: userName }}
                 setShowProfileMenu={setShowProfileMenu}
                 showProfileMenu={showProfileMenu}
                 ProfileMenu={ProfileMenu}
             />
 
-            <FeedMobileMenu 
+            <FeedMobileMenu
                 showMobileMenu={showMobileMenu}
                 setShowMobileMenu={setShowMobileMenu}
                 setShowPostModal={setShowPostModal}
@@ -260,9 +318,22 @@ const Feed = () => {
                 setReviewRating={setReviewRating}
                 reviewText={reviewText}
                 setReviewText={setReviewText}
+                targetName={
+                    (() => {
+                        const q = reviewQueues.find(q => {
+                            const others = q.participants.filter(p => p.email !== user?.email);
+                            const reviewed = q.progress[user?.email] || [];
+                            return reviewed.length < others.length;
+                        });
+                        if (!q) return 'Member';
+                        const others = q.participants.filter(p => p.email !== user?.email);
+                        const reviewed = q.progress[user?.email] || [];
+                        return others.find(o => !reviewed.includes(o.email))?.name || 'Member';
+                    })()
+                }
             />
 
-            <main className="px-8 lg:px-20 py-0 max-w-7xl mx-auto">
+            <main className="px-4 sm:px-8 lg:px-20 py-0 max-w-7xl mx-auto">
 
                 <MobileSearchBar activeTab={activeTab} />
 
@@ -272,8 +343,9 @@ const Feed = () => {
                         ongoingRide={ongoingRide}
                         handleCompleteSimulation={handleCompleteSimulation}
                         userNeedsReview={userNeedsReview}
-                        userRole={userRole}
+                        reviewQueues={reviewQueues}
                         openReviewModal={openReviewModal}
+                        userProfile={user}
                     />
                 )}
 
@@ -281,10 +353,10 @@ const Feed = () => {
                     <RequestRide />
                 )}
 
-                <RidesList 
+                <RidesList
                     activeTab={activeTab}
                     filteredRides={filteredRides}
-                    userProfile={userProfile}
+                    userProfile={{ ...user, name: userName }}
                     setSelectedRide={setSelectedRide}
                 />
 
@@ -294,14 +366,14 @@ const Feed = () => {
                 <RideDetails
                     ride={selectedRide}
                     onClose={() => setSelectedRide(null)}
-                    onAccept={(note) => {
-                        handleAcceptSimulation(note, selectedRide);
+                    onAccept={(note, seats) => {
+                        handleAcceptSimulation(note, selectedRide, seats);
                         setSelectedRide(null);
                     }}
                 />
             )}
 
-            <PostRide 
+            <PostRide
                 showPostModal={showPostModal}
                 setShowPostModal={setShowPostModal}
                 postForm={postForm}
