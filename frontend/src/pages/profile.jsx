@@ -20,14 +20,14 @@ const ProfilePage = () => {
     const [isSettingsView, setIsSettingsView] = useState(false);
     const [show4fields, setShow4Fields] = useState(true);
 
-    const myRides = rides.filter(r => r.riderEmail === user?.email).map(r => ({
+    const myRides = rides.filter(r => r.riderEmail?.toLowerCase() === user?.email?.toLowerCase()).map(r => ({
         id: r.id,
         title: r.title,
-        status: r.status === "active" ? "Live" : "Done",
+        status: (r.status === "active" || r.status === "In Progress") ? "Live" : "Done",
         date: r.date,
     }));
 
-    const myRequestedRides = requests.filter(r => r.requesterEmail === user?.email).map(r => ({
+    const myRequestedRides = requests.filter(r => r.requesterEmail?.toLowerCase() === user?.email?.toLowerCase()).map(r => ({
         id: r.id,
         title: r.ride,
         rider: r.requesterName,

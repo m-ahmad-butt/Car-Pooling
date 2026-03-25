@@ -232,9 +232,10 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                 <div className="lg:hidden fixed bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-50">
                     <button
                         onClick={handleRequestRide}
-                        className="w-full bg-black text-white py-5 rounded-2xl text-[12px] font-bold uppercase tracking-[0.2em]"
+                        disabled={ride.status === 'In Progress'}
+                        className={`w-full py-5 rounded-2xl text-[12px] font-bold uppercase tracking-[0.2em] ${ride.status === 'In Progress' ? 'bg-gray-400 text-white opacity-40 cursor-not-allowed' : 'bg-black text-white'}`}
                     >
-                        Request This Ride
+                        {ride.status === 'In Progress' ? 'Ride Started' : 'Request This Ride'}
                     </button>
                 </div>
             )}
@@ -244,9 +245,10 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                     <div className="max-w-5xl mx-auto px-12 py-5 flex justify-end">
                         <button
                             onClick={handleRequestRide}
-                            className="bg-black text-white py-4 px-12 rounded-2xl text-[12px] font-bold uppercase tracking-[0.2em]"
+                            disabled={ride.status === 'In Progress'}
+                            className={`py-4 px-12 rounded-2xl text-[12px] font-bold uppercase tracking-[0.2em] ${ride.status === 'In Progress' ? 'bg-gray-400 text-white opacity-40 cursor-not-allowed' : 'bg-black text-white'}`}
                         >
-                            Request This Ride
+                            {ride.status === 'In Progress' ? 'Ride Started' : 'Request This Ride'}
                         </button>
                     </div>
                 </div>

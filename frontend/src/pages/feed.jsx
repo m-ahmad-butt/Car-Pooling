@@ -12,7 +12,7 @@ import ReviewModal from '../components/reviewModal';
 import OngoingRideNotification from '../components/ongoingRideNotification';
 import MobileSearchBar from '../components/mobileSearchBar';
 import RidesList from '../components/ridesList';
-import { addRide, removeRide, clearOngoingRide, submitReviewForQueue, addReviewToRide, } from '../features/rideSlice';
+import { addRide, clearOngoingRide, submitReviewForQueue, addReviewToRide, updateRide } from '../features/rideSlice';
 import { addRequest } from '../features/requestSlice';
 import { addReview } from '../features/reviewSlice';
 import { validatePhone, validateVehicleNumber, getCampuses } from '../utils/method';
@@ -198,7 +198,7 @@ const Feed = () => {
             // participants = rider + all requesters
             const participants = [ongoingRide.riderEmail, ...(ongoingRide.requesterEmails || [])];
             dispatch(incrementRidesCount({ emails: participants }));
-            dispatch(removeRide(ongoingRide.rideId));
+            dispatch(updateRide({ id: ongoingRide.rideId, status: "Done" }));
         }
         dispatch(clearOngoingRide());
     };
