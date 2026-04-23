@@ -15,35 +15,13 @@ services:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 # --- BUILD JOBS ---
-build-eureka:
+build-backend:
   <<: *docker-login
   stage: build
   image: docker:24.0.5
   script:
-    - docker build -t $DOCKER_USERNAME/fspm-netflix-eureka-server:latest ./backend/netflix-eureka-server
-    - docker push $DOCKER_USERNAME/fspm-netflix-eureka-server:latest
-  only:
-    - main
-    - develop
-
-build-gateway:
-  <<: *docker-login
-  stage: build
-  image: docker:24.0.5
-  script:
-    - docker build -t $DOCKER_USERNAME/fspm-api-gateway:latest ./backend/api-gateway
-    - docker push $DOCKER_USERNAME/fspm-api-gateway:latest
-  only:
-    - main
-    - develop
-
-build-auth:
-  <<: *docker-login
-  stage: build
-  image: docker:24.0.5
-  script:
-    - docker build -t $DOCKER_USERNAME/fspm-auth-service:latest ./backend/auth-service
-    - docker push $DOCKER_USERNAME/fspm-auth-service:latest
+    - docker build -t $DOCKER_USERNAME/car-pooling-backend:latest ./backend
+    - docker push $DOCKER_USERNAME/car-pooling-backend:latest
   only:
     - main
     - develop
@@ -53,14 +31,14 @@ build-frontend:
   stage: build
   image: docker:24.0.5
   script:
-    - docker build --build-arg VITE_CLERK_PUBLISHABLE_KEY=$CLERK_PUBLISHABLE_KEY --build-arg VITE_API_URL=$API_SERVICE_URL -t $DOCKER_USERNAME/fspm-frontend:latest ./frontend
-    - docker push $DOCKER_USERNAME/fspm-frontend:latest
+    - docker build --build-arg VITE_CLERK_PUBLISHABLE_KEY=$CLERK_PUBLISHABLE_KEY --build-arg VITE_API_URL=$API_SERVICE_URL -t $DOCKER_USERNAME/car-pooling-frontend:latest ./frontend
+    - docker push $DOCKER_USERNAME/car-pooling-frontend:latest
   only:
     - main
     - develop
 
 # --- DEPLOY JOBS ---
-deploy-eureka:
+deploy-app:
   stage: deploy
   image: alpine:latest
   script:
@@ -68,63 +46,7 @@ deploy-eureka:
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_EUREKA_IP "docker image prune -f && docker pull $DOCKER_USERNAME/fspm-netflix-eureka-server:latest && docker rm -f eureka || true && docker run -d --name eureka -p 5001:5001 -e EUREKA_SERVER_PORT=5001 $DOCKER_USERNAME/fspm-netflix-eureka-server:latest"
-  only:
-    - main
-
-deploy-gateway:
-  stage: deploy
-  image: alpine:latest
-  script:
-    - apk add --no-cache openssh-client
-    - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_GATEWAY_IP "docker image prune -f && docker pull $DOCKER_USERNAME/fspm-api-gateway:latest && docker rm -f gateway || true && docker run -d --name gateway -p 5000:5000 -e API_GATEWAY_PORT=5000 -e EUREKA_URL=http://$EC2_EUREKA_IP:5001 -e AUTH_SERVICE_URL=http://$EC2_AUTH_IP:5002 -e CLIENT_URL='$CLIENT_PROD_URL' $DOCKER_USERNAME/fspm-api-gateway:latest"
-  only:
-    - main
-
-
-deploy-auth:
-  stage: deploy
-  image: alpine:latest
-  script:
-    - apk add --no-cache openssh-client
-    - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    # Clean up old containers, volumes, and images
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker rm -f auth auth-db mongo-express 2>/dev/null || true && docker volume rm auth_mongo_data 2>/dev/null || true && docker image prune -f"
-    # Create keyfile for replica set auth (sudo rm first in case old one exists with root/999 ownership)
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "sudo rm -f /tmp/mongo-keyfile && openssl rand -base64 756 > /tmp/mongo-keyfile && chmod 400 /tmp/mongo-keyfile && sudo chown 999:999 /tmp/mongo-keyfile"
-    # Start MongoDB as replica set with keyfile
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker pull mongo:latest && docker run -d --name auth-db -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME=admin -e MONGO_INITDB_ROOT_PASSWORD=admin123 -v auth_mongo_data:/data/db -v /tmp/mongo-keyfile:/data/mongo-keyfile:ro mongo:latest --replSet rs0 --keyFile /data/mongo-keyfile"
-    # Wait for MongoDB to fully start
-    - echo "Waiting for MongoDB to start..." && sleep 15
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker logs auth-db --tail 10"
-    # Initialize replica set
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker exec auth-db mongosh -u admin -p admin123 --authenticationDatabase admin --eval 'try{rs.status()}catch(e){rs.initiate({_id:\"rs0\",members:[{_id:0,host:\"localhost:27017\"}]})}'"
-    - echo "Waiting for replica set primary..." && sleep 5
-    # Verify replica set is healthy
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker exec auth-db mongosh -u admin -p admin123 --authenticationDatabase admin --eval 'rs.status().ok'"
-    # Start Mongo Express (directConnection=true avoids hostname mismatch)
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker pull mongo-express:latest && docker run -d --name mongo-express -p 8081:8081 --link auth-db:mongo -e ME_CONFIG_MONGODB_ADMINUSERNAME=admin -e ME_CONFIG_MONGODB_ADMINPASSWORD=admin123 -e ME_CONFIG_MONGODB_URL='mongodb://admin:admin123@mongo:27017/?directConnection=true' -e ME_CONFIG_BASICAUTH=false mongo-express:latest"
-    # Start Auth Service (directConnection=true so Prisma connects directly without replica set discovery)
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker pull $DOCKER_USERNAME/fspm-auth-service:latest && docker run -d --name auth -p 5002:5002 --link auth-db:mongodb -e CLERK_SECRET_KEY=$CLERK_SECRET_KEY -e DATABASE_URL='mongodb://admin:admin123@mongodb:27017/auth_db?authSource=admin&directConnection=true' -e EUREKA_URL=http://$EC2_EUREKA_IP:5001 $DOCKER_USERNAME/fspm-auth-service:latest"
-    # Push Prisma schema
-    - sleep 5
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_AUTH_IP "docker exec auth npx prisma db push"
-  only:
-    - main
-
-deploy-frontend:
-  stage: deploy
-  image: alpine:latest
-  script:
-    - apk add --no-cache openssh-client
-    - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_FRONTEND_IP "docker image prune -f && docker pull $DOCKER_USERNAME/fspm-frontend:latest && docker rm -f frontend || true && docker run -d --name frontend -p 3000:80 $DOCKER_USERNAME/fspm-frontend:latest"
+    - scp -o StrictHostKeyChecking=no docker-compose.yml ubuntu@$EC2_IP:/home/ubuntu/docker-compose.yml
+    - ssh -o StrictHostKeyChecking=no ubuntu@$EC2_IP "export DOCKER_USERNAME=$DOCKER_USERNAME CLERK_SECRET_KEY=$CLERK_SECRET_KEY CLIENT_URL=$CLIENT_PROD_URL; docker compose pull && docker compose up -d"
   only:
     - main

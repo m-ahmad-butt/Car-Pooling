@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: carpooling-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin123
+      MONGO_INITDB_ROOT_PASSWORD: 123123123
+    volumes:
+      - mongo_data:/data/db
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: carpooling-mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin123
+      ME_CONFIG_MONGODB_ADMINPASSWORD: 123123123
+      ME_CONFIG_MONGODB_URL: mongodb://admin123:123123123@mongo:27017/?authSource=admin
+      ME_CONFIG_BASICAUTH: "false"
+    depends_on:
+      - mongo
+
+  redis:
+    image: redis:latest
+    container_name: carpooling-redis
+    restart: always
+    command: redis-server --requirepass 123123123
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build: ./backend
+    image: carpooling-backend:local
+    container_name: carpooling-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGODB_URI=mongodb://admin123:123123123@mongo:27017/carpooling?authSource=admin
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_USERNAME=default
+      - REDIS_PASSWORD=123123123
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - CLIENT_URL=${CLIENT_URL:-http://localhost:5173}
+    depends_on:
+      - mongo
+      - redis
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:5000/api}
+    image: carpooling-frontend:local
+    container_name: carpooling-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
+  redis_data:
