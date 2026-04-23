@@ -1,4 +1,5 @@
 const userRepository = require('../repositories/user.repository');
+const { uploadToS3, deleteFromS3 } = require('../config/s3');
 
 const syncUser = async (req, res, next) => {
   try {
@@ -35,4 +36,34 @@ const getProfile = async (req, res, next) => {
   }
 };
 
-module.exports = { syncUser, getProfile };
+const updateProfileImage = async (req, res, next) => {
+  try {
+    const { email } = req.params;
+    
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    const user = await userRepository.findByEmail(email);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Delete old image if exists
+    if (user.image) {
+      await deleteFromS3(user.image);
+    }
+
+    // Upload new image
+    const imageUrl = await uploadToS3(req.file, 'profiles');
+    
+    // Update user with new image URL
+    const updatedUser = await userRepository.updateByEmail(email, { image: imageUrl });
+    
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { syncUser, getProfile, updateProfileImage };

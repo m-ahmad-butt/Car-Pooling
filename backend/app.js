@@ -46,7 +46,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/api/rides', clerkAuth, rideRoutes);
+app.use('/api/rides', rideRoutes);
 app.use('/api/requests', clerkAuth, requestRoutes);
 app.use('/api/reviews', clerkAuth, reviewRoutes);
 app.use('/api/notifications', clerkAuth, notificationRoutes);

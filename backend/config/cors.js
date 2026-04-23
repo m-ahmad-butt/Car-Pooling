@@ -1,6 +1,8 @@
 const allowedOrigins = [
   process.env.CLIENT_URL?.trim().replace(/\/$/, ""),
-  "http://localhost:5173"
+  "http://localhost:5173",
+  "http://localhost",
+  "http://localhost:80"
 ].filter(Boolean);
 
 const corsOptions = {

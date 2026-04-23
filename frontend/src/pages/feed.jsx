@@ -64,6 +64,7 @@ const Feed = () => {
 
     // Post Ride Modal State
     const [showPostModal, setShowPostModal] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
     const [postForm, setPostForm] = useState({
         title: '', vehicleType: '', campus: '', vehicleNumber: '',
         seats: '', departureTime: '', contactNumber: userProfile.contactNo, location: '',
@@ -80,6 +81,7 @@ const Feed = () => {
             seats: '', departureTime: '', contactNumber: userProfile.contactNo, location: '',
             destination: '', description: '',
         });
+        setSelectedImage(null);
     };
 
     const handleSubmitReview = (e) => {
@@ -219,6 +221,7 @@ const Feed = () => {
                 location: postForm.location,
                 destination: postForm.destination,
             },
+            image: selectedImage,
             getToken
         }));
         setShowPostModal(false);
@@ -309,6 +312,8 @@ const Feed = () => {
                 handlePostRide={handlePostRide}
                 postErrors={postErrors}
                 setPostErrors={setPostErrors}
+                selectedImage={selectedImage}
+                setSelectedImage={setSelectedImage}
             />
 
             <Footer />

@@ -5,7 +5,8 @@ const rateLimiter = rateLimit({
   max: 100, 
   standardHeaders: true,
   legacyHeaders: false,
-  message: 'Too many requests from this IP, please try again after 15 minutes'
+  message: 'Too many requests from this IP, please try again after 15 minutes',
+  validate: { trustProxy: false }
 });
 
 module.exports = { rateLimiter };

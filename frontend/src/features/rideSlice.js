@@ -10,9 +10,9 @@ export const fetchRides = createAsyncThunk('rides/fetchRides', async (getToken, 
     }
 });
 
-export const createRideAsync = createAsyncThunk('rides/createRide', async ({ rideData, getToken }, { rejectWithValue }) => {
+export const createRideAsync = createAsyncThunk('rides/createRide', async ({ rideData, image, getToken }, { rejectWithValue }) => {
     try {
-        const ride = await rideService.createRide(rideData, getToken);
+        const ride = await rideService.createRide(rideData, image, getToken);
         return ride;
     } catch (error) {
         return rejectWithValue(error.response?.data || error.message);

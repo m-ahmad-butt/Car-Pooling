@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
 import Footer from '../components/footer';
 import { getCampuses, validatePassword } from '../utils/method';
-import { updateProfile } from '../features/userSlice';
-import { useClerk } from "@clerk/clerk-react";
+import { updateProfile, updateProfileImageAsync } from '../features/userSlice';
+import { useClerk, useAuth } from "@clerk/clerk-react";
 
 const ProfilePage = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { openUserProfile } = useClerk();
+    const { getToken } = useAuth();
 
     const userProfile = useSelector(state => state.user.profile);
     const rides = useSelector(state => state.rides.rides);
@@ -53,6 +54,30 @@ const ProfilePage = () => {
     const [completedRidesFilter, setCompletedRidesFilter] = useState('offered');
     const [isEditingName, setIsEditingName] = useState(false);
     const [isEditingCampus, setIsEditingCampus] = useState(false);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Image size must be less than 5MB');
+            return;
+        }
+
+        setIsUploadingImage(true);
+        try {
+            await dispatch(updateProfileImageAsync({ 
+                email: userProfile.email, 
+                imageFile: file, 
+                getToken 
+            })).unwrap();
+        } catch (error) {
+            alert('Failed to upload image');
+        } finally {
+            setIsUploadingImage(false);
+        }
+    };
 
     const handleSaveProfile = () => {
         if (isEditingName || isEditingCampus) {
@@ -105,6 +130,30 @@ const ProfilePage = () => {
                                 : <span className="text-white font-black" style={{ fontSize: 'clamp(24px, 5vw, 36px)' }}>{userProfile.name.charAt(0)}</span>
                             }
                         </div>
+                        <label 
+                            htmlFor="profile-image-upload" 
+                            className="absolute bottom-0 right-0 bg-black text-white rounded-full p-2 cursor-pointer hover:bg-gray-800 transition-all shadow-lg"
+                            title="Upload profile picture"
+                        >
+                            {isUploadingImage ? (
+                                <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            ) : (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            )}
+                        </label>
+                        <input 
+                            id="profile-image-upload" 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handleImageUpload} 
+                            className="hidden" 
+                            disabled={isUploadingImage}
+                        />
                     </div>
 
                     <h2 className="font-black tracking-tight" style={{ fontSize: 'clamp(18px, 4vw, 26px)', marginBottom: '6px' }}>{userProfile.name}</h2>

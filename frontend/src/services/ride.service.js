@@ -1,9 +1,20 @@
 import api, { getAuthHeaders } from './api';
 
 export const rideService = {
-    createRide: async (rideData, getToken) => {
+    createRide: async (rideData, image, getToken) => {
         const config = await getAuthHeaders(getToken);
-        const response = await api.post('/rides', rideData, config);
+        
+        const formData = new FormData();
+        Object.keys(rideData).forEach(key => {
+            formData.append(key, rideData[key]);
+        });
+        
+        if (image) {
+            formData.append('image', image);
+        }
+        
+        config.headers['Content-Type'] = 'multipart/form-data';
+        const response = await api.post('/rides', formData, config);
         return response.data;
     },
     getRides: async (getToken) => {

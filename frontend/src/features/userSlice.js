@@ -10,6 +10,15 @@ export const fetchProfileAsync = createAsyncThunk('user/fetchProfile', async ({ 
     }
 });
 
+export const updateProfileImageAsync = createAsyncThunk('user/updateProfileImage', async ({ email, imageFile, getToken }, { rejectWithValue }) => {
+    try {
+        const profile = await authService.updateProfileImage(email, imageFile, getToken);
+        return profile;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || error.message);
+    }
+});
+
 const defaultProfile = {
     name: null,
     rollNo: null,
@@ -50,6 +59,9 @@ const userSlice = createSlice({
             .addCase(fetchProfileAsync.rejected, (state, action) => {
                 state.status = 'failed';
                 state.error = action.payload;
+            })
+            .addCase(updateProfileImageAsync.fulfilled, (state, action) => {
+                state.profile = action.payload;
             });
     }
 });

@@ -15,6 +15,7 @@ const rideSchema = new mongoose.Schema({
   contactNumber: { type: String },
   location: { type: String },
   destination: { type: String },
+  image: { type: String },
   status: { type: String, enum: ['active', 'Done'], default: 'active' },
 }, { timestamps: true });
 

@@ -18,6 +18,10 @@ class UserRepository {
     return User.findOneAndUpdate({ clerkId }, updateData, { new: true });
   }
 
+  async updateByEmail(email, updateData) {
+    return User.findOneAndUpdate({ email }, updateData, { new: true });
+  }
+
   async updateStats(email, updateData) {
     return User.findOneAndUpdate({ email }, { $set: { stats: updateData } }, { new: true });
   }

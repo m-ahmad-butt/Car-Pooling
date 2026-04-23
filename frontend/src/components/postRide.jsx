@@ -1,6 +1,30 @@
 import { getCampuses, validatePhone, validateVehicleNumber } from '../utils/method';
+import { useState } from 'react';
 
-const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormChange, handlePostRide, postErrors, setPostErrors }) => {
+const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormChange, handlePostRide, postErrors, setPostErrors, selectedImage, setSelectedImage }) => {
+    const [imagePreview, setImagePreview] = useState(null);
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Image size must be less than 5MB');
+                return;
+            }
+            setSelectedImage(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeImage = () => {
+        setSelectedImage(null);
+        setImagePreview(null);
+    };
+
     if (!showPostModal) return null;
 
     return (
@@ -135,15 +159,36 @@ const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormCha
 
                             {/* Right: Image Upload */}
                             <div className="w-full lg:w-1/3 bg-white border border-gray-100 p-8 rounded-[2.5rem] shadow-sm sticky top-0">
-                                <label className="block text-[11px] font-black text-gray-400 uppercase mb-4 tracking-widest">Item Image (JPEG, PNG, or WEBP, max 1MB)</label>
-                                <div className="border-2 border-dashed border-gray-100 rounded-[2rem] p-10 flex flex-col items-center justify-center bg-gray-50/30 group hover:border-black/10 transition-all cursor-pointer h-full min-h-[400px]">
-                                    <div className="w-20 h-20 bg-white rounded-[1.5rem] shadow-sm border border-gray-50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                                        <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <label className="block text-[11px] font-black text-gray-400 uppercase mb-4 tracking-widest">Ride Image (Optional, max 5MB)</label>
+                                
+                                {!imagePreview ? (
+                                    <label htmlFor="image-upload" className="border-2 border-dashed border-gray-100 rounded-[2rem] p-10 flex flex-col items-center justify-center bg-gray-50/30 group hover:border-black/10 transition-all cursor-pointer h-full min-h-[400px]">
+                                        <div className="w-20 h-20 bg-white rounded-[1.5rem] shadow-sm border border-gray-50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                            <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                        </div>
+                                        <p className="text-sm font-black text-gray-700 mb-2 text-center">Click to upload image</p>
+                                        <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">MAX 5MB</p>
+                                        <input 
+                                            id="image-upload" 
+                                            type="file" 
+                                            accept="image/*" 
+                                            onChange={handleImageChange} 
+                                            className="hidden" 
+                                        />
+                                    </label>
+                                ) : (
+                                    <div className="relative rounded-[2rem] overflow-hidden min-h-[400px]">
+                                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                        <button 
+                                            type="button" 
+                                            onClick={removeImage} 
+                                            className="absolute top-4 right-4 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-all"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </button>
                                     </div>
-                                    <p className="text-sm font-black text-gray-700 mb-2 text-center">Drag and drop an image or click to browse</p>
-                                    <p className="text-[10px] font-bold text-gray-300 uppercase letter tracking-widest">MAX 1MB</p>
+                                )}
 
-                                </div>
                                 <div className="max-w-2xl mx-auto pt-6">
                                     <button type="submit" className="w-full bg-black text-white py-5 rounded-[2rem] text-[13px] font-black uppercase tracking-[0.3em] hover:shadow-2xl hover:shadow-black/20 active:scale-95 transition-all">
                                         Publish Ride
