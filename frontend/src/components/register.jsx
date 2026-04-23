@@ -1,12 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { extractRollNo, validateEmail, getCampuses, validatePassword, validatePhone } from "../utils/method";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { useSignUp } from "@clerk/clerk-react";
+import { useSignUp, useUser } from "@clerk/clerk-react";
 import { updateProfile } from "../features/userSlice";
 import { authService } from "../services/auth.service";
 
 function RegisterForm() {
+    const navigate = useNavigate();
+    const { isSignedIn, isLoaded: userLoaded } = useUser();
+    
+    useEffect(() => {
+        if (userLoaded && isSignedIn) {
+            navigate('/feed');
+        }
+    }, [userLoaded, isSignedIn, navigate]);
+
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
     const [phoneError, setPhoneError] = useState("");
@@ -32,7 +41,6 @@ function RegisterForm() {
     });
 
     const campuses = getCampuses();
-    const navigate = useNavigate();
     const dispatch = useDispatch();
     const { signUp, isLoaded } = useSignUp();
 

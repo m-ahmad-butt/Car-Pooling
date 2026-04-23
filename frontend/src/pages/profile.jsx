@@ -428,7 +428,7 @@ const ProfilePage = () => {
 const InfoCard = ({ label, value }) => (
     <div className="bg-gray-100 p-4 sm:p-7 rounded-2xl">
         <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2.5">{label}</h5>
-        <p className="font-black m-0 break-all" style={{ fontSize: 'clamp(13px, 2.5vw, 17px)' }}>{value}</p>
+        <p className="font-black m-0 break-all" style={{ fontSize: 'clamp(13px, 2.5vw, 17px)' }}>{value || 'Not set'}</p>
     </div>
 );
 

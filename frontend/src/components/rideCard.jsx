@@ -1,7 +1,17 @@
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 const RideCard = ({ ride, onViewDetails, isOwnRide }) => {
     const navigate = useNavigate();
+    const userProfile = useSelector(state => state.user.profile);
+    
+    const handleProfileClick = () => {
+        if (ride.riderEmail === userProfile.email) {
+            navigate('/profile');
+        } else {
+            navigate(`/profile/${ride.riderName.replace(/\s+/g, '-').toLowerCase()}`);
+        }
+    };
 
     return (
         <div className="relative bg-white border border-gray-100 rounded-[1rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 group flex flex-col h-full ring-1 ring-black/[0.05]">
@@ -11,7 +21,7 @@ const RideCard = ({ ride, onViewDetails, isOwnRide }) => {
                     <img
                         src={ride.image}
                         alt={ride.title}
-                        className="w-full h-full object-cover transition-all duration-700 grayscale group-hover:grayscale-0"
+                        className="w-full h-full object-cover transition-all duration-700"
                     />
                 ) : (
                     <div className="flex flex-col items-center opacity-10">
@@ -31,7 +41,7 @@ const RideCard = ({ ride, onViewDetails, isOwnRide }) => {
             <div className="p-7 flex-1 flex flex-col">
                 <div className="flex items-center gap-3 mb-6">
                     <button
-                        onClick={() => navigate(`/profile/${ride.riderName.replace(' ', '-').toLowerCase()}`)}
+                        onClick={handleProfileClick}
                         className="w-9 h-9 rounded-full bg-white border-2 border-white shadow-md flex items-center justify-center overflow-hidden shrink-0 hover:scale-110 transition-transform"
                     >
                         {ride.riderAvatar ? (
@@ -42,7 +52,7 @@ const RideCard = ({ ride, onViewDetails, isOwnRide }) => {
                     </button>
                     <div className="flex-1 text-left">
                         <button
-                            onClick={() => navigate(`/profile/${ride.riderName.replace(' ', '-').toLowerCase()}`)}
+                            onClick={handleProfileClick}
                             className="text-[13px] font-bold text-black leading-none hover:text-gray-500 transition-colors"
                         >
                             {ride.riderName}

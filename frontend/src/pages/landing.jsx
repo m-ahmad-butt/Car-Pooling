@@ -1,8 +1,14 @@
-import { useNavigate } from "react-router-dom";
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
+import { useNavigate, Navigate } from "react-router-dom";
+import { SignedIn, SignedOut, useUser } from "@clerk/clerk-react";
 
 function LandingPage() {
     const navigate = useNavigate();
+    const { isSignedIn, isLoaded } = useUser();
+
+    // If user is signed in, redirect to feed
+    if (isLoaded && isSignedIn) {
+        return <Navigate to="/feed" replace />;
+    }
 
     return (
         <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white overflow-x-hidden">

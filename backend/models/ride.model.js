@@ -9,6 +9,7 @@ const rideSchema = new mongoose.Schema({
   seats: { type: Number, required: true, default: 1 },
   riderName: { type: String, required: true },
   riderEmail: { type: String, required: true },
+  riderAvatar: { type: String },
   riderRating: { type: Number, default: 0 },
   date: { type: String },
   departureTime: { type: String },

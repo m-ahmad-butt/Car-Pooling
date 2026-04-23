@@ -10,7 +10,7 @@ const UserSync = () => {
     useEffect(() => {
         const syncUser = async () => {
             console.log('UserSync state:', { isLoaded, isSignedIn, userId: user?.id });
-            if (isLoaded && isSignedIn && user) {
+            if (isLoaded && isSignedIn && user && !profile._id) {
                 try {
                     const response = await authService.syncUser({
                         clerkId: user.id,
@@ -18,7 +18,7 @@ const UserSync = () => {
                         name: user.fullName,
                         firstName: user.firstName || profile?.firstName,
                         lastName: user.lastName || profile?.lastName,
-                        campus: profile?.campusId,
+                        campus: profile?.campus,
                         contactNo: profile?.contactNo,
                         rollNo: profile?.rollNo
                     });
@@ -30,7 +30,7 @@ const UserSync = () => {
         };
 
         syncUser();
-    }, [isLoaded, isSignedIn, user, profile]);
+    }, [isLoaded, isSignedIn, user?.id]);
 
     return null;
 };

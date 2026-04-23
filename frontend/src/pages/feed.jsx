@@ -214,6 +214,7 @@ const Feed = () => {
                 seats: parseInt(postForm.seats) || 1,
                 riderName: userProfile.name,
                 riderEmail: userProfile.email,
+                riderAvatar: userProfile.image,
                 riderRating: userProfile.stats.rating,
                 date: "Just now",
                 departureTime: postForm.departureTime,

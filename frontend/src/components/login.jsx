@@ -52,8 +52,9 @@ function LoginForm() {
             });
 
             if (result.status === "complete") {
+                await signIn.setActive({ session: result.createdSessionId });
                 dispatch(loginUser({ email: formData.email }));
-                navigate("/feed");
+                window.location.href = "/feed";
             } else {
                 setLoginError("Login incomplete. Please try again.");
             }
