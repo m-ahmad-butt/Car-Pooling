@@ -1,40 +1,36 @@
 import { useSelector, useDispatch } from "react-redux";
-import { approveRequest, declineRequest } from "../features/requestSlice";
-import { decrementSeats, setOngoingRide, updateRide } from "../features/rideSlice";
-import { addNotification } from "../features/notificationSlice";
-
+import { updateRequestStatusAsync } from "../features/requestSlice";
+import { setOngoingRide, updateRideAsync } from "../features/rideSlice";
+import { createNotificationAsync } from "../features/notificationSlice";
+import { useAuth } from '@clerk/clerk-react';
 
 function RequestRide() {
     const dispatch = useDispatch();
+    const { getToken } = useAuth();
     const rideRequests = useSelector(state => state.requests.requests);
     const userProfile = useSelector(state => state.user.profile);
     const rides = useSelector(state => state.rides.rides);
 
-    const myRides = rides.filter(r => r.riderEmail === userProfile.email).map(r => r.id);
+    const myRides = rides.filter(r => r.riderEmail === userProfile.email).map(r => r._id || r.id);
     const pendingRequests = rideRequests.filter(r => r.status === 'pending' && myRides.includes(r.rideId));
 
 
     const handleApproveRequest = (id) => {
-        const request = rideRequests.find(r => r.id === id);
+        const request = rideRequests.find(r => r._id === id || r.id === id);
 
-        // allRequests
-        dispatch(approveRequest(id));
+        dispatch(updateRequestStatusAsync({ id, status: 'approved', getToken }));
         if (request) {
+            const rideId = request.rideId;
+            const ride = rides.find(r => r._id === rideId || r.id === rideId);
 
-            // allRides
-            dispatch(decrementSeats(request.rideId));
-
-            const ride = rides.find(r => r.id === request.rideId);
-
-            // allRides 
-            dispatch(updateRide({
-                id: request.rideId,
-                status: "Done"
+            dispatch(updateRideAsync({
+                id: rideId,
+                updateData: { status: "Done" },
+                getToken
             }));
 
-            // setting ongoing ride [THE RIDER]
             dispatch(setOngoingRide({
-                rideId: request.rideId,
+                rideId: rideId,
                 rider: ride ? ride.riderName : "Rider",
                 riderEmail: ride ? ride.riderEmail : userProfile.email,
                 requesterName: request.requesterName,
@@ -44,28 +40,31 @@ function RequestRide() {
                 status: "In Progress"
             }));
 
-            dispatch(addNotification({
-                id: Date.now(),
-                targetEmail: request.requesterEmail,
-                from: userProfile.email,
-                message: `Your request for "${ride ? ride.title : 'ride'}" has been approved!`,
-                type: 'approval'
+            dispatch(createNotificationAsync({
+                notificationData: {
+                    targetEmail: request.requesterEmail,
+                    from: userProfile.email,
+                    message: `Your request for "${ride ? ride.title : 'ride'}" has been approved!`,
+                    type: 'approval'
+                },
+                getToken
             }));
         }
     };
 
-    //allRequests
     const handleDeclineRequest = (id) => {
-        const request = rideRequests.find(r => r.id === id);
-        dispatch(declineRequest(id));
+        const request = rideRequests.find(r => r._id === id || r.id === id);
+        dispatch(updateRequestStatusAsync({ id, status: 'declined', getToken }));
 
         if (request) {
-            dispatch(addNotification({
-                id: Date.now(),
-                targetEmail: request.requesterEmail,
-                from: userProfile.email,
-                message: `Your request for "${request.ride}" was declined.`,
-                type: 'decline'
+            dispatch(createNotificationAsync({
+                notificationData: {
+                    targetEmail: request.requesterEmail,
+                    from: userProfile.email,
+                    message: `Your request for "${request.ride}" was declined.`,
+                    type: 'decline'
+                },
+                getToken
             }));
         }
     };
@@ -84,7 +83,7 @@ function RequestRide() {
             </div>
         ) : (
             pendingRequests.map(req => (
-                <div key={req.id} className="bg-white border border-gray-100 rounded-3xl p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all hover:shadow-xl hover:shadow-black/5">
+                <div key={req._id || req.id} className="bg-white border border-gray-100 rounded-3xl p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all hover:shadow-xl hover:shadow-black/5">
                     {/* Avatar */}
                     <div className="w-12 h-12 rounded-full bg-black flex-shrink-0 flex items-center justify-center">
                         <span className="text-white text-sm font-black italic">{req.requesterName.charAt(0)}</span>
@@ -112,13 +111,13 @@ function RequestRide() {
                     {req.status === 'pending' && (
                         <div className="flex gap-3 flex-shrink-0">
                             <button
-                                onClick={() => handleApproveRequest(req.id)}
+                                onClick={() => handleApproveRequest(req._id || req.id)}
                                 className="bg-black text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                             >
                                 Approve
                             </button>
                             <button
-                                onClick={() => handleDeclineRequest(req.id)}
+                                onClick={() => handleDeclineRequest(req._id || req.id)}
                                 className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-50 hover:text-red-600 transition-all"
                             >
                                 Decline

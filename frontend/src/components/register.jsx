@@ -3,7 +3,8 @@ import { extractRollNo, validateEmail, getCampuses, validatePassword, validatePh
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { useSignUp } from "@clerk/clerk-react";
-import { setProfileFromAuth } from "../features/userSlice";
+import { updateProfile } from "../features/userSlice";
+import { authService } from "../services/auth.service";
 
 function RegisterForm() {
     const [emailError, setEmailError] = useState("");
@@ -120,15 +121,39 @@ function RegisterForm() {
             const result = await signUp.attemptEmailAddressVerification({ code });
 
             if (result.status === "complete") {
-                // Sync profile to Redux
-                dispatch(setProfileFromAuth({
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
+                // Set the active session
+                await result.createdSessionId && await signUp.setActive({ session: result.createdSessionId });
+                
+                // Prepare profile data
+                const profileData = {
+                    name: `${formData.firstName} ${formData.lastName}`,
                     email: formData.email,
-                    campusId: campuses.find(c => c.id === formData.campusId)?.name || formData.campusId,
+                    campus: campuses.find(c => c.id === formData.campusId)?.name || formData.campusId,
                     contactNo: formData.contactNo,
                     rollNo: formData.rollNo,
-                }));
+                };
+
+                // Sync with backend
+                try {
+                    await authService.syncUser({
+                        clerkId: result.createdUserId,
+                        email: formData.email,
+                        name: `${formData.firstName} ${formData.lastName}`,
+                        firstName: formData.firstName,
+                        lastName: formData.lastName,
+                        campus: campuses.find(c => c.id === formData.campusId)?.name || formData.campusId,
+                        contactNo: formData.contactNo,
+                        rollNo: formData.rollNo
+                    });
+                } catch (syncError) {
+                    console.error('Backend sync failed:', syncError);
+                    // Continue anyway since Clerk registration succeeded
+                }
+
+                // Update Redux state
+                dispatch(updateProfile(profileData));
+                
+                // Navigate to feed
                 navigate("/feed");
             } else {
                 setOtpError("Verification incomplete. Please try again.");

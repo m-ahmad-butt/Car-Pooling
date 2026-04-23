@@ -13,21 +13,26 @@ import OngoingRideNotification from '../components/ongoingRideNotification';
 import MobileSearchBar from '../components/mobileSearchBar';
 import RidesList from '../components/ridesList';
 import {
-    addRide,
+    createRideAsync,
     clearOngoingRide,
     setNeedsReview,
-    addReviewToRide,
-    updateRiderRatings
+    fetchRides
 } from '../features/rideSlice';
-import { addRequest } from '../features/requestSlice';
-import { addReview } from '../features/reviewSlice';
+import { createRequestAsync } from '../features/requestSlice';
+import { createReviewAsync } from '../features/reviewSlice';
 import { validatePhone, validateVehicleNumber } from '../utils/method';
-import { refreshUserStats } from '../features/userSlice';
-import { addNotification } from '../features/notificationSlice';
+import { createNotificationAsync } from '../features/notificationSlice';
+import { useAuth } from '@clerk/clerk-react';
+import { useEffect } from 'react';
 
 const Feed = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const { getToken } = useAuth();
+
+    useEffect(() => {
+        dispatch(fetchRides(getToken));
+    }, [dispatch, getToken]);
 
     const rides = useSelector(state => state.rides.rides);
     const ongoingRide = useSelector(state => state.rides.ongoingRide);
@@ -87,65 +92,57 @@ const Feed = () => {
             const role = userProfile.email === riderEmail ? 'rider' : 'requester';
             const targetEmail = role === 'rider' ? requesterEmail : riderEmail;
             
-            dispatch(addReview({
-                rideId: rideId,
-                targetEmail: targetEmail,
-                user: userProfile.name,
-                rating: reviewRating,
-                comment: reviewText,
+            dispatch(createReviewAsync({
+                reviewData: {
+                    rideId: rideId,
+                    targetEmail: targetEmail,
+                    user: userProfile.name,
+                    rating: reviewRating,
+                    comment: reviewText,
+                },
+                getToken
             }));
 
-            dispatch(addReviewToRide({
-                rideId: rideId,
-                review: { user: userProfile.name, rating: reviewRating, comment: reviewText }
+            dispatch(createNotificationAsync({
+                notificationData: {
+                    targetEmail: targetEmail,
+                    from: userProfile.email,
+                    message: `You received a new ${role === 'rider' ? 'rider' : 'requester'} review from ${userProfile.name}!`,
+                    type: 'review'
+                },
+                getToken
             }));
 
-            const newReview = { targetEmail, rating: reviewRating };
-            const allTargetReviews = [...reviews.filter(r => r.targetEmail === targetEmail), newReview];
-            const newAvgRating = Number((allTargetReviews.reduce((acc, curr) => acc + curr.rating, 0) / allTargetReviews.length).toFixed(1));
-
-            dispatch(refreshUserStats({ 
-                email: targetEmail, 
-                reviews: [...reviews, newReview] 
-            }));
-
-            dispatch(updateRiderRatings({
-                email: targetEmail,
-                rating: newAvgRating
-            }));
-
-            dispatch(addNotification({
-                id: Date.now(),
-                targetEmail: targetEmail,
-                from: userProfile.email,
-                message: `You received a new ${role === 'rider' ? 'rider' : 'requester'} review from ${userProfile.name}!`,
-                type: 'review'
-            }));
-
+            dispatch(fetchRides(getToken));
             dispatch(setNeedsReview({ role, value: false }));
         }
         closeReviewModal();
     };
 
     const handleAcceptSimulation = (note, ride) => {
-        dispatch(addRequest({
-            rideId: ride.id,
-            requesterName: userProfile.name,
-            requesterEmail: userProfile.email,
-            requesterAvatar: userProfile.image,
-            requesterRating: userProfile.stats.rating,
-            ride: ride.title,
-            rideDate: ride.date,
-            seats: 1,
-            note: note,
+        dispatch(createRequestAsync({
+            requestData: {
+                rideId: ride.id || ride._id,
+                requesterName: userProfile.name,
+                requesterEmail: userProfile.email,
+                requesterAvatar: userProfile.image,
+                requesterRating: userProfile.stats.rating,
+                ride: ride.title,
+                rideDate: ride.date,
+                seats: 1,
+                note: note,
+            },
+            getToken
         }));
 
-        dispatch(addNotification({
-            id: Date.now(),
-            targetEmail: ride.riderEmail,
-            from: userProfile.email,
-            message: `${userProfile.name} requested your ride: ${ride.title}`,
-            type: 'request'
+        dispatch(createNotificationAsync({
+            notificationData: {
+                targetEmail: ride.riderEmail,
+                from: userProfile.email,
+                message: `${userProfile.name} requested your ride: ${ride.title}`,
+                type: 'request'
+            },
+            getToken
         }));
     };
 
@@ -205,21 +202,24 @@ const Feed = () => {
 
         setPostErrors({});
 
-        dispatch(addRide({
-            title: postForm.title,
-            description: postForm.description,
-            campus: postForm.campus,
-            vehicleType: postForm.vehicleType,
-            vehicleNumber: postForm.vehicleNumber,
-            seats: parseInt(postForm.seats) || 1,
-            riderName: userProfile.name,
-            riderEmail: userProfile.email,
-            riderRating: userProfile.stats.rating,
-            date: "Just now",
-            departureTime: postForm.departureTime,
-            contactNumber: postForm.contactNumber,
-            location: postForm.location,
-            destination: postForm.destination,
+        dispatch(createRideAsync({
+            rideData: {
+                title: postForm.title,
+                description: postForm.description,
+                campus: postForm.campus,
+                vehicleType: postForm.vehicleType,
+                vehicleNumber: postForm.vehicleNumber,
+                seats: parseInt(postForm.seats) || 1,
+                riderName: userProfile.name,
+                riderEmail: userProfile.email,
+                riderRating: userProfile.stats.rating,
+                date: "Just now",
+                departureTime: postForm.departureTime,
+                contactNumber: postForm.contactNumber,
+                location: postForm.location,
+                destination: postForm.destination,
+            },
+            getToken
         }));
         setShowPostModal(false);
         resetPostForm();

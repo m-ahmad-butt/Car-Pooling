@@ -1,54 +1,72 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { requestService } from "../services/request.service";
 
-let nextRequestId = Number(localStorage.getItem('nextRequestId')) || 200;
+export const createRequestAsync = createAsyncThunk('requests/createRequest', async ({ requestData, getToken }, { rejectWithValue }) => {
+    try {
+        const request = await requestService.createRequest(requestData, getToken);
+        return request;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || error.message);
+    }
+});
+
+export const fetchRequestsByRide = createAsyncThunk('requests/fetchRequestsByRide', async ({ rideId, getToken }, { rejectWithValue }) => {
+    try {
+        const requests = await requestService.getRequestsByRide(rideId, getToken);
+        return requests;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || error.message);
+    }
+});
+
+export const updateRequestStatusAsync = createAsyncThunk('requests/updateStatus', async ({ id, status, getToken }, { rejectWithValue }) => {
+    try {
+        const request = await requestService.updateRequestStatus(id, status, getToken);
+        return request;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || error.message);
+    }
+});
 
 const initialState = {
-    requests: JSON.parse(localStorage.getItem('allRequests')) || [],
+    requests: [],
+    status: 'idle',
+    error: null
 };
 
 const requestSlice = createSlice({
     name: "requests",
     initialState,
     reducers: {
-        addRequest: (state, action) => {
-            const newRequest = {
-                ...action.payload,
-                id: nextRequestId++,
-                status: "pending",
-            };
-            state.requests.unshift(newRequest);
-            localStorage.setItem('allRequests', JSON.stringify(state.requests));
-            localStorage.setItem('nextRequestId', nextRequestId.toString());
-        },
-
-        approveRequest: (state, action) => {
-            const request = state.requests.find(r => r.id === action.payload);
-            if (request) {
-                request.status = "approved";
-                localStorage.setItem('allRequests', JSON.stringify(state.requests));
-            }
-        },
-
-        declineRequest: (state, action) => {
-            const request = state.requests.find(r => r.id === action.payload);
-            if (request) {
-                request.status = "declined";
-                localStorage.setItem('allRequests', JSON.stringify(state.requests));
-            }
-        },
-
         removeRequest: (state, action) => {
-            state.requests = state.requests.filter(r => r.id !== action.payload);
-            localStorage.setItem('allRequests', JSON.stringify(state.requests));
+            state.requests = state.requests.filter(r => r._id !== action.payload);
         },
+    },
+    extraReducers: (builder) => {
+        builder
+            .addCase(createRequestAsync.fulfilled, (state, action) => {
+                state.requests.unshift(action.payload);
+            })
+            .addCase(fetchRequestsByRide.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(fetchRequestsByRide.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+                state.requests = action.payload;
+            })
+            .addCase(fetchRequestsByRide.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload;
+            })
+            .addCase(updateRequestStatusAsync.fulfilled, (state, action) => {
+                const index = state.requests.findIndex(r => r._id === action.payload._id);
+                if (index !== -1) {
+                    state.requests[index] = action.payload;
+                }
+            });
     }
 });
 
-export const {
-    addRequest,
-    approveRequest,
-    declineRequest,
-    removeRequest,
-} = requestSlice.actions;
+export const { removeRequest } = requestSlice.actions;
 
 export default requestSlice.reducer;

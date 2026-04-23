@@ -1,8 +1,10 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { removeNotification, clearNotifications } from '../features/notificationSlice';
+import { removeNotification, clearNotificationsAsync } from '../features/notificationSlice';
+import { useAuth } from '@clerk/clerk-react';
 
 const Notifications = ({ notifications, onClose }) => {
     const dispatch = useDispatch();
+    const { getToken } = useAuth();
     const userProfile = useSelector(state => state.user.profile);
 
     const handleRemove = (id) => {
@@ -10,7 +12,7 @@ const Notifications = ({ notifications, onClose }) => {
     };
 
     const clearAll = () => {
-        dispatch(clearNotifications(userProfile.email));
+        dispatch(clearNotificationsAsync({ email: userProfile.email, getToken }));
     };
 
     return (
@@ -36,7 +38,7 @@ const Notifications = ({ notifications, onClose }) => {
             <div className="flex-1 overflow-y-auto p-3 space-y-3 lg:max-h-[350px]">
                 {notifications.length > 0 ? (
                     notifications.map((n) => (
-                        <div key={n.id} className="bg-white border border-gray-100 p-3 rounded-xl flex gap-3 transition-all hover:shadow-lg hover:shadow-black/5 relative">
+                        <div key={n._id || n.id} className="bg-white border border-gray-100 p-3 rounded-xl flex gap-3 transition-all hover:shadow-lg hover:shadow-black/5 relative">
                             <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
                                 <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
@@ -50,7 +52,7 @@ const Notifications = ({ notifications, onClose }) => {
                                         <span className="text-gray-900 font-bold">{n.from.split('@')[0]}</span>
                                     </h4>
                                     <button
-                                        onClick={() => handleRemove(n.id)}
+                                        onClick={() => handleRemove(n._id || n.id)}
                                         className="text-red-400 p-0.5 hover:bg-red-50 rounded transition-all"
                                     >
                                         <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
