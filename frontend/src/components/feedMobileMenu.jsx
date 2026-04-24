@@ -1,10 +1,24 @@
 import { useDispatch } from 'react-redux';
 import { logoutAuth } from '../features/authSlice';
 import { logoutUser } from '../features/userSlice';
-import { useNavigate } from 'react-router-dom';
+import { useClerk } from '@clerk/clerk-react';
 
 const FeedMobileMenu = ({ showMobileMenu, setShowMobileMenu, setShowPostModal, setShowNotifications, notifications, navigate }) => {
     const dispatch = useDispatch();
+    const { signOut } = useClerk();
+
+    const handleLogout = async () => {
+        dispatch(logoutAuth());
+        dispatch(logoutUser());
+        setShowMobileMenu(false);
+
+        try {
+            await signOut({ redirectUrl: '/login' });
+        } catch (error) {
+            console.error('Logout error:', error);
+            navigate('/login', { replace: true });
+        }
+    };
 
     if (!showMobileMenu) return null;
 
@@ -56,12 +70,7 @@ const FeedMobileMenu = ({ showMobileMenu, setShowMobileMenu, setShowPostModal, s
 
                 <div className="border-t border-gray-100 pt-6">
                     <button
-                        onClick={() => {
-                            dispatch(logoutAuth());
-                            dispatch(logoutUser());
-                            navigate('/login');
-                            setShowMobileMenu(false);
-                        }}
+                        onClick={handleLogout}
                         className="w-full flex items-center gap-5 px-4 py-4 rounded-2xl text-red-500 font-bold text-sm uppercase tracking-wide hover:bg-red-50 transition-colors"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>

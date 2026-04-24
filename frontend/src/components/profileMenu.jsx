@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useClerk } from '@clerk/clerk-react';
+import { logoutAuth } from '../features/authSlice';
 import { logoutUser } from '../features/userSlice';
 
 const ProfileMenu = ({ onClose }) => {
@@ -10,23 +11,15 @@ const ProfileMenu = ({ onClose }) => {
 
     const handleLogout = async () => {
         try {
-            console.log('Logging out...');
             onClose();
-            
-            // Clear Redux state
+
+            dispatch(logoutAuth());
             dispatch(logoutUser());
-            
-            // Sign out from Clerk
-            await signOut();
-            
-            // Force redirect
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 100);
+
+            await signOut({ redirectUrl: '/login' });
         } catch (error) {
             console.error('Logout error:', error);
-            // Force redirect even on error
-            window.location.href = '/';
+            navigate('/login', { replace: true });
         }
     };
 

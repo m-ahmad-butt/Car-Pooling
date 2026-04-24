@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { useSignIn, useUser } from "@clerk/clerk-react";
+import { useSignIn, useUser, useClerk } from "@clerk/clerk-react";
 import { loginUser } from "../features/authSlice";
 import { validateEmail } from "../utils/method";
 
@@ -14,8 +14,17 @@ function LoginForm() {
 
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { signIn, isLoaded } = useSignIn();
+    const { signIn, isLoaded, setActive } = useSignIn();
     const { isSignedIn } = useUser();
+    const { setActive: clerkSetActive } = useClerk();
+
+    // Clear errors and redirect if user becomes signed in
+    useEffect(() => {
+        if (isSignedIn) {
+            setLoginError("");
+            setIsLoading(false);
+        }
+    }, [isSignedIn]);
 
     // Already logged in → go straight to feed
     if (isSignedIn) return <Navigate to="/feed" replace />;
@@ -35,9 +44,19 @@ function LoginForm() {
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        if (!isLoaded) return;
+        
+        // Prevent multiple submissions
+        if (isLoading || !isLoaded) return;
+        
+        if (isSignedIn) {
+            navigate('/feed', { replace: true });
+            return;
+        }
+
+        const normalizedEmail = formData.email.trim().toLowerCase();
+
         if (emailError) return;
-        if (!validateEmail(formData.email)) {
+        if (!validateEmail(normalizedEmail)) {
             setEmailError("Please use a valid university email (e.g. l23XXXX@lhr.nu.edu.pk)");
             return;
         }
@@ -47,21 +66,50 @@ function LoginForm() {
 
         try {
             const result = await signIn.create({
-                identifier: formData.email,
+                identifier: normalizedEmail,
                 password: formData.password,
             });
 
             if (result.status === "complete") {
-                await signIn.setActive({ session: result.createdSessionId });
-                dispatch(loginUser({ email: formData.email }));
-                window.location.href = "/feed";
+                const setActiveMethod = setActive || clerkSetActive;
+                
+                if (setActiveMethod) {
+                    await setActiveMethod({ session: result.createdSessionId });
+                }
+                
+                setLoginError("");
+                setFormData({ email: "", password: "" });
+                setIsLoading(false);
+                
+                navigate('/feed', { replace: true });
+            } else if (result.status === "needs_first_factor") {
+                setLoginError("Please complete the authentication process.");
+                setIsLoading(false);
             } else {
                 setLoginError("Login incomplete. Please try again.");
+                setIsLoading(false);
             }
         } catch (err) {
-            const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || "Invalid email or password.";
-            setLoginError(msg);
-        } finally {
+            const code = err?.errors?.[0]?.code;
+            const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message;
+
+            if (code === 'session_exists' || /already\s+signed\s+in/i.test(msg)) {
+                setLoginError("");
+                setIsLoading(false);
+                navigate('/feed', { replace: true });
+                return;
+            }
+
+            if (code === 'form_identifier_not_found' || code === 'form_password_incorrect') {
+                setLoginError("Invalid email or password.");
+            } else if (code === 'form_password_pwned') {
+                setLoginError("This password has been compromised. Please use a different password.");
+            } else if (msg) {
+                setLoginError(msg);
+            } else {
+                setLoginError("Invalid email or password.");
+            }
+            
             setIsLoading(false);
         }
     };

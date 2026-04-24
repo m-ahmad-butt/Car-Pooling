@@ -7,7 +7,6 @@ const helmet = require('helmet');
 const compression = require('compression');
 const { corsOptions } = require('./config/cors');
 const { rateLimiter } = require('./middleware/rateLimiter.middleware');
-const { errorHandler } = require('./middleware/errorHandler.middleware');
 const { clerkAuth } = require('./middleware/auth.middleware');
 
 const authRoutes = require('./routes/auth.routes');
@@ -54,7 +53,5 @@ app.use('/api/notifications', clerkAuth, notificationRoutes);
 app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
-
-app.use(errorHandler);
 
 module.exports = app;
