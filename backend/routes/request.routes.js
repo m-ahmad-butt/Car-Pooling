@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const requestController = require('../controllers/request.controller');
+const { clerkAuth } = require('../middleware/auth.middleware');
 
-router.post('/', requestController.createRequest);
-router.get('/ride/:rideId', requestController.getRequestsByRide);
-router.patch('/:id/status', requestController.updateRequestStatus);
+router.post('/', clerkAuth, requestController.createBooking);
+router.get('/my-bookings', clerkAuth, requestController.getMyBookings);
+router.get('/ride/:rideId', clerkAuth, requestController.getBookingsByRide);
+router.patch('/:id/status', clerkAuth, requestController.updateBookingStatus);
 
 module.exports = router;

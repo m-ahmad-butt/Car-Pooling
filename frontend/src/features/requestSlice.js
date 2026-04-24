@@ -1,72 +1,93 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { requestService } from "../services/request.service";
 
-export const createRequestAsync = createAsyncThunk('requests/createRequest', async ({ requestData, getToken }, { rejectWithValue }) => {
+export const createBookingAsync = createAsyncThunk('bookings/createBooking', async ({ bookingData, getToken }, { rejectWithValue }) => {
     try {
-        const request = await requestService.createRequest(requestData, getToken);
-        return request;
+        const booking = await requestService.createBooking(bookingData, getToken);
+        return booking;
     } catch (error) {
         return rejectWithValue(error.response?.data || error.message);
     }
 });
 
-export const fetchRequestsByRide = createAsyncThunk('requests/fetchRequestsByRide', async ({ rideId, getToken }, { rejectWithValue }) => {
+export const fetchMyBookings = createAsyncThunk('bookings/fetchMyBookings', async (getToken, { rejectWithValue }) => {
     try {
-        const requests = await requestService.getRequestsByRide(rideId, getToken);
-        return requests;
+        const bookings = await requestService.getMyBookings(getToken);
+        return bookings;
     } catch (error) {
         return rejectWithValue(error.response?.data || error.message);
     }
 });
 
-export const updateRequestStatusAsync = createAsyncThunk('requests/updateStatus', async ({ id, status, getToken }, { rejectWithValue }) => {
+export const fetchBookingsByRide = createAsyncThunk('bookings/fetchBookingsByRide', async ({ rideId, getToken }, { rejectWithValue }) => {
     try {
-        const request = await requestService.updateRequestStatus(id, status, getToken);
-        return request;
+        const bookings = await requestService.getBookingsByRide(rideId, getToken);
+        return bookings;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || error.message);
+    }
+});
+
+export const updateBookingStatusAsync = createAsyncThunk('bookings/updateStatus', async ({ id, status, getToken }, { rejectWithValue }) => {
+    try {
+        const booking = await requestService.updateBookingStatus(id, status, getToken);
+        return booking;
     } catch (error) {
         return rejectWithValue(error.response?.data || error.message);
     }
 });
 
 const initialState = {
-    requests: [],
+    bookings: [],
+    myBookings: [],
     status: 'idle',
     error: null
 };
 
 const requestSlice = createSlice({
-    name: "requests",
+    name: "bookings",
     initialState,
     reducers: {
-        removeRequest: (state, action) => {
-            state.requests = state.requests.filter(r => r._id !== action.payload);
+        removeBooking: (state, action) => {
+            state.bookings = state.bookings.filter(r => r._id !== action.payload);
         },
     },
     extraReducers: (builder) => {
         builder
-            .addCase(createRequestAsync.fulfilled, (state, action) => {
-                state.requests.unshift(action.payload);
+            .addCase(createBookingAsync.fulfilled, (state, action) => {
+                state.bookings.unshift(action.payload);
             })
-            .addCase(fetchRequestsByRide.pending, (state) => {
+            .addCase(fetchMyBookings.pending, (state) => {
                 state.status = 'loading';
             })
-            .addCase(fetchRequestsByRide.fulfilled, (state, action) => {
+            .addCase(fetchMyBookings.fulfilled, (state, action) => {
                 state.status = 'succeeded';
-                state.requests = action.payload;
+                state.myBookings = action.payload;
             })
-            .addCase(fetchRequestsByRide.rejected, (state, action) => {
+            .addCase(fetchMyBookings.rejected, (state, action) => {
                 state.status = 'failed';
                 state.error = action.payload;
             })
-            .addCase(updateRequestStatusAsync.fulfilled, (state, action) => {
-                const index = state.requests.findIndex(r => r._id === action.payload._id);
+            .addCase(fetchBookingsByRide.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(fetchBookingsByRide.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+                state.bookings = action.payload;
+            })
+            .addCase(fetchBookingsByRide.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload;
+            })
+            .addCase(updateBookingStatusAsync.fulfilled, (state, action) => {
+                const index = state.bookings.findIndex(r => r._id === action.payload._id);
                 if (index !== -1) {
-                    state.requests[index] = action.payload;
+                    state.bookings[index] = action.payload;
                 }
             });
     }
 });
 
-export const { removeRequest } = requestSlice.actions;
+export const { removeBooking } = requestSlice.actions;
 
 export default requestSlice.reducer;

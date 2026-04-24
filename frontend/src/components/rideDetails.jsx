@@ -56,7 +56,7 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
 
                     <div className="w-full aspect-[4/3] rounded-3xl overflow-hidden bg-gray-50">
                         {ride.image ? (
-                            <img src={ride.image} alt={ride.title} className="w-full h-full object-cover grayscale" />
+                            <img src={ride.image} alt={ride.title} className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center opacity-10">
                                 <svg className="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,7 +166,6 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                         </div>
                     )}
 
-                    {/* Details tab */}
                     {!showRequestNote && activeTab === 'details' && (
                         <div className="space-y-8">
                             <div>
@@ -198,13 +197,12 @@ const RideDetails = ({ ride, onClose, onAccept }) => {
                         </div>
                     )}
 
-                    {/* Reviews tab */}
                     {!showRequestNote && activeTab === 'reviews' && (
                         <div>
                             {ride.reviews && ride.reviews.length > 0 ? (
                                 <div className="space-y-8">
                                     {ride.reviews
-                                        .filter(rev => rev.user !== ride.riderName) // Filter out rider's own review
+                                        .filter(rev => rev.user !== ride.riderName)
                                         .map((rev, idx) => (
                                         <div key={idx}>
                                             <div className="flex justify-between items-center mb-3">

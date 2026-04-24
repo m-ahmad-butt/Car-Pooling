@@ -13,7 +13,6 @@ const UserSync = () => {
     const profile = useSelector((state) => state.user.profile);
     const syncedEmailRef = useRef(null);
 
-    // Handle logout
     useEffect(() => {
         if (isLoaded && !isSignedIn && (currentUser || profile?.email)) {
             dispatch(logoutAuth());
@@ -22,7 +21,6 @@ const UserSync = () => {
         }
     }, [isLoaded, isSignedIn, currentUser, profile?.email, dispatch]);
 
-    // Handle login and sync
     useEffect(() => {
         const syncUser = async () => {
             if (!isLoaded || !isSignedIn || !user) {
@@ -34,7 +32,6 @@ const UserSync = () => {
                 return;
             }
 
-            // Prevent duplicate syncs for the same email
             if (syncedEmailRef.current === userEmail) {
                 return;
             }
@@ -42,7 +39,6 @@ const UserSync = () => {
             syncedEmailRef.current = userEmail;
 
             try {
-                // Sync with backend
                 const syncResponse = await authService.syncUser({
                     clerkId: user.id,
                     email: userEmail,
@@ -54,14 +50,10 @@ const UserSync = () => {
                     rollNo: profile?.rollNo || ''
                 });
 
-                // Fetch full profile from backend
                 const fullProfile = await authService.getProfile(userEmail, getToken);
-                
-                // Update Redux state
                 dispatch(updateProfile(fullProfile));
                 
             } catch (error) {
-                // Silent fail - user can manually refresh if needed
             }
         };
 

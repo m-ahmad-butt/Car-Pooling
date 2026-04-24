@@ -49,15 +49,11 @@ const updateProfileImage = async (req, res, next) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Delete old image if exists
     if (user.image) {
       await deleteFromS3(user.image);
     }
 
-    // Upload new image
     const imageUrl = await uploadToS3(req.file, 'profiles');
-    
-    // Update user with new image URL
     const updatedUser = await userRepository.updateByEmail(email, { image: imageUrl });
     
     res.status(200).json(updatedUser);

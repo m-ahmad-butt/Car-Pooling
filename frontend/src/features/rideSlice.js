@@ -1,10 +1,19 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { rideService } from "../services/ride.service";
 
-export const fetchRides = createAsyncThunk('rides/fetchRides', async (getToken, { rejectWithValue }) => {
+export const fetchRides = createAsyncThunk('rides/fetchRides', async (filters = {}, { rejectWithValue }) => {
     try {
-        const rides = await rideService.getRides(getToken);
+        const rides = await rideService.getRides(filters);
         return rides;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || error.message);
+    }
+});
+
+export const fetchRideById = createAsyncThunk('rides/fetchRideById', async (id, { rejectWithValue }) => {
+    try {
+        const ride = await rideService.getRideById(id);
+        return ride;
     } catch (error) {
         return rejectWithValue(error.response?.data || error.message);
     }

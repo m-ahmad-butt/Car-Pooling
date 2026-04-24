@@ -1,6 +1,6 @@
 const requestRepository = require('../repositories/request.repository');
 
-const createRequest = async (req, res, next) => {
+const createBooking = async (req, res, next) => {
   try {
     const requestData = req.body;
     const request = await requestRepository.create(requestData);
@@ -10,7 +10,7 @@ const createRequest = async (req, res, next) => {
   }
 };
 
-const getRequestsByRide = async (req, res, next) => {
+const getBookingsByRide = async (req, res, next) => {
   try {
     const { rideId } = req.params;
     const requests = await requestRepository.findByRideId(rideId);
@@ -20,7 +20,17 @@ const getRequestsByRide = async (req, res, next) => {
   }
 };
 
-const updateRequestStatus = async (req, res, next) => {
+const getMyBookings = async (req, res, next) => {
+  try {
+    const { email } = req.auth;
+    const requests = await requestRepository.findByRequesterEmail(email);
+    res.status(200).json(requests);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateBookingStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -31,4 +41,4 @@ const updateRequestStatus = async (req, res, next) => {
   }
 };
 
-module.exports = { createRequest, getRequestsByRide, updateRequestStatus };
+module.exports = { createBooking, getBookingsByRide, getMyBookings, updateBookingStatus };

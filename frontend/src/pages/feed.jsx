@@ -18,7 +18,7 @@ import {
     setNeedsReview,
     fetchRides
 } from '../features/rideSlice';
-import { createRequestAsync } from '../features/requestSlice';
+import { createBookingAsync } from '../features/requestSlice';
 import { createReviewAsync } from '../features/reviewSlice';
 import { validatePhone, validateVehicleNumber } from '../utils/method';
 import { createNotificationAsync } from '../features/notificationSlice';
@@ -30,19 +30,27 @@ const Feed = () => {
     const navigate = useNavigate();
     const { getToken } = useAuth();
 
-    useEffect(() => {
-        dispatch(fetchRides(getToken));
-    }, [dispatch, getToken]);
-
     const rides = useSelector(state => state.rides.rides);
     const ongoingRide = useSelector(state => state.rides.ongoingRide);
     const needsReviewBy = useSelector(state => state.rides.needsReviewBy);
     const filters = useSelector(state => state.rides.filters);
     const activeTab = useSelector(state => state.rides.activeTab);
-    const reviews = useSelector(state => state.reviews.reviews);
     const userProfile = useSelector(state => state.user.profile);
     const allNotifications = useSelector(state => state.notifications.notifications);
     const notifications = allNotifications.filter(n => n.targetEmail === userProfile.email || n.targetEmail === 'all');
+
+    useEffect(() => {
+        const backendFilters = {};
+        
+        if (filters.searchTerm) {
+            backendFilters.search = filters.searchTerm;
+        }
+        if (filters.campus && filters.campus !== 'All Campuses') {
+            backendFilters.campus = filters.campus;
+        }
+        
+        dispatch(fetchRides(backendFilters));
+    }, [dispatch, filters.searchTerm, filters.campus]);
 
     const [selectedRide, setSelectedRide] = useState(null);
     const [showNotifications, setShowNotifications] = useState(false);
@@ -50,7 +58,6 @@ const Feed = () => {
     const [showMobileMenu, setShowMobileMenu] = useState(false);
     const [postErrors, setPostErrors] = useState({});
 
-    // Review Modal State
     const [showReviewModal, setShowReviewModal] = useState(false);
     const [reviewRating, setReviewRating] = useState(0);
     const [reviewText, setReviewText] = useState('');
@@ -62,7 +69,6 @@ const Feed = () => {
         setReviewText('');
     };
 
-    // Post Ride Modal State
     const [showPostModal, setShowPostModal] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
     const [postForm, setPostForm] = useState({
@@ -115,15 +121,15 @@ const Feed = () => {
                 getToken
             }));
 
-            dispatch(fetchRides(getToken));
+            dispatch(fetchRides());
             dispatch(setNeedsReview({ role, value: false }));
         }
         closeReviewModal();
     };
 
     const handleAcceptSimulation = (note, ride) => {
-        dispatch(createRequestAsync({
-            requestData: {
+        dispatch(createBookingAsync({
+            bookingData: {
                 rideId: ride.id || ride._id,
                 requesterName: userProfile.name,
                 requesterEmail: userProfile.email,
@@ -167,17 +173,8 @@ const Feed = () => {
 
     const filteredRides = rides.filter(ride => {
         if (ride.status === 'Done') return false;
-        
-        const term = filters.searchTerm.toLowerCase();
-        const matchesSearch = !term ||
-            ride.title.toLowerCase().includes(term) ||
-            (ride.description && ride.description.toLowerCase().includes(term)) ||
-            (ride.location && ride.location.toLowerCase().includes(term)) ||
-            (ride.destination && ride.destination.toLowerCase().includes(term)) ||
-            (ride.riderName && ride.riderName.toLowerCase().includes(term));
-        const matchesCampus = filters.campus === 'All Campuses' || ride.campus === filters.campus;
         const matchesCategory = filters.category === 'All Categories' || ride.vehicleType === filters.category;
-        return matchesSearch && matchesCampus && matchesCategory;
+        return matchesCategory;
     });
 
     const handlePostRide = (e) => {

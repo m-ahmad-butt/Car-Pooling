@@ -44,11 +44,11 @@ app.get('/', (req, res) => {
   });
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api/rides', rideRoutes);
-app.use('/api/requests', clerkAuth, requestRoutes);
-app.use('/api/reviews', clerkAuth, reviewRoutes);
-app.use('/api/notifications', clerkAuth, notificationRoutes);
+app.use('/auth', authRoutes);
+app.use('/rides', rideRoutes);
+app.use('/bookings', requestRoutes);
+app.use('/reviews', clerkAuth, reviewRoutes);
+app.use('/notifications', clerkAuth, notificationRoutes);
 
 app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found' });

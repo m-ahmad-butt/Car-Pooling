@@ -13,9 +13,9 @@ const ProfilePage = () => {
     const { getToken } = useAuth();
 
     const userProfile = useSelector(state => state.user.profile);
-    const rides = useSelector(state => state.rides.rides);
-    const requests = useSelector(state => state.requests.requests);
-    const allReviews = useSelector(state => state.reviews.reviews);
+    const rides = useSelector(state => state.rides?.rides || []);
+    const requests = useSelector(state => state.bookings?.bookings || []);
+    const allReviews = useSelector(state => state.reviews?.reviews || []);
 
     const [showEditPanel, setShowEditPanel] = useState(false);
     const [show4fields, setShow4Fields] = useState(true);

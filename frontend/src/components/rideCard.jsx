@@ -3,10 +3,10 @@ import { useSelector } from 'react-redux';
 
 const RideCard = ({ ride, onViewDetails, isOwnRide }) => {
     const navigate = useNavigate();
-    const userProfile = useSelector(state => state.user.profile);
+    const userProfile = useSelector(state => state.user?.profile);
     
     const handleProfileClick = () => {
-        if (ride.riderEmail === userProfile.email) {
+        if (userProfile && ride.riderEmail === userProfile.email) {
             navigate('/profile');
         } else {
             navigate(`/profile/${ride.riderName.replace(/\s+/g, '-').toLowerCase()}`);
@@ -37,7 +37,6 @@ const RideCard = ({ ride, onViewDetails, isOwnRide }) => {
                 </div>
             </div>
 
-            {/* Content panel */}
             <div className="p-7 flex-1 flex flex-col">
                 <div className="flex items-center gap-3 mb-6">
                     <button

@@ -17,9 +17,22 @@ export const rideService = {
         const response = await api.post('/rides', formData, config);
         return response.data;
     },
-    getRides: async (getToken) => {
-        const config = await getAuthHeaders(getToken);
-        const response = await api.get('/rides', config);
+    getRides: async (filters = {}) => {
+        const queryParams = new URLSearchParams();
+        if (filters.search) queryParams.append('search', filters.search);
+        if (filters.destination) queryParams.append('destination', filters.destination);
+        if (filters.seats) queryParams.append('seats', filters.seats);
+        if (filters.date) queryParams.append('date', filters.date);
+        if (filters.location) queryParams.append('location', filters.location);
+        if (filters.campus) queryParams.append('campus', filters.campus);
+        
+        const queryString = queryParams.toString();
+        const url = queryString ? `/rides?${queryString}` : '/rides';
+        const response = await api.get(url);
+        return response.data;
+    },
+    getRideById: async (id) => {
+        const response = await api.get(`/rides/${id}`);
         return response.data;
     },
     updateRide: async (id, updateData, getToken) => {

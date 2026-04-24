@@ -26,7 +26,6 @@ function RegisterForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [serverError, setServerError] = useState("");
 
-    // Step 5: email OTP verification
     const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""]);
     const [otpError, setOtpError] = useState("");
 
@@ -80,7 +79,6 @@ function RegisterForm() {
 
     const handleBack = () => setStep(prev => prev - 1);
 
-    // Step 4 submit → create Clerk account → triggers email OTP
     const handleRegister = async (e) => {
         e.preventDefault();
         if (!isLoaded) return;
@@ -105,9 +103,8 @@ function RegisterForm() {
                 lastName: formData.lastName,
             });
 
-            // Trigger email verification OTP
             await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-            setStep(5); // Go to OTP verification step
+            setStep(5);
         } catch (err) {
             const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || "Registration failed.";
             setServerError(msg);
@@ -116,7 +113,6 @@ function RegisterForm() {
         }
     };
 
-    // Step 5: verify the OTP sent by Clerk
     const handleVerifyOtp = async (e) => {
         e.preventDefault();
         if (!isLoaded) return;
@@ -129,10 +125,8 @@ function RegisterForm() {
             const result = await signUp.attemptEmailAddressVerification({ code });
 
             if (result.status === "complete") {
-                // Set the active session
                 await result.createdSessionId && await signUp.setActive({ session: result.createdSessionId });
                 
-                // Prepare profile data
                 const profileData = {
                     name: `${formData.firstName} ${formData.lastName}`,
                     email: formData.email,
@@ -141,7 +135,6 @@ function RegisterForm() {
                     rollNo: formData.rollNo,
                 };
 
-                // Sync with backend
                 try {
                     await authService.syncUser({
                         clerkId: result.createdUserId,
@@ -155,13 +148,9 @@ function RegisterForm() {
                     });
                 } catch (syncError) {
                     console.error('Backend sync failed:', syncError);
-                    // Continue anyway since Clerk registration succeeded
                 }
 
-                // Update Redux state
                 dispatch(updateProfile(profileData));
-                
-                // Navigate to feed
                 navigate("/feed");
             } else {
                 setOtpError("Verification incomplete. Please try again.");
@@ -195,18 +184,15 @@ function RegisterForm() {
     return (
         <div className="flex min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
 
-            {/* Left side */}
             <div className="w-full lg:w-[48%] flex flex-col justify-center px-12 lg:px-20 py-12">
                 <div className="max-w-[340px] w-full mx-auto">
 
-                    {/* dropme */}
                     <div className="mb-10 -ml-0.5">
                         <h1 className="text-4xl font-extrabold tracking-tighter text-black flex items-baseline">
                             drop<span className="text-gray-300 font-bold ml-0.5">ME</span>
                         </h1>
                     </div>
 
-                    {/* Steps indicator — only show for steps 1-4 */}
                     {step <= TOTAL_STEPS && (
                         <div className="mb-8">
                             <div className="flex items-center justify-between mb-3">
@@ -244,7 +230,6 @@ function RegisterForm() {
                         </p>
                     </div>
 
-                    {/* ── Steps 1–4 ── */}
                     {step <= TOTAL_STEPS && (
                         <form onSubmit={step === TOTAL_STEPS ? handleRegister : handleNext} className="space-y-5">
 
@@ -397,7 +382,6 @@ function RegisterForm() {
                         </form>
                     )}
 
-                    {/* ── Step 5: Email OTP Verification ── */}
                     {step === 5 && (
                         <form onSubmit={handleVerifyOtp} className="space-y-6">
                             <div className="flex justify-between gap-2">
@@ -445,7 +429,6 @@ function RegisterForm() {
                 </div>
             </div>
 
-            {/* Right side */}
             <div className="hidden lg:block lg:w-[52%] bg-black relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/40 to-transparent flex flex-col justify-center px-20">
                     <div className="max-w-lg">

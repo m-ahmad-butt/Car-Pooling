@@ -6,8 +6,8 @@ class RideRepository {
     return ride.save();
   }
 
-  async findAll() {
-    return Ride.find().sort({ createdAt: -1 });
+  async findAll(filters = {}) {
+    return Ride.find(filters).sort({ createdAt: -1 });
   }
 
   async findById(id) {

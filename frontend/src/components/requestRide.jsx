@@ -1,5 +1,5 @@
 import { useSelector, useDispatch } from "react-redux";
-import { updateRequestStatusAsync } from "../features/requestSlice";
+import { updateBookingStatusAsync } from "../features/requestSlice";
 import { setOngoingRide, updateRideAsync } from "../features/rideSlice";
 import { createNotificationAsync } from "../features/notificationSlice";
 import { useAuth } from '@clerk/clerk-react';
@@ -7,7 +7,7 @@ import { useAuth } from '@clerk/clerk-react';
 function RequestRide() {
     const dispatch = useDispatch();
     const { getToken } = useAuth();
-    const rideRequests = useSelector(state => state.requests.requests);
+    const rideRequests = useSelector(state => state.bookings.bookings);
     const userProfile = useSelector(state => state.user.profile);
     const rides = useSelector(state => state.rides.rides);
 
@@ -18,7 +18,7 @@ function RequestRide() {
     const handleApproveRequest = (id) => {
         const request = rideRequests.find(r => r._id === id || r.id === id);
 
-        dispatch(updateRequestStatusAsync({ id, status: 'approved', getToken }));
+        dispatch(updateBookingStatusAsync({ id, status: 'approved', getToken }));
         if (request) {
             const rideId = request.rideId;
             const ride = rides.find(r => r._id === rideId || r.id === rideId);
@@ -54,7 +54,7 @@ function RequestRide() {
 
     const handleDeclineRequest = (id) => {
         const request = rideRequests.find(r => r._id === id || r.id === id);
-        dispatch(updateRequestStatusAsync({ id, status: 'declined', getToken }));
+        dispatch(updateBookingStatusAsync({ id, status: 'declined', getToken }));
 
         if (request) {
             dispatch(createNotificationAsync({
@@ -84,12 +84,10 @@ function RequestRide() {
         ) : (
             pendingRequests.map(req => (
                 <div key={req._id || req.id} className="bg-white border border-gray-100 rounded-3xl p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all hover:shadow-xl hover:shadow-black/5">
-                    {/* Avatar */}
                     <div className="w-12 h-12 rounded-full bg-black flex-shrink-0 flex items-center justify-center">
                         <span className="text-white text-sm font-black italic">{req.requesterName.charAt(0)}</span>
                     </div>
 
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-3 mb-1">
                             <h4 className="text-sm font-black text-black">{req.requesterName}</h4>
@@ -107,7 +105,6 @@ function RequestRide() {
                         <p className="text-sm text-gray-500 font-medium italic">"{req.note}"</p>
                     </div>
 
-                    {/* Actions */}
                     {req.status === 'pending' && (
                         <div className="flex gap-3 flex-shrink-0">
                             <button
