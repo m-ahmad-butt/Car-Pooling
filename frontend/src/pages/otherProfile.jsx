@@ -7,7 +7,7 @@ import { useAuth } from '@clerk/clerk-react';
 import Footer from '../components/footer';
 
 const OtherProfilePage = () => {
-    const { userId } = useParams(); // This is now the email
+    const { userId } = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { getToken } = useAuth();
@@ -23,7 +23,7 @@ const OtherProfilePage = () => {
         }
     }, [userId, dispatch, getToken]);
 
-    // If it's the current user's profile, navigate to the main profile page
+
     useEffect(() => {
         if (userProfile && userId === userProfile.email) {
             navigate('/profile');
@@ -120,13 +120,11 @@ const OtherProfilePage = () => {
                                     </div>
                                     <span className="text-[13px] font-bold text-black">{rev.user}</span>
                                 </div>
-                                <div className="flex gap-0.5">
-                                    {[...Array(5)].map((_, i) => (
-                                        <span key={i} className={`text-xs ${i < rev.rating ? 'text-black' : 'text-gray-100'}`}>★</span>
-                                    ))}
+                                <div className="flex gap-1 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
+                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest self-center mr-1">RATING</span>
+                                    <span className="text-xs font-black text-black">{rev.rating}/5</span>
                                 </div>
                             </div>
-                            <p className="text-sm text-gray-500 font-medium italic leading-relaxed">"{rev.comment}"</p>
                         </div>
                     )) : (
                         <div className="flex flex-col items-center justify-center py-24 text-center opacity-20">

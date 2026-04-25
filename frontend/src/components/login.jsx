@@ -18,7 +18,7 @@ function LoginForm() {
     const { isSignedIn } = useUser();
     const { setActive: clerkSetActive } = useClerk();
 
-    // Clear errors and redirect if user becomes signed in
+
     useEffect(() => {
         if (isSignedIn) {
             setLoginError("");
@@ -26,7 +26,7 @@ function LoginForm() {
         }
     }, [isSignedIn]);
 
-    // Already logged in → go straight to feed
+
     if (isSignedIn) return <Navigate to="/feed" replace />;
 
     const handleInputChange = (e) => {
@@ -45,7 +45,7 @@ function LoginForm() {
     const handleLogin = async (e) => {
         e.preventDefault();
         
-        // Prevent multiple submissions
+
         if (isLoading || !isLoaded) return;
         
         if (isSignedIn) {
@@ -116,10 +116,10 @@ function LoginForm() {
 
     return (
         <div className="flex min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
-            {/* Left side */}
+            {}
             <div className="w-full lg:w-[48%] flex flex-col justify-center px-12 lg:px-20 py-12">
                 <div className="max-w-[340px] w-full mx-auto">
-                    {/* dropme */}
+                    {}
                     <div className="mb-12 -ml-0.5">
                         <h1 className="text-4xl font-black tracking-tighter text-black flex items-baseline">
                             drop<span className="text-gray-300 font-bold italic ml-0.5">ME</span>
@@ -207,7 +207,7 @@ function LoginForm() {
                 </div>
             </div>
 
-            {/* Right side */}
+            {}
             <div className="hidden lg:block lg:w-[52%] bg-black relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/40 to-transparent flex flex-col justify-center px-20">
                     <div className="max-w-lg">

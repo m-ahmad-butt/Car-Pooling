@@ -60,7 +60,7 @@ const Feed = () => {
         if (userProfile.email) {
             dispatch(fetchNotifications({ email: userProfile.email, getToken }));
             
-            // Poll for new notifications every 30 seconds
+
             const interval = setInterval(() => {
                 dispatch(fetchNotifications({ email: userProfile.email, getToken }));
             }, 30000);
@@ -69,25 +69,25 @@ const Feed = () => {
         }
     }, [dispatch, userProfile.email, getToken]);
 
-    // Poll for ongoing ride every 5 seconds so passengers see the panel quickly
+
     useEffect(() => {
         if (userProfile.email) {
             dispatch(fetchMyOngoingRide(getToken));
 
             const interval = setInterval(() => {
                 dispatch(fetchMyOngoingRide(getToken));
-            }, 5000); // 5 seconds — fast enough for passengers to see the panel
+            }, 5000);
 
             return () => clearInterval(interval);
         }
     }, [dispatch, userProfile.email, getToken]);
-    // Real-time review prompt detector for passengers: triggers when the polled
-    // ongoingRide state transitions from an active ride to null.
+
+
     const prevOngoingRef = useRef(null);
     const prevUserEmailRef = useRef(userProfile.email);
 
     useEffect(() => {
-        // Reset the ref on user switch so we don't accidentally trigger a prompt for the new user
+
         if (prevUserEmailRef.current !== userProfile.email) {
             prevOngoingRef.current = null;
             prevUserEmailRef.current = userProfile.email;
@@ -103,8 +103,8 @@ const Feed = () => {
         
         const userEmail = userProfile.email?.toLowerCase();
 
-        // If we previously had an ongoing ride, we are a passenger on it,
-        // and now it's null (rider ended it), immediately trigger the review prompt.
+
+
         if (
             prev &&
             !ongoingRide &&
@@ -125,15 +125,15 @@ const Feed = () => {
     }, [ongoingRide, userProfile.email]);
 
 
-    // Robust review prompt detector: checks if there's any recently completed
-    // ride that the user was part of and hasn't dismissed yet.
+
+
     useEffect(() => {
         if (!userProfile.email || !rides.length) return;
 
         const userEmail = userProfile.email?.toLowerCase();
         const dismissedReviews = JSON.parse(localStorage.getItem(`dismissedReviews_${userEmail}`) || '[]');
         
-        // Find the most recently completed ride that the user was part of and hasn't dismissed
+
         const unreviewedRide = rides.find(ride => {
             if (ride.status !== 'completed' && ride.status !== 'Done') return false;
             
@@ -146,8 +146,8 @@ const Feed = () => {
             return isRider || isPassenger;
         });
 
-        // If there's an unreviewed ride, we need to ensure the prompt state is active
-        // and correctly matches the current user's role.
+
+
         if (unreviewedRide) {
             const rId = unreviewedRide._id || unreviewedRide.id;
             const isRider = unreviewedRide.riderEmail?.toLowerCase() === userEmail;
@@ -219,7 +219,7 @@ const Feed = () => {
 
     const handleSubmitReview = (e) => {
         e.preventDefault();
-        // This is now handled by MultiReviewModal
+
         closeReviewModal();
     };
 
@@ -249,7 +249,7 @@ const Feed = () => {
             },
             getToken
         })).then(() => {
-            // Refresh notifications for the ride owner
+
             if (userProfile.email === ride.riderEmail) {
                 dispatch(fetchNotifications({ email: userProfile.email, getToken }));
             }
@@ -261,7 +261,7 @@ const Feed = () => {
         (ongoingRide.members && ongoingRide.members.some(m => m.email === userProfile.email))
     );
 
-    // Determine role: 'rider', 'member' (passenger), or null
+
     const userRole = (() => {
         const userEmail = userProfile.email?.toLowerCase();
         if (ongoingRide && ongoingRide.riderEmail?.toLowerCase() === userEmail) return 'rider';
@@ -285,16 +285,16 @@ const Feed = () => {
         const riderEmail = ongoingRide.riderEmail;
         const riderName = ongoingRide.rider;
         
-        // Update ride status to completed in backend
+
         dispatch(updateRideAsync({
             id: rideId,
             updateData: { status: "completed" },
             getToken
         }));
         
-        // The RIDER reviews all passengers.
-        // We only set the pending reviews, but DO NOT auto-open the modal.
-        // The modal will open when the rider clicks 'Write Review' in the panel.
+
+
+
         const pendingReviews = members.map(member => ({
             targetEmail: member.email,
             targetName: member.name,
@@ -303,7 +303,7 @@ const Feed = () => {
         
         setPendingReviewsForRide(pendingReviews);
         
-        // Mark rider as having completed their review setup, clear ongoingRide
+
         dispatch(clearOngoingRide());
     };
     
@@ -344,10 +344,10 @@ const Feed = () => {
         
         dispatch(fetchRides());
 
-        // Dismiss this ride so it never prompts again
+
         handleDismissReview(needsReviewBy.rideId);
 
-        // Clear the review prompt state completely across all roles
+
         dispatch(setNeedsReview({ role: 'rider', value: false }));
         dispatch(setNeedsReview({ role: 'member', value: false }));
         dispatch(setNeedsReview({ role: 'requester', value: false }));
@@ -473,14 +473,14 @@ const Feed = () => {
                             dispatch(setNeedsReview({ role: 'requester', value: false }));
                         }}
                         openReviewModal={() => {
-                            // Build pending reviews for passenger
+
                             const rideId = needsReviewBy.rideId;
                             const reviews = [];
-                            // Review the rider
+
                             if (needsReviewBy.riderEmail && needsReviewBy.riderEmail.toLowerCase() !== userProfile.email.toLowerCase()) {
                                 reviews.push({ targetEmail: needsReviewBy.riderEmail, targetName: needsReviewBy.riderName || 'Rider', rideId });
                             }
-                            // Review other passengers
+
                             (needsReviewBy.members || []).forEach(m => {
                                 if (m.email && m.email.toLowerCase() !== userProfile.email.toLowerCase()) {
                                     reviews.push({ targetEmail: m.email, targetName: m.name, rideId });

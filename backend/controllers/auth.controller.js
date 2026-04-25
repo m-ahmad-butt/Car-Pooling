@@ -6,33 +6,33 @@ const { uploadToS3, deleteFromS3 } = require('../config/s3');
 const syncUser = async (req, res, next) => {
   try {
     const { clerkId, email, name, firstName, lastName, campus, contactNo, rollNo } = req.body;
-    
+
     let user = await userRepository.findByClerkId(clerkId);
-    
-    // Prepare update data, only including non-empty values
+
+
     const updateData = { email, name };
     if (firstName) updateData.firstName = firstName;
     if (lastName) updateData.lastName = lastName;
     if (campus) updateData.campus = campus;
     if (contactNo) updateData.contactNo = contactNo;
     if (rollNo) updateData.rollNo = rollNo;
-    
+
     if (user) {
       user = await userRepository.updateByClerkId(clerkId, updateData);
     } else {
-      // For new users, require all fields
+
       user = await userRepository.create({
-        clerkId, 
-        email, 
+        clerkId,
+        email,
         name: name || `${firstName} ${lastName}`,
-        firstName, 
-        lastName, 
-        campus, 
-        contactNo, 
+        firstName,
+        lastName,
+        campus,
+        contactNo,
         rollNo
       });
     }
-    
+
     res.status(200).json(user);
   } catch (error) {
     next(error);
@@ -47,14 +47,14 @@ const getProfile = async (req, res, next) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Calculate real-time stats
+
     const rides = await rideRepository.findAll({ riderEmail: email });
     const reviews = await reviewRepository.findByTargetEmail(email);
     const avgRating = reviews.length > 0
-        ? Number((reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length).toFixed(1))
-        : 0;
+      ? Number((reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length).toFixed(1))
+      : 0;
 
-    // Convert to plain object to modify
+
     const userObj = user.toObject();
     userObj.stats = {
       rides: rides.length,
@@ -71,7 +71,7 @@ const getProfile = async (req, res, next) => {
 const updateProfileImage = async (req, res, next) => {
   try {
     const { email } = req.params;
-    
+
     if (!req.file) {
       return res.status(400).json({ message: 'No image file provided' });
     }
@@ -87,7 +87,7 @@ const updateProfileImage = async (req, res, next) => {
 
     const imageUrl = await uploadToS3(req.file, 'profiles');
     const updatedUser = await userRepository.updateByEmail(email, { image: imageUrl });
-    
+
     res.status(200).json(updatedUser);
   } catch (error) {
     next(error);
@@ -98,7 +98,7 @@ const updateProfile = async (req, res, next) => {
   try {
     const { email } = req.params;
     const { name, campus } = req.body;
-    
+
     const user = await userRepository.findByEmail(email);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });

@@ -11,7 +11,7 @@ const MultiReviewModal = ({ showModal, closeModal, pendingReviews, onSubmitRevie
         }))
     );
 
-    // Re-sync when pendingReviews changes (new modal opens with different people)
+
     useEffect(() => {
         setReviews(pendingReviews.map(pr => ({
             targetEmail: pr.targetEmail,
@@ -49,13 +49,13 @@ const MultiReviewModal = ({ showModal, closeModal, pendingReviews, onSubmitRevie
         closeModal();
     };
 
-    // If there are no people to review (e.g. rider with no passengers), close gracefully
+
     if (pendingReviews.length === 0) {
         return (
             <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
                 <div className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl p-8 text-center">
                     <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                        <span className="text-3xl">✓</span>
+                        <span className="text-xl font-black">OK</span>
                     </div>
                     <h2 className="text-2xl font-black tracking-tight uppercase mb-2">Ride Complete</h2>
                     <p className="text-sm text-gray-400 mb-6">No members to review for this ride.</p>
@@ -74,7 +74,7 @@ const MultiReviewModal = ({ showModal, closeModal, pendingReviews, onSubmitRevie
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl max-h-[90vh] overflow-y-auto">
 
-                {/* Header */}
+                {}
                 <div className="sticky top-0 bg-white border-b border-gray-100 px-8 py-6 rounded-t-[2rem] flex items-center justify-between z-10">
                     <div>
                         <h2 className="text-2xl font-black tracking-tight uppercase mb-1">Rate Your Ride</h2>
@@ -95,7 +95,7 @@ const MultiReviewModal = ({ showModal, closeModal, pendingReviews, onSubmitRevie
                 <form onSubmit={handleSubmit} className="px-8 py-6 space-y-6">
                     {reviews.map((review, index) => (
                         <div key={index} className="bg-gray-50 rounded-[1.5rem] p-6 space-y-5">
-                            {/* Person info */}
+                            {}
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-full bg-black flex items-center justify-center flex-shrink-0">
                                     <span className="text-white text-lg font-black">
@@ -110,40 +110,27 @@ const MultiReviewModal = ({ showModal, closeModal, pendingReviews, onSubmitRevie
                                 </div>
                             </div>
 
-                            {/* Star Rating */}
+                            {}
                             <div className="pt-4 border-t border-gray-200">
                                 <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">
                                     Your Rating
                                 </label>
-                                <div className="flex gap-2">
-                                    {[1, 2, 3, 4, 5].map(star => (
+                                <div className="flex gap-3">
+                                    {[1, 2, 3, 4, 5].map(num => (
                                         <button
-                                            key={star}
+                                            key={num}
                                             type="button"
-                                            onClick={() => handleRatingChange(index, star)}
-                                            className={`text-3xl transition-all hover:scale-110 ${
-                                                star <= review.rating ? 'text-black' : 'text-gray-200'
+                                            onClick={() => handleRatingChange(index, num)}
+                                            className={`w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black transition-all border-2 ${
+                                                num <= review.rating 
+                                                    ? 'bg-black text-white border-black' 
+                                                    : 'bg-white text-gray-400 border-gray-100 hover:border-gray-300'
                                             }`}
                                         >
-                                            ★
+                                            {num}
                                         </button>
                                     ))}
                                 </div>
-                            </div>
-
-                            {/* Comment */}
-                            <div>
-                                <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">
-                                    Your Comment
-                                </label>
-                                <textarea
-                                    rows={3}
-                                    value={review.comment}
-                                    onChange={e => handleCommentChange(index, e.target.value)}
-                                    placeholder="Share your experience..."
-                                    className="w-full bg-white border border-gray-200 rounded-2xl py-3 px-4 text-sm font-medium text-black placeholder:text-gray-300 focus:ring-2 focus:ring-black/10 focus:border-black/20 outline-none resize-none transition-all"
-                                    required
-                                />
                             </div>
                         </div>
                     ))}

@@ -61,7 +61,7 @@ const RideCard = ({ ride, onViewDetails, isOwnRide }) => {
                         <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">{ride.date}</p>
                     </div>
                     <div className="ml-auto flex items-center gap-1 bg-white/50 px-2 py-1 rounded-full border border-black/5">
-                        <span className="text-black font-extrabold text-[12px]">★</span>
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter mr-0.5">RATING</span>
                         <span className="text-[10px] font-bold tracking-tighter">{ride.riderRating}</span>
                     </div>
                 </div>

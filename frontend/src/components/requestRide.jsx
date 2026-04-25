@@ -21,7 +21,7 @@ function RequestRide() {
     const pendingRequests = rideRequests.filter(r => r.status === 'pending');
     const approvedRequests = rideRequests.filter(r => r.status === 'approved');
     
-    // Group requests by ride
+
     const requestsByRide = {};
     rideRequests.forEach(req => {
         if (!requestsByRide[req.rideId]) {
@@ -40,14 +40,14 @@ function RequestRide() {
             
             if (!ride) return;
             
-            // Calculate available seats
+
             const approvedSeats = rideRequests
                 .filter(r => r.rideId === rideId && r.status === 'approved')
                 .reduce((sum, r) => sum + r.seats, 0);
             
             const availableSeats = ride.seats - approvedSeats;
             
-            // Check if enough seats available
+
             if (request.seats > availableSeats) {
                 alert(`Not enough seats! Only ${availableSeats} seat(s) available, but ${request.seats} requested.`);
                 return;
@@ -55,7 +55,7 @@ function RequestRide() {
 
             dispatch(updateBookingStatusAsync({ id, status: 'approved', getToken }));
             
-            // Build new approvedMembers WITHOUT mutating Redux state
+
             const existingMembers = Array.isArray(ride.approvedMembers) ? ride.approvedMembers : [];
             const newMember = {
                 email: request.requesterEmail,
@@ -99,7 +99,7 @@ function RequestRide() {
             getToken
         }));
         
-        // Set ongoing ride with all members
+
         dispatch(setOngoingRide({
             rideId: rideId,
             rider: ride.riderName,
@@ -114,7 +114,7 @@ function RequestRide() {
             status: "In Progress"
         }));
         
-        // Notify all passengers that ride has started
+
         rideApprovedRequests.forEach(req => {
             dispatch(createNotificationAsync({
                 notificationData: {
@@ -154,7 +154,7 @@ function RequestRide() {
             </div>
         </div>
         
-        {/* Group by rides and show Start Ride button */}
+        {}
         {Object.keys(requestsByRide).map(rideId => {
             const ride = rides.find(r => r._id === rideId || r.id === rideId);
             const rideReqs = requestsByRide[rideId];
@@ -168,7 +168,7 @@ function RequestRide() {
             
             return (
                 <div key={rideId} className="space-y-4">
-                    {/* Ride Header */}
+                    {}
                     <div className="bg-gray-50 rounded-2xl p-4 flex items-center justify-between">
                         <div>
                             <h3 className="text-base font-black uppercase">{ride.title}</h3>
@@ -191,7 +191,7 @@ function RequestRide() {
                         )}
                     </div>
                     
-                    {/* Approved Members */}
+                    {}
                     {approved.length > 0 && (
                         <div className="space-y-3">
                             <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest">Approved Members</p>
@@ -214,7 +214,7 @@ function RequestRide() {
                         </div>
                     )}
                     
-                    {/* Pending Requests */}
+                    {}
                     {pending.map(req => (
                         <div key={req._id || req.id} className="bg-white border border-gray-100 rounded-3xl p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center shadow-[0_4px_20px_rgb(0,0,0,0.04)] transition-all hover:shadow-xl hover:shadow-black/5">
                             <div className="w-12 h-12 rounded-full bg-black flex-shrink-0 flex items-center justify-center">
@@ -225,7 +225,7 @@ function RequestRide() {
                                 <div className="flex flex-wrap items-center gap-3 mb-1">
                                     <h4 className="text-sm font-black text-black">{req.requesterName}</h4>
                                     <div className="flex items-center gap-1">
-                                        <span className="text-black text-xs">★</span>
+                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">RATING</span>
                                         <span className="text-[10px] font-black text-gray-500">{req.requesterRating}</span>
                                     </div>
                                 </div>

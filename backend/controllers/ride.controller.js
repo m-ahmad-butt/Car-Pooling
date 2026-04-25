@@ -22,7 +22,7 @@ const createRide = async (req, res, next) => {
 const getRides = async (req, res, next) => {
   try {
     const { destination, seats, date, location, campus, search } = req.query;
-    const filters = {}; // Frontend handles status filtering
+    const filters = {};
     
     if (search) {
       filters.$or = [
@@ -113,7 +113,7 @@ const getMyOngoingRide = async (req, res, next) => {
       return res.status(404).json({ message: 'User not found' });
     }
     
-    // Find ongoing ride where user is either the rider or a member
+
     const ongoingRides = await rideRepository.findAll({ status: 'ongoing' });
     
     const userOngoingRide = ongoingRides.find(ride => 

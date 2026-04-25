@@ -4,7 +4,7 @@ import { useSignIn } from "@clerk/clerk-react";
 import { validateEmail } from "../utils/method";
 
 function ForgotPasswordForm() {
-    const [step, setStep] = useState(1); // 1: enter email, 2: enter OTP + new password
+    const [step, setStep] = useState(1);
     const [email, setEmail] = useState("");
     const [emailError, setEmailError] = useState("");
     const [otpError, setOtpError] = useState("");
@@ -18,7 +18,7 @@ function ForgotPasswordForm() {
     const navigate = useNavigate();
     const { signIn, isLoaded } = useSignIn();
 
-    // OTP timer
+
     useEffect(() => {
         if (step === 2 && timeLeft > 0) {
             const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
@@ -42,7 +42,7 @@ function ForgotPasswordForm() {
         }
     };
 
-    // Step 1: send reset code via Clerk
+
     const handleEmailSubmit = async (e) => {
         e.preventDefault();
         if (!isLoaded) return;
@@ -76,7 +76,7 @@ function ForgotPasswordForm() {
         if (element.value && element.nextSibling) element.nextSibling.focus();
     };
 
-    // Step 2: verify OTP + set new password
+
     const handleVerifyOtp = async (e) => {
         e.preventDefault();
         if (!isLoaded) return;
@@ -121,10 +121,10 @@ function ForgotPasswordForm() {
 
     return (
         <div className="flex min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
-            {/* Left SIDE */}
+            {}
             <div className="w-full lg:w-[48%] flex flex-col justify-center px-12 lg:px-20 py-12">
                 <div className="max-w-[340px] w-full mx-auto">
-                    {/* dropME */}
+                    {}
                     <div className="mb-12 -ml-0.5">
                         <h1 className="text-4xl font-black tracking-tighter text-black flex items-baseline">
                             drop<span className="text-gray-300 font-bold italic ml-0.5">ME</span>
@@ -179,7 +179,7 @@ function ForgotPasswordForm() {
                         </form>
                     ) : (
                         <form onSubmit={handleVerifyOtp} className="space-y-6">
-                            {/* OTP Boxes */}
+                            {}
                             <div>
                                 <label className="block text-[12px] font-bold text-gray-800 mb-3">Verification Code</label>
                                 <div className="flex justify-between gap-2">
@@ -197,7 +197,7 @@ function ForgotPasswordForm() {
                                 </div>
                             </div>
 
-                            {/* New Password */}
+                            {}
                             <div>
                                 <label className="block text-[12px] font-bold text-gray-800 mb-2">New Password</label>
                                 <div className="relative">
@@ -251,7 +251,7 @@ function ForgotPasswordForm() {
                 </div>
             </div>
 
-            {/* Right side */}
+            {}
             <div className="hidden lg:block lg:w-[52%] bg-black relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/40 to-transparent flex flex-col justify-center px-20">
                     <div className="max-w-lg">

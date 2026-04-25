@@ -58,18 +58,18 @@ export const deleteRideAsync = createAsyncThunk('rides/deleteRide', async ({ id,
 const initialState = {
     rides: [],
     ongoingRide: null,
-    // needsReviewBy now supports multiple members
+
     needsReviewBy: JSON.parse(localStorage.getItem('needsReviewBy')) || { 
         riderEmail: null,
         riderName: null,
-        memberEmails: [],   // all passenger emails
+        memberEmails: [],
         rideId: null,
         riderNeedsReview: false,
-        memberNeedsReview: false,  // true for any member of the ride
-        // keep legacy fields for backward compat
+        memberNeedsReview: false,
+
         requesterEmail: null,
         requesterNeedsReview: false,
-        // full members list so each passenger knows who to review
+
         members: [],
     },
     filters: {
@@ -89,7 +89,7 @@ const rideSlice = createSlice({
         setOngoingRide: (state, action) => {
             state.ongoingRide = action.payload;
         },
-        // Called by the rider when they click "End Ride"
+
         clearOngoingRide: (state) => {
             if (state.ongoingRide) {
                 const memberEmails = (state.ongoingRide.members || []).map(m => m.email);
@@ -100,8 +100,8 @@ const rideSlice = createSlice({
                     members: state.ongoingRide.members || [],
                     rideId: state.ongoingRide.rideId,
                     riderNeedsReview: true,
-                    memberNeedsReview: false, // rider is ending, not member
-                    // legacy
+                    memberNeedsReview: false,
+
                     requesterEmail: memberEmails[0] || null,
                     requesterNeedsReview: false,
                 };
@@ -125,9 +125,9 @@ const rideSlice = createSlice({
             state.ongoingRide = null;
             localStorage.setItem('needsReviewBy', JSON.stringify(state.needsReviewBy));
         },
-        // Called for a passenger when the backend ride transitions to completed
+
         triggerPassengerReview: (state, action) => {
-            // action.payload = { rideId, riderEmail, riderName, members, myEmail }
+
             const { rideId, riderEmail, riderName, members, myEmail } = action.payload;
             state.needsReviewBy = {
                 riderEmail,
@@ -136,7 +136,7 @@ const rideSlice = createSlice({
                 members: members || [],
                 rideId,
                 riderNeedsReview: false,
-                memberNeedsReview: true,  // passenger needs to review
+                memberNeedsReview: true,
                 requesterEmail: myEmail,
                 requesterNeedsReview: true,
             };
@@ -147,7 +147,7 @@ const rideSlice = createSlice({
             const { role, value } = action.payload;
             if (role === 'rider') state.needsReviewBy.riderNeedsReview = value;
             if (role === 'member') state.needsReviewBy.memberNeedsReview = value;
-            // legacy
+
             if (role === 'requester') state.needsReviewBy.requesterNeedsReview = value;
             
             const anyPending = state.needsReviewBy.riderNeedsReview 
@@ -197,11 +197,11 @@ const rideSlice = createSlice({
                         to: action.payload.destination || "Destination",
                         status: "In Progress"
                     };
-                    // If there's an active ride in the DB, clear any stale
-                    // needsReviewBy that might have been set incorrectly (e.g.
-                    // from a logout/switch-account race condition).
+
+
+
                     if (state.needsReviewBy.rideId && state.needsReviewBy.rideId !== newRideId) {
-                        // Different rideId — the old review prompt is stale, clear it
+
                         state.needsReviewBy = {
                             riderEmail: null, riderName: null, memberEmails: [],
                             rideId: null, riderNeedsReview: false, memberNeedsReview: false,
@@ -210,8 +210,8 @@ const rideSlice = createSlice({
                         localStorage.removeItem('needsReviewBy');
                     }
                 } else {
-                    // Ride is gone — if we HAD an ongoing ride, the passenger
-                    // review prompt is triggered in feed.jsx via triggerPassengerReview
+
+
                     state.ongoingRide = null;
                 }
             })

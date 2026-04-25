@@ -84,11 +84,7 @@ function LandingPage() {
                             </button>
                         </div>
                         
-                        <div className="pt-4 animate-in fade-in slide-in-from-bottom-10 duration-1200">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                                ✓ No login required to browse • ✓ 100+ active rides
-                            </p>
-                        </div>
+
                     </div>
 
                     <div className="hidden lg:block lg:w-2/5 relative animate-in fade-in slide-in-from-right-12 duration-1000">

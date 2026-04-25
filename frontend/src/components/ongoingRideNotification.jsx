@@ -18,7 +18,7 @@ const OngoingRideNotification = ({
     const totalMembers = members.length;
     const isRider = userEmail === ongoingRide?.riderEmail;
 
-    // For passengers, find their own entry and the rider info
+
     const myMemberEntry = !isRider
         ? members.find(m => m.email === userEmail)
         : null;
@@ -26,7 +26,7 @@ const OngoingRideNotification = ({
 
     return (
         <div className="mb-10 space-y-4">
-            {/* ── Ongoing Ride Panel ── */}
+            {}
             {isUserInOngoingRide && ongoingRide && (
                 <div className="bg-black text-white p-6 rounded-[2rem] shadow-2xl shadow-black/20">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
@@ -60,7 +60,7 @@ const OngoingRideNotification = ({
                             </div>
                         </div>
 
-                        {/* Only the rider can end the ride */}
+                        {}
                         {isRider && (
                             <button
                                 onClick={handleCompleteSimulation}
@@ -71,9 +71,9 @@ const OngoingRideNotification = ({
                         )}
                     </div>
 
-                    {/* Members section — shown for rider and passengers alike */}
+                    {}
                     {isRider ? (
-                        /* Rider sees all passengers */
+                        
                         totalMembers > 0 && (
                             <div className="mt-6 pt-6 border-t border-white/10">
                                 <h5 className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-3">
@@ -99,13 +99,13 @@ const OngoingRideNotification = ({
                             </div>
                         )
                     ) : (
-                        /* Passenger sees rider + other passengers */
+                        
                         <div className="mt-6 pt-6 border-t border-white/10">
                             <h5 className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-3">
                                 Ride Members
                             </h5>
                             <div className="flex flex-wrap gap-3">
-                                {/* Rider badge */}
+                                {}
                                 <div className="bg-white/20 rounded-xl px-4 py-2 flex items-center gap-2">
                                     <div className="w-6 h-6 rounded-full bg-white/30 flex items-center justify-center">
                                         <span className="text-white text-[10px] font-black">
@@ -117,7 +117,7 @@ const OngoingRideNotification = ({
                                         <p className="text-[9px] opacity-60 uppercase tracking-wide">Driver</p>
                                     </div>
                                 </div>
-                                {/* Other passengers */}
+                                {}
                                 {otherMembers.map((member, index) => (
                                     <div key={index} className="bg-white/10 rounded-xl px-4 py-2 flex items-center gap-2">
                                         <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
@@ -139,7 +139,7 @@ const OngoingRideNotification = ({
                 </div>
             )}
 
-            {/* ── Review Prompt (shown after ride ends, for any user) ── */}
+            {}
             {userNeedsReview && (
                 <div className="bg-gray-50 border-2 border-dashed border-gray-200 p-6 rounded-[2rem] flex flex-col sm:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-6">

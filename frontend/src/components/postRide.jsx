@@ -41,9 +41,9 @@ const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormCha
                     <form onSubmit={handlePostRide} className="space-y-8">
                         <div className="flex flex-col lg:flex-row gap-8 items-start">
 
-                            {/* Left: Profile + Form */}
+                            {}
                             <div className="w-full lg:w-2/3 space-y-8">
-                                {/* Form Fields Section */}
+                                {}
                                 <div className="space-y-4 bg-white border border-gray-100 p-8 rounded-[2.5rem] shadow-sm">
                                     <div>
                                         <div className="flex justify-between items-center mb-2">
@@ -157,7 +157,7 @@ const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormCha
                                 </div>
                             </div>
 
-                            {/* Right: Image Upload */}
+                            {}
                             <div className="w-full lg:w-1/3 bg-white border border-gray-100 p-8 rounded-[2.5rem] shadow-sm sticky top-0">
                                 <label className="block text-[11px] font-black text-gray-400 uppercase mb-4 tracking-widest">Ride Image (Optional, max 5MB)</label>
                                 

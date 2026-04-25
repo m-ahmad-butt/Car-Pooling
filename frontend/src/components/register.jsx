@@ -11,7 +11,7 @@ function RegisterForm() {
     const { isSignedIn, isLoaded: userLoaded } = useUser();
     const { setActive: clerkSetActive } = useClerk();
     
-    // Clear errors if user becomes signed in
+
     useEffect(() => {
         if (isSignedIn) {
             setOtpError("");
@@ -50,7 +50,7 @@ function RegisterForm() {
     const TOTAL_STEPS = 4;
     const stepLabels = ["Name", "Campus", "Email", "Password"];
 
-    // Already logged in → go straight to feed
+
     if (isSignedIn) return <Navigate to="/feed" replace />;
 
     const handleInputChange = (e) => {
@@ -123,7 +123,7 @@ function RegisterForm() {
     const handleVerifyOtp = async (e) => {
         e.preventDefault();
         
-        // Prevent multiple submissions
+
         if (isLoading || !isLoaded) return;
         
         if (isSignedIn) {
@@ -142,7 +142,7 @@ function RegisterForm() {
             if (result.status === "complete") {
                 const setActiveMethod = setActive || clerkSetActive;
                 
-                // Wait a bit before setting active to ensure Clerk is ready
+
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
                 if (setActiveMethod && result.createdSessionId) {
@@ -176,7 +176,7 @@ function RegisterForm() {
                 setOtpError("");
                 setIsLoading(false);
                 
-                // Wait a bit more before navigation to ensure sync completes
+
                 await new Promise(resolve => setTimeout(resolve, 300));
                 navigate('/feed', { replace: true });
             } else {

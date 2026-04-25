@@ -13,7 +13,7 @@ const ProfileMenu = ({ onClose }) => {
         try {
             onClose();
 
-            // Clear review-related local storage so state doesn't leak between accounts
+
             localStorage.removeItem('needsReviewBy');
 
             dispatch(logoutAuth());

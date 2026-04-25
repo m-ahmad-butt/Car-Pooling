@@ -29,7 +29,7 @@ const getMyBookings = async (req, res, next) => {
       return res.status(401).json({ message: 'Unauthorized' });
     }
     
-    // Get user email from database using Clerk userId
+
     const user = await userRepository.findByClerkId(userId);
     
     if (!user) {
@@ -51,7 +51,7 @@ const getRequestsForMyRides = async (req, res, next) => {
       return res.status(401).json({ message: 'Unauthorized' });
     }
     
-    // Get user email from database using Clerk userId
+
     const user = await userRepository.findByClerkId(userId);
     
     if (!user) {

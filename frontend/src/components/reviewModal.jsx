@@ -23,36 +23,28 @@ const ReviewModal = ({ showReviewModal, closeReviewModal, handleSubmitReview, re
                 <form onSubmit={handleSubmitReview} className="space-y-6">
                     <div>
                         <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">Your Rating</label>
-                        <div className="flex gap-2">
-                            {[1, 2, 3, 4, 5].map(star => (
+                        <div className="flex gap-3">
+                            {[1, 2, 3, 4, 5].map(num => (
                                 <button
-                                    key={star}
+                                    key={num}
                                     type="button"
-                                    onClick={() => setReviewRating(star)}
-                                    className={`text-3xl transition-colors ${star <= reviewRating ? 'text-black' : 'text-gray-200'}`}
+                                    onClick={() => setReviewRating(num)}
+                                    className={`w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black transition-all border-2 ${
+                                        num <= reviewRating 
+                                            ? 'bg-black text-white border-black' 
+                                            : 'bg-white text-gray-400 border-gray-100 hover:border-gray-300'
+                                    }`}
                                 >
-                                    ★
+                                    {num}
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">Your Comment</label>
-                        <textarea
-                            rows={4}
-                            value={reviewText}
-                            onChange={e => setReviewText(e.target.value)}
-                            placeholder="Share your experience with this ride..."
-                            className="w-full bg-gray-50 border-none rounded-2xl py-4 px-5 text-sm font-medium focus:ring-1 focus:ring-black/5 outline-none resize-none"
-                            required
-                        />
-                    </div>
-
                     <button
                         type="submit"
                         disabled={reviewRating === 0}
-                        className="w-full bg-black text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="w-full bg-black text-white py-5 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.2em] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-xl"
                     >
                         Submit Review
                     </button>

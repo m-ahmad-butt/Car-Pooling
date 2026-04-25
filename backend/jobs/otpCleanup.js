@@ -6,7 +6,7 @@ class OTPCleanupJob {
   }
 
   start() {
-    // Run cleanup every 5 minutes
+
     this.intervalId = setInterval(async () => {
       try {
         const result = await otpRepository.deleteExpired();
@@ -16,7 +16,7 @@ class OTPCleanupJob {
       } catch (error) {
         console.error('OTP Cleanup Error:', error);
       }
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 5 * 60 * 1000);
 
     console.log('OTP Cleanup Job started - runs every 5 minutes');
   }

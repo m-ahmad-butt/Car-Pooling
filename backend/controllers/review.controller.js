@@ -8,9 +8,9 @@ const createReview = async (req, res, next) => {
 
     const userReviews = await reviewRepository.findByTargetEmail(reviewData.targetEmail);
     const avgRating = userReviews.length > 0
-        ? Number((userReviews.reduce((acc, curr) => acc + curr.rating, 0) / userReviews.length).toFixed(1))
-        : 0;
-    
+      ? Number((userReviews.reduce((acc, curr) => acc + curr.rating, 0) / userReviews.length).toFixed(1))
+      : 0;
+
     const user = await userRepository.findByEmail(reviewData.targetEmail);
     if (user) {
       await userRepository.updateStats(reviewData.targetEmail, {

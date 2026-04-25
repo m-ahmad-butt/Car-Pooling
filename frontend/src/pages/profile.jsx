@@ -59,7 +59,7 @@ const ProfilePage = () => {
     const completedOfferedRides = myRides.filter(r => r.status === "Done");
     const completedTookRides = myRequestedRides.filter(req => {
         if (req.status !== "Approved") return false;
-        // Verify the actual ride is completed
+
         const ride = rides.find(r => r._id === req.rideId || r.id === req.rideId);
         return ride && (ride.status === 'completed' || ride.status === 'Done');
     });
@@ -86,10 +86,10 @@ const ProfilePage = () => {
 
         setIsUploadingImage(true);
         try {
-            await dispatch(updateProfileImageAsync({ 
-                email: userProfile.email, 
-                imageFile: file, 
-                getToken 
+            await dispatch(updateProfileImageAsync({
+                email: userProfile.email,
+                imageFile: file,
+                getToken
             })).unwrap();
         } catch (error) {
             alert('Failed to upload image');
@@ -101,13 +101,13 @@ const ProfilePage = () => {
     const handleSaveProfile = async () => {
         if (isEditingName || isEditingCampus) {
             try {
-                await dispatch(updateProfileAsync({ 
-                    email: userProfile.email, 
-                    profileData: { 
-                        name: editData.name, 
-                        campus: editData.campus 
-                    }, 
-                    getToken 
+                await dispatch(updateProfileAsync({
+                    email: userProfile.email,
+                    profileData: {
+                        name: editData.name,
+                        campus: editData.campus
+                    },
+                    getToken
                 })).unwrap();
             } catch (error) {
                 alert('Failed to update profile: ' + (error.message || 'Unknown error'));
@@ -161,8 +161,8 @@ const ProfilePage = () => {
                                 : <span className="text-white font-black" style={{ fontSize: 'clamp(24px, 5vw, 36px)' }}>{(userProfile.name || userProfile.email || 'U').charAt(0).toUpperCase()}</span>
                             }
                         </div>
-                        <label 
-                            htmlFor="profile-image-upload" 
+                        <label
+                            htmlFor="profile-image-upload"
                             className="absolute bottom-0 right-0 bg-black text-white rounded-full p-2 cursor-pointer hover:bg-gray-800 transition-all shadow-lg"
                             title="Upload profile picture"
                         >
@@ -177,12 +177,12 @@ const ProfilePage = () => {
                                 </svg>
                             )}
                         </label>
-                        <input 
-                            id="profile-image-upload" 
-                            type="file" 
-                            accept="image/*" 
-                            onChange={handleImageUpload} 
-                            className="hidden" 
+                        <input
+                            id="profile-image-upload"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
                             disabled={isUploadingImage}
                         />
                     </div>
@@ -355,13 +355,11 @@ const ProfilePage = () => {
                                         </div>
                                         <span className="text-sm sm:text-base font-black text-black">{rev.user}</span>
                                     </div>
-                                    <div className="flex gap-0.5">
-                                        {[...Array(5)].map((_, i) => (
-                                            <span key={i} className={`text-sm ${i < rev.rating ? 'text-black' : 'text-gray-100'}`}>★</span>
-                                        ))}
+                                    <div className="flex gap-1 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest self-center mr-1">SCORE</span>
+                                        <span className="text-sm font-black text-black">{rev.rating}/5</span>
                                     </div>
                                 </div>
-                                <p className="text-sm sm:text-base text-gray-600 leading-relaxed m-0">"{rev.comment}"</p>
                             </div>
                         )) : <EmptyState message="No reviews yet" />
                     )}
@@ -436,7 +434,7 @@ const ProfilePage = () => {
                             >
                                 {(isEditingName || isEditingCampus) ? 'Save Changes' : 'Close'}
                             </button>
-                            
+
                             {!(isEditingName || isEditingCampus) && (
                                 <button
                                     onClick={() => openUserProfile()}
