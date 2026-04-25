@@ -3,8 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from 'react-redux';
 import Footer from '../components/footer';
 import { getCampuses, validatePassword } from '../utils/method';
-import { updateProfile, updateProfileImageAsync } from '../features/userSlice';
+import { updateProfile, updateProfileImageAsync, updateProfileAsync } from '../features/userSlice';
+import { fetchReviewsByUser } from '../features/reviewSlice';
+import { fetchRides } from '../features/rideSlice';
+import { fetchMyRideRequests, fetchMyBookings } from '../features/requestSlice';
 import { useClerk, useAuth } from "@clerk/clerk-react";
+import { useEffect } from 'react';
 
 const ProfilePage = () => {
     const navigate = useNavigate();
@@ -14,11 +18,20 @@ const ProfilePage = () => {
 
     const userProfile = useSelector(state => state.user.profile);
     const rides = useSelector(state => state.rides?.rides || []);
-    const requests = useSelector(state => state.bookings?.bookings || []);
+    const myBookings = useSelector(state => state.bookings?.myBookings || []);
     const allReviews = useSelector(state => state.reviews?.reviews || []);
 
     const [showEditPanel, setShowEditPanel] = useState(false);
     const [show4fields, setShow4Fields] = useState(true);
+
+    useEffect(() => {
+        if (userProfile.email) {
+            dispatch(fetchReviewsByUser({ email: userProfile.email, getToken }));
+            dispatch(fetchRides());
+            dispatch(fetchMyRideRequests(getToken));
+            dispatch(fetchMyBookings(getToken));
+        }
+    }, [dispatch, userProfile.email, getToken]);
 
     const myRides = rides.filter(r => r.riderEmail === userProfile.email).map(r => ({
         id: r.id,
@@ -27,8 +40,9 @@ const ProfilePage = () => {
         date: r.date,
     }));
 
-    const myRequestedRides = requests.filter(r => r.requesterEmail === userProfile.email).map(r => ({
-        id: r.id,
+    const myRequestedRides = myBookings.filter(r => r.requesterEmail === userProfile.email).map(r => ({
+        id: r.id || r._id,
+        rideId: r.rideId,
         title: r.ride,
         rider: r.requesterName,
         status: r.status === "pending" ? "Pending" : r.status === "approved" ? "Approved" : "Declined",
@@ -36,14 +50,19 @@ const ProfilePage = () => {
     }));
 
     const myReviews = allReviews.filter(r => r.targetEmail === userProfile.email).map((r, idx) => ({
-        id: r.id || idx,
+        id: r.id || r._id || idx,
         user: r.user,
         comment: r.comment,
         rating: r.rating,
     }));
 
     const completedOfferedRides = myRides.filter(r => r.status === "Done");
-    const completedTookRides = myRequestedRides.filter(r => r.status === "Approved");
+    const completedTookRides = myRequestedRides.filter(req => {
+        if (req.status !== "Approved") return false;
+        // Verify the actual ride is completed
+        const ride = rides.find(r => r._id === req.rideId || r.id === req.rideId);
+        return ride && (ride.status === 'completed' || ride.status === 'Done');
+    });
 
     const avgRating = myReviews.length > 0
         ? (myReviews.reduce((sum, r) => sum + r.rating, 0) / myReviews.length).toFixed(1)
@@ -79,9 +98,21 @@ const ProfilePage = () => {
         }
     };
 
-    const handleSaveProfile = () => {
+    const handleSaveProfile = async () => {
         if (isEditingName || isEditingCampus) {
-            dispatch(updateProfile({ name: editData.name, campus: editData.campus }));
+            try {
+                await dispatch(updateProfileAsync({ 
+                    email: userProfile.email, 
+                    profileData: { 
+                        name: editData.name, 
+                        campus: editData.campus 
+                    }, 
+                    getToken 
+                })).unwrap();
+            } catch (error) {
+                alert('Failed to update profile: ' + (error.message || 'Unknown error'));
+                return;
+            }
         }
 
         setIsEditingName(false);
@@ -127,7 +158,7 @@ const ProfilePage = () => {
                         }}>
                             {userProfile.image
                                 ? <img src={userProfile.image} className="w-full h-full object-cover" alt="profile" />
-                                : <span className="text-white font-black" style={{ fontSize: 'clamp(24px, 5vw, 36px)' }}>{userProfile.name.charAt(0)}</span>
+                                : <span className="text-white font-black" style={{ fontSize: 'clamp(24px, 5vw, 36px)' }}>{(userProfile.name || userProfile.email || 'U').charAt(0).toUpperCase()}</span>
                             }
                         </div>
                         <label 
@@ -156,9 +187,9 @@ const ProfilePage = () => {
                         />
                     </div>
 
-                    <h2 className="font-black tracking-tight" style={{ fontSize: 'clamp(18px, 4vw, 26px)', marginBottom: '6px' }}>{userProfile.name}</h2>
+                    <h2 className="font-black tracking-tight" style={{ fontSize: 'clamp(18px, 4vw, 26px)', marginBottom: '6px' }}>{userProfile.name || userProfile.email || 'User'}</h2>
                     <p className="text-xs sm:text-sm font-black text-gray-400 uppercase tracking-widest mb-5 opacity-70">
-                        Roll No: {userProfile.rollNo}
+                        Roll No: {userProfile.rollNo || 'Not set'}
                     </p>
 
                     <div className="flex gap-3 sm:gap-4 flex-wrap justify-center mb-5">
@@ -357,7 +388,7 @@ const ProfilePage = () => {
                                 }}>
                                     {userProfile.image
                                         ? <img src={userProfile.image} className="w-full h-full object-cover" alt="profile" />
-                                        : <span className="text-white font-black" style={{ fontSize: 'clamp(24px, 5vw, 36px)' }}>{(userProfile.name || 'U').charAt(0)}</span>
+                                        : <span className="text-white font-black" style={{ fontSize: 'clamp(24px, 5vw, 36px)' }}>{(userProfile.name || userProfile.email || 'U').charAt(0).toUpperCase()}</span>
                                     }
                                 </div>
                             </div>
@@ -371,7 +402,7 @@ const ProfilePage = () => {
                                     <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2.5">Full Name</h5>
                                     {isEditingName
                                         ? <input type="text" value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} className="w-full bg-white/50 border-0 rounded-xl p-2.5 sm:p-3.5 font-black outline-none box-border" autoFocus />
-                                        : <p className="font-black m-0" style={{ fontSize: 'clamp(14px, 2.5vw, 17px)' }}>{userProfile.name || 'User'}</p>
+                                        : <p className="font-black m-0" style={{ fontSize: 'clamp(14px, 2.5vw, 17px)' }}>{userProfile.name || userProfile.email || 'User'}</p>
                                     }
                                     <EditButton active={isEditingName} onClick={() => setIsEditingName(!isEditingName)} />
                                 </div>
@@ -382,7 +413,7 @@ const ProfilePage = () => {
                                         ? <select value={editData.campus} onChange={e => setEditData({ ...editData, campus: e.target.value })} className="w-full bg-white/50 border-0 rounded-xl p-2.5 sm:p-3.5 font-black outline-none box-border" autoFocus>
                                             {getCampuses().map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                                         </select>
-                                        : <p className="font-black m-0" style={{ fontSize: 'clamp(14px, 2.5vw, 17px)' }}>{getCampuses().find(c => c.id === userProfile.campus)?.name || userProfile.campus || 'NUCES'}</p>
+                                        : <p className="font-black m-0" style={{ fontSize: 'clamp(14px, 2.5vw, 17px)' }}>{userProfile.campus || 'Not set'}</p>
                                     }
                                     <EditButton active={isEditingCampus} onClick={() => setIsEditingCampus(!isEditingCampus)} />
                                 </div>

@@ -1,20 +1,24 @@
 import { useState, useEffect } from "react";
 import { extractRollNo, validateEmail, getCampuses, validatePassword, validatePhone } from "../utils/method";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { useSignUp, useUser } from "@clerk/clerk-react";
+import { useSignUp, useUser, useClerk } from "@clerk/clerk-react";
 import { updateProfile } from "../features/userSlice";
 import { authService } from "../services/auth.service";
 
 function RegisterForm() {
     const navigate = useNavigate();
     const { isSignedIn, isLoaded: userLoaded } = useUser();
+    const { setActive: clerkSetActive } = useClerk();
     
+    // Clear errors if user becomes signed in
     useEffect(() => {
-        if (userLoaded && isSignedIn) {
-            navigate('/feed');
+        if (isSignedIn) {
+            setOtpError("");
+            setServerError("");
+            setIsLoading(false);
         }
-    }, [userLoaded, isSignedIn, navigate]);
+    }, [isSignedIn]);
 
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
@@ -41,10 +45,13 @@ function RegisterForm() {
 
     const campuses = getCampuses();
     const dispatch = useDispatch();
-    const { signUp, isLoaded } = useSignUp();
+    const { signUp, isLoaded, setActive } = useSignUp();
 
     const TOTAL_STEPS = 4;
     const stepLabels = ["Name", "Campus", "Email", "Password"];
+
+    // Already logged in → go straight to feed
+    if (isSignedIn) return <Navigate to="/feed" replace />;
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -115,7 +122,15 @@ function RegisterForm() {
 
     const handleVerifyOtp = async (e) => {
         e.preventDefault();
-        if (!isLoaded) return;
+        
+        // Prevent multiple submissions
+        if (isLoading || !isLoaded) return;
+        
+        if (isSignedIn) {
+            navigate('/feed', { replace: true });
+            return;
+        }
+
         setOtpError("");
         const code = otpCode.join("");
         if (code.length < 6) return;
@@ -125,7 +140,14 @@ function RegisterForm() {
             const result = await signUp.attemptEmailAddressVerification({ code });
 
             if (result.status === "complete") {
-                await result.createdSessionId && await signUp.setActive({ session: result.createdSessionId });
+                const setActiveMethod = setActive || clerkSetActive;
+                
+                // Wait a bit before setting active to ensure Clerk is ready
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                if (setActiveMethod && result.createdSessionId) {
+                    await setActiveMethod({ session: result.createdSessionId });
+                }
                 
                 const profileData = {
                     name: `${formData.firstName} ${formData.lastName}`,
@@ -151,14 +173,28 @@ function RegisterForm() {
                 }
 
                 dispatch(updateProfile(profileData));
-                navigate("/feed");
+                setOtpError("");
+                setIsLoading(false);
+                
+                // Wait a bit more before navigation to ensure sync completes
+                await new Promise(resolve => setTimeout(resolve, 300));
+                navigate('/feed', { replace: true });
             } else {
                 setOtpError("Verification incomplete. Please try again.");
+                setIsLoading(false);
             }
         } catch (err) {
-            const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message || "Invalid code.";
-            setOtpError(msg);
-        } finally {
+            const code = err?.errors?.[0]?.code;
+            const msg = err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message;
+
+            if (code === 'session_exists' || /already\s+signed\s+in/i.test(msg)) {
+                setOtpError("");
+                setIsLoading(false);
+                navigate('/feed', { replace: true });
+                return;
+            }
+
+            setOtpError(msg || "Invalid code.");
             setIsLoading(false);
         }
     };

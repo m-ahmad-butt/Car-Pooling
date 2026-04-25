@@ -13,15 +13,6 @@ const createRide = async (req, res, next) => {
     
     const ride = await rideRepository.create(rideData);
     
-    const user = await userRepository.findByEmail(rideData.riderEmail);
-    if (user) {
-      await userRepository.updateStats(rideData.riderEmail, {
-        rides: user.stats.rides + 1,
-        comments: user.stats.comments,
-        rating: user.stats.rating
-      });
-    }
-
     res.status(201).json(ride);
   } catch (error) {
     next(error);
@@ -31,7 +22,7 @@ const createRide = async (req, res, next) => {
 const getRides = async (req, res, next) => {
   try {
     const { destination, seats, date, location, campus, search } = req.query;
-    const filters = {};
+    const filters = {}; // Frontend handles status filtering
     
     if (search) {
       filters.$or = [
@@ -108,4 +99,36 @@ const getRideById = async (req, res, next) => {
   }
 };
 
-module.exports = { createRide, getRides, getRideById, updateRide, deleteRide };
+const getMyOngoingRide = async (req, res, next) => {
+  try {
+    const { userId } = req.auth;
+    
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    
+    const user = await userRepository.findByClerkId(userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Find ongoing ride where user is either the rider or a member
+    const ongoingRides = await rideRepository.findAll({ status: 'ongoing' });
+    
+    const userOngoingRide = ongoingRides.find(ride => 
+      ride.riderEmail === user.email || 
+      (ride.approvedMembers && ride.approvedMembers.some(m => m.email === user.email))
+    );
+    
+    if (!userOngoingRide) {
+      return res.status(200).json(null);
+    }
+    
+    res.status(200).json(userOngoingRide);
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { createRide, getRides, getRideById, updateRide, deleteRide, getMyOngoingRide };

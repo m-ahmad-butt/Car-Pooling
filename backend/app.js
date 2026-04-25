@@ -14,6 +14,7 @@ const rideRoutes = require('./routes/ride.routes');
 const requestRoutes = require('./routes/request.routes');
 const reviewRoutes = require('./routes/review.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const otpRoutes = require('./routes/otp.routes');
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use('/rides', rideRoutes);
 app.use('/bookings', requestRoutes);
 app.use('/reviews', clerkAuth, reviewRoutes);
 app.use('/notifications', clerkAuth, notificationRoutes);
+app.use('/otp', otpRoutes);
 
 app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found' });

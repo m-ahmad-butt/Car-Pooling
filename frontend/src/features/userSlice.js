@@ -19,6 +19,24 @@ export const updateProfileImageAsync = createAsyncThunk('user/updateProfileImage
     }
 });
 
+export const updateProfileAsync = createAsyncThunk('user/updateProfile', async ({ email, profileData, getToken }, { rejectWithValue }) => {
+    try {
+        const profile = await authService.updateProfile(email, profileData, getToken);
+        return profile;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || error.message);
+    }
+});
+
+export const fetchOtherProfileAsync = createAsyncThunk('user/fetchOtherProfile', async ({ email, getToken }, { rejectWithValue }) => {
+    try {
+        const profile = await authService.getProfile(email, getToken);
+        return profile;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || error.message);
+    }
+});
+
 const defaultProfile = {
     name: null,
     rollNo: null,
@@ -45,6 +63,7 @@ const userSlice = createSlice({
         },
         logoutUser: (state) => {
             state.profile = defaultProfile;
+            state.otherProfiles = {};
         },
     },
     extraReducers: (builder) => {
@@ -60,7 +79,13 @@ const userSlice = createSlice({
                 state.status = 'failed';
                 state.error = action.payload;
             })
+            .addCase(fetchOtherProfileAsync.fulfilled, (state, action) => {
+                state.otherProfiles[action.payload.email] = action.payload;
+            })
             .addCase(updateProfileImageAsync.fulfilled, (state, action) => {
+                state.profile = action.payload;
+            })
+            .addCase(updateProfileAsync.fulfilled, (state, action) => {
                 state.profile = action.payload;
             });
     }

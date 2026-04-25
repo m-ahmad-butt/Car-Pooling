@@ -9,7 +9,7 @@ const RideCard = ({ ride, onViewDetails, isOwnRide }) => {
         if (userProfile && ride.riderEmail === userProfile.email) {
             navigate('/profile');
         } else {
-            navigate(`/profile/${ride.riderName.replace(/\s+/g, '-').toLowerCase()}`);
+            navigate(`/profile/${ride.riderEmail}`);
         }
     };
 
@@ -30,11 +30,13 @@ const RideCard = ({ ride, onViewDetails, isOwnRide }) => {
                         </svg>
                     </div>
                 )}
-                <div className="absolute top-4 right-4">
-                    <div className="bg-white/90 backdrop-blur-md text-black text-[9px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm ring-1 ring-black/5">
-                        {ride.vehicleType}
+                {ride.vehicleType && (
+                    <div className="absolute top-4 right-4">
+                        <div className="bg-white/90 backdrop-blur-md text-black text-[9px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-sm ring-1 ring-black/5">
+                            {ride.vehicleType}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             <div className="p-7 flex-1 flex flex-col">

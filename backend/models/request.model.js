@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const requestSchema = new mongoose.Schema({
   rideId: { type: String, required: true },
+  riderEmail: { type: String, required: true },
   requesterName: { type: String, required: true },
   requesterEmail: { type: String, required: true },
   requesterAvatar: { type: String },

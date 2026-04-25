@@ -1,46 +1,43 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { useEffect } from 'react';
+import { fetchOtherProfileAsync } from '../features/userSlice';
+import { fetchReviewsByUser } from '../features/reviewSlice';
+import { useAuth } from '@clerk/clerk-react';
 import Footer from '../components/footer';
 
 const OtherProfilePage = () => {
-    const { userId } = useParams();
+    const { userId } = useParams(); // This is now the email
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const { getToken } = useAuth();
 
     const otherProfiles = useSelector(state => state.user.otherProfiles);
-    const allUsers = useSelector(state => state.auth.users);
     const allReviews = useSelector(state => state.reviews.reviews);
+    const userProfile = useSelector(state => state.user.profile);
 
-    let userData = otherProfiles[userId];
-    
-    if (!userData && userId) {
-        const foundUser = allUsers.find(user => {
-            const userName = `${user.firstName} ${user.lastName}`.replace(/\s+/g, '-').toLowerCase();
-            return userName === userId;
-        });
-        
-        if (foundUser) {
-            userData = {
-                name: `${foundUser.firstName} ${foundUser.lastName}`,
-                rollNo: foundUser.rollNo,
-                campus: foundUser.campusId,
-                email: foundUser.email,
-                contactNo: foundUser.contactNo,
-                image: null,
-                stats: { rides: 0, comments: 0, rating: 0 },
-            };
+    useEffect(() => {
+        if (userId) {
+            dispatch(fetchOtherProfileAsync({ email: userId, getToken }));
+            dispatch(fetchReviewsByUser({ email: userId, getToken }));
         }
-    }
+    }, [userId, dispatch, getToken]);
 
-    if (!userData) {
-        userData = {
-            name: userId ? userId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : "Unknown User",
-            rollNo: "N/A",
-            campus: "N/A",
-            email: "",
-            image: null,
-            stats: { rides: 0, comments: 0, rating: 0 },
-        };
-    }
+    // If it's the current user's profile, navigate to the main profile page
+    useEffect(() => {
+        if (userProfile && userId === userProfile.email) {
+            navigate('/profile');
+        }
+    }, [userId, userProfile, navigate]);
+
+    const userData = otherProfiles[userId] || {
+        name: userId ? userId.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : "Loading User...",
+        rollNo: "Loading...",
+        campus: "Loading...",
+        email: userId || "",
+        image: null,
+        stats: { rides: 0, comments: 0, rating: 0 },
+    };
 
     const userReviews = allReviews
         .filter(r => r.targetEmail === userData.email)

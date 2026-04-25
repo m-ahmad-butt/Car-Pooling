@@ -35,6 +35,11 @@ export const rideService = {
         const response = await api.get(`/rides/${id}`);
         return response.data;
     },
+    getMyOngoingRide: async (getToken) => {
+        const config = await getAuthHeaders(getToken);
+        const response = await api.get('/rides/my-ongoing', config);
+        return response.data;
+    },
     updateRide: async (id, updateData, getToken) => {
         const config = await getAuthHeaders(getToken);
         const response = await api.put(`/rides/${id}`, updateData, config);

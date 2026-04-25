@@ -1,7 +1,7 @@
 import { getCampuses, validatePhone, validateVehicleNumber } from '../utils/method';
 import { useState } from 'react';
 
-const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormChange, handlePostRide, postErrors, setPostErrors, selectedImage, setSelectedImage }) => {
+const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormChange, handlePostRide, postErrors, setPostErrors, selectedImage, setSelectedImage, userProfile }) => {
     const [imagePreview, setImagePreview] = useState(null);
 
     const handleImageChange = (e) => {
@@ -56,10 +56,10 @@ const PostRide = ({ showPostModal, setShowPostModal, postForm, handlePostFormCha
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-[11px] font-black text-gray-400 uppercase mb-2 tracking-widest">Category (Vehicle)</label>
-                                            <select value={postForm.vehicleType} onChange={(e) => handlePostFormChange('vehicleType', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none appearance-none">
+                                            <select value={postForm.vehicleType} onChange={(e) => handlePostFormChange('vehicleType', e.target.value)} className="w-full bg-gray-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-1 focus:ring-black/5 transition-all outline-none appearance-none" required>
                                                 <option value="">Select a category</option>
-                                                <option>CAR</option>
-                                                <option>BIKE</option>
+                                                <option value="CAR">CAR</option>
+                                                <option value="BIKE">BIKE</option>
                                             </select>
                                         </div>
                                         <div>

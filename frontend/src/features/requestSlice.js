@@ -19,6 +19,15 @@ export const fetchMyBookings = createAsyncThunk('bookings/fetchMyBookings', asyn
     }
 });
 
+export const fetchMyRideRequests = createAsyncThunk('bookings/fetchMyRideRequests', async (getToken, { rejectWithValue }) => {
+    try {
+        const bookings = await requestService.getMyRideRequests(getToken);
+        return bookings;
+    } catch (error) {
+        return rejectWithValue(error.response?.data || error.message);
+    }
+});
+
 export const fetchBookingsByRide = createAsyncThunk('bookings/fetchBookingsByRide', async ({ rideId, getToken }, { rejectWithValue }) => {
     try {
         const bookings = await requestService.getBookingsByRide(rideId, getToken);
@@ -65,6 +74,17 @@ const requestSlice = createSlice({
                 state.myBookings = action.payload;
             })
             .addCase(fetchMyBookings.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload;
+            })
+            .addCase(fetchMyRideRequests.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(fetchMyRideRequests.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+                state.bookings = action.payload;
+            })
+            .addCase(fetchMyRideRequests.rejected, (state, action) => {
                 state.status = 'failed';
                 state.error = action.payload;
             })

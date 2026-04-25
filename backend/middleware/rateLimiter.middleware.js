@@ -4,7 +4,7 @@ const { RedisStore } = require('rate-limit-redis');
 
 const rateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -16,7 +16,7 @@ const rateLimiter = rateLimit({
     res.status(429).json({
       error: 'Too many requests',
       message: 'Rate limit exceeded. Please try again after 15 minutes.',
-      limit: 100,
+      limit: 1000,
       windowMs: 15 * 60 * 1000
     });
   },

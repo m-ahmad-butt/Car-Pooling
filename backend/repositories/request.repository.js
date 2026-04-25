@@ -10,6 +10,10 @@ class RequestRepository {
     return Request.find({ rideId }).sort({ createdAt: -1 });
   }
 
+  async findByRiderEmail(email) {
+    return Request.find({ riderEmail: email }).sort({ createdAt: -1 });
+  }
+
   async findByRequesterEmail(email) {
     return Request.find({ requesterEmail: email }).sort({ createdAt: -1 });
   }

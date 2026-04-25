@@ -7,5 +7,6 @@ const { upload } = require('../config/s3');
 router.post('/sync', authController.syncUser);
 router.get('/profile/:email', clerkAuth, authController.getProfile);
 router.put('/profile/:email/image', clerkAuth, upload.single('image'), authController.updateProfileImage);
+router.put('/profile/:email', clerkAuth, authController.updateProfile);
 
 module.exports = router;

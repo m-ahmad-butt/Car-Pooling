@@ -17,5 +17,10 @@ export const authService = {
         config.headers['Content-Type'] = 'multipart/form-data';
         const response = await api.put(`/auth/profile/${email}/image`, formData, config);
         return response.data;
+    },
+    updateProfile: async (email, profileData, getToken) => {
+        const config = await getAuthHeaders(getToken);
+        const response = await api.put(`/auth/profile/${email}`, profileData, config);
+        return response.data;
     }
 };
